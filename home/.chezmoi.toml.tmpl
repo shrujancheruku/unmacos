@@ -1,0 +1,13 @@
+{{- /* UnMacOS: asked once on `chezmoi init`, stored in ~/.config/chezmoi/chezmoi.toml */ -}}
+{{- $name := promptStringOnce . "name" "Git user name" -}}
+{{- $email := promptStringOnce . "email" "Git email" -}}
+{{- $op := promptBoolOnce . "use_1password" "Read secrets from 1Password (needs the 1Password app + CLI integration)" false -}}
+{{- $personal := promptBoolOnce . "personal" "Also install personal apps (Brewfile.personal)" false -}}
+[data]
+  name = {{ $name | quote }}
+  email = {{ $email | quote }}
+  use_1password = {{ $op }}
+  personal = {{ $personal }}
+  # 1Password reference for spotify_player's client_id (only read when use_1password = true)
+  spotify_client_id_ref = "op://Private/spotify-player/client_id"
+  theme = "tokyo-night"

@@ -1,0 +1,10 @@
+#!/bin/bash
+# UnMacOS: new Ghostty window (same process), optionally running a command.
+#   unmacos-term                 shell
+#   unmacos-term tmux new -A -s Work
+set -euo pipefail
+if (( $# == 0 )); then
+  osascript -e 'tell application "Ghostty" to new window' -e 'tell application "Ghostty" to activate' >/dev/null
+  exit 0
+fi
+exec "$HOME/.local/bin/unmacos-tui" - "$@"

@@ -1,0 +1,7 @@
+#!/bin/bash
+# UnMacOS: show/hide SketchyBar (Omarchy: SUPER + SHIFT + SPACE)
+if [[ "$(sketchybar --query bar | jq -r .hidden)" == "on" ]]; then
+  sketchybar --bar hidden=off
+else
+  sketchybar --bar hidden=on
+fi

@@ -1,0 +1,13 @@
+#!/bin/bash
+# UnMacOS: run a command in a small floating Ghostty window that closes when
+# the command exits. Rift floats any window titled "float:*" (see app_rules).
+#   unmacos-popup <title> <command...>
+set -euo pipefail
+title="$1"; shift
+path="$HOME/.local/bin:/opt/homebrew/bin:/opt/homebrew/sbin:/usr/bin:/bin:/usr/sbin:/sbin"
+exec /usr/bin/open -na Ghostty --args \
+  --title="float:$title" \
+  --quit-after-last-window-closed=true \
+  --window-save-state=never \
+  --window-width=110 --window-height=28 \
+  -e /usr/bin/env PATH="$path" "$@"

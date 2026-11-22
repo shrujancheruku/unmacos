@@ -1,0 +1,8 @@
+theme = "tokyo-night"
+show_plan = false
+show_5h = true
+show_7d = true
+show_extra = true
+show_cost = false
+show_cwd = false
+show_branch = false

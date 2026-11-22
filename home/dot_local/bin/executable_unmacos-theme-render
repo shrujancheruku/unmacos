@@ -1,0 +1,73 @@
+#!/usr/bin/env bash
+# UnMacOS theme renderer (Omarchy-style).
+#   unmacos-theme-render [theme]      default: current theme, else tokyo-night
+#   unmacos-theme-render --list
+# Renders ~/.local/share/unmacos/templates/*.tpl with the theme's colors.toml
+# into ~/.local/state/unmacos/theme/, lets the theme's own files override any
+# template, then live-reloads what can be reloaded. Apps read only from that
+# state directory, so switching themes is just re-running this.
+set -euo pipefail
+
+SHARE="${UNMACOS_SHARE:-$HOME/.local/share/unmacos}"
+STATE="${UNMACOS_STATE:-$HOME/.local/state/unmacos}"
+OUT="$STATE/theme"
+
+if [[ "${1:-}" == "--list" ]]; then
+  ls "$SHARE/themes"
+  exit 0
+fi
+
+theme="${1:-$(cat "$STATE/theme.name" 2>/dev/null || echo tokyo-night)}"
+src="$SHARE/themes/$theme"
+[[ -f "$src/colors.toml" ]] || { echo "unmacos: no theme '$theme' (try --list)" >&2; exit 1; }
+
+tmp="$(mktemp -d)"
+trap 'rm -rf "$tmp"' EXIT
+
+# Build a sed script from colors.toml: {{ key }}, {{ key_strip }} (no #), {{ key_rgb }} (r,g,b)
+: > "$tmp/colors.sed"
+while IFS='=' read -r key val; do
+  key="${key//[[:space:]]/}"
+  [[ -z "$key" || "$key" == \#* || -z "$val" ]] && continue
+  val="${val#"${val%%[![:space:]]*}"}"; val="${val%\"*}"; val="${val#\"}"
+  printf 's|{{ %s }}|%s|g\n' "$key" "$val" >> "$tmp/colors.sed"
+  if [[ "$val" =~ ^#([0-9a-fA-F]{6})$ ]]; then
+    hex="${BASH_REMATCH[1]}"
+    printf 's|{{ %s_strip }}|%s|g\n' "$key" "$hex" >> "$tmp/colors.sed"
+    printf 's|{{ %s_rgb }}|%d,%d,%d|g\n' "$key" "0x${hex:0:2}" "0x${hex:2:2}" "0x${hex:4:2}" >> "$tmp/colors.sed"
+  fi
+done < "$src/colors.toml"
+
+mkdir -p "$tmp/out"
+for tpl in "$SHARE"/templates/*.tpl; do
+  name="$(basename "$tpl" .tpl)"
+  sed -f "$tmp/colors.sed" "$tpl" > "$tmp/out/$name"
+done
+# Theme-provided files win over rendered templates
+for f in "$src"/*; do
+  [[ "$(basename "$f")" == "colors.toml" ]] && continue
+  cp "$f" "$tmp/out/"
+done
+cp "$src/colors.toml" "$tmp/out/colors.toml"
+
+left="$(grep -l '{{ ' "$tmp"/out/* 2>/dev/null | grep -v '/colors.toml$' || true)"
+[[ -n "$left" ]] && echo "unmacos: warning, unrendered keys in: $(echo "$left" | xargs -n1 basename | tr '\n' ' ')" >&2
+
+mkdir -p "$STATE"
+rm -rf "$OUT"
+mv "$tmp/out" "$OUT"
+echo "$theme" > "$STATE/theme.name"
+echo "unmacos: theme '$theme' rendered to $OUT"
+
+[[ "${UNMACOS_NO_RELOAD:-}" == 1 ]] && exit 0
+
+# --- Live reload (best effort) ---
+mode="$(awk -F'"' '/^mode/ {print $2}' "$src/colors.toml")"
+osascript -e "tell application \"System Events\" to tell appearance preferences to set dark mode to $([[ "$mode" == light ]] && echo false || echo true)" >/dev/null 2>&1 || true
+pgrep -xq sketchybar && sketchybar --reload >/dev/null 2>&1 || true
+pgrep -xq borders && [[ -x "$HOME/.config/borders/bordersrc" ]] && "$HOME/.config/borders/bordersrc" >/dev/null 2>&1 &
+pgrep -xq tmux && tmux source-file "$OUT/tmux.conf" >/dev/null 2>&1 || true
+pkill -USR2 -x ghostty >/dev/null 2>&1 || true   # Ghostty reloads its config on SIGUSR2
+pkill -USR2 -x btop >/dev/null 2>&1 || true
+# Neovim reloads itself: lua/plugins/unmacos-theme.lua watches $OUT
+exit 0

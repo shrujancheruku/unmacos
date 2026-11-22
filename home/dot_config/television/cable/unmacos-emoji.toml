@@ -1,0 +1,15 @@
+# UnMacOS picker, used by unmacos-menu emoji
+[metadata]
+name = "unmacos-emoji"
+description = "Copy an emoji"
+
+[source]
+command = '''python3 -I -c '
+import unicodedata as u
+for r in [(0x1F300,0x1FAFF),(0x2600,0x27BF)]:
+    for c in range(*r):
+        n=u.name(chr(c),"")
+        if n: print(chr(c)+"\t"+chr(c)+"  "+n.lower())
+''''
+display = "{split:\\t:1}"
+output = "{split:\\t:0}"

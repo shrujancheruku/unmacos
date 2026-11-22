@@ -1,0 +1,9 @@
+# UnMacOS picker, used by unmacos-menu apps
+[metadata]
+name = "unmacos-apps"
+description = "Launch an app"
+
+[source]
+command = '''for d in /Applications /Applications/Utilities /System/Applications /System/Applications/Utilities "$HOME/Applications"; do [ -d "$d" ] && find "$d" -maxdepth 1 -name "*.app"; done | awk -F/ '{n=$NF; sub(/\.app$/,"",n); print $0 "\t" n}' | sort -t "	" -k2 -f -u'''
+display = "{split:\\t:1}"
+output = "{split:\\t:0}"

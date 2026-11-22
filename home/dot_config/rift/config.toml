@@ -81,6 +81,9 @@ app_rules = [
   { title_substring = "Settings", ax_subrole = "AXDialog", floating = true },
   { app_id = "com.apple.systempreferences", floating = true },
   { app_id = "com.apple.ActivityMonitor", floating = true },
+  # unmacos-popup windows (menus, pickers): floating, centred (position is a
+  # fraction of the free space; size is in points)
+  { app_id = "com.mitchellh.ghostty", title_substring = "float:", floating = true, position = { x = 0.5, y = 0.4 }, size = { w = 1000, h = 600 } },
 ]
 
 # [keys] replaces Rift's whole default keymap.
@@ -89,25 +92,17 @@ app_rules = [
 # --- Tiling on/off for the current Space (Rift-specific) ---
 "Alt + Z" = "toggle_space_activated"
 
-# --- Focus (Omarchy: SUPER + arrows; hjkl kept from AeroSpace) ---
+# --- Focus (Omarchy: SUPER + arrows). hjkl only: Alt + arrows stay word-jumps in text ---
 "Alt + H" = { move_focus = "left" }
 "Alt + J" = { move_focus = "down" }
 "Alt + K" = { move_focus = "up" }
 "Alt + L" = { move_focus = "right" }
-"Alt + Left" = { move_focus = "left" }
-"Alt + Down" = { move_focus = "down" }
-"Alt + Up" = { move_focus = "up" }
-"Alt + Right" = { move_focus = "right" }
 
 # --- Swap / move window (Omarchy: SUPER + SHIFT + arrows) ---
 "Alt + Shift + H" = { move_node = "left" }
 "Alt + Shift + J" = { move_node = "down" }
 "Alt + Shift + K" = { move_node = "up" }
 "Alt + Shift + L" = { move_node = "right" }
-"Alt + Shift + Left" = { move_node = "left" }
-"Alt + Shift + Down" = { move_node = "down" }
-"Alt + Shift + Up" = { move_node = "up" }
-"Alt + Shift + Right" = { move_node = "right" }
 
 # --- Workspaces 1-5 (Rift indices are 0-based) ---
 "Alt + 1" = { switch_to_workspace = 0 }
@@ -139,8 +134,8 @@ app_rules = [
 # Omarchy: SUPER + J toggles split. Alt + J is focus-down here, so use Alt + Slash.
 "Alt + Slash" = "toggle_orientation"
 "Alt + Ctrl + Equal" = "balance"
-"Alt + Comma" = "toggle_stack" # Hyprland group ≈ Rift stack
-"Alt + Ctrl + E" = "unjoin_windows"
+"Alt + G" = "toggle_stack" # Omarchy: SUPER + G group ≈ Rift stack
+"Alt + Ctrl + G" = "unjoin_windows" # Omarchy: SUPER + ALT + G
 "Alt + Ctrl + Left" = { join_window = "left" }
 "Alt + Ctrl + Right" = { join_window = "right" }
 "Alt + Ctrl + Up" = { join_window = "up" }
@@ -157,7 +152,7 @@ app_rules = [
 "Alt + T" = { toggle_window_floating = { center = true } }   # Omarchy: SUPER + T
 "Alt + Shift + T" = "toggle_focus_floating"
 "Alt + F" = "toggle_fullscreen"                              # Omarchy: SUPER + F
-"Alt + Shift + F" = "toggle_fullscreen_within_gaps"             # Omarchy: SUPER + ALT + F
+"Alt + Cmd + F" = "toggle_fullscreen_within_gaps"              # Omarchy: SUPER + CTRL + F
 
 # --- Resize (Omarchy: SUPER + minus/equal width, SUPER + SHIFT height) ---
 "Alt + Minus" = { resize_window_shrink = "horizontal" }
@@ -166,8 +161,40 @@ app_rules = [
 "Alt + Shift + Minus" = { resize_window_shrink = "vertical" }
 "Alt + R" = { binding_mode = "resize" }
 
-# --- Launch (Omarchy: SUPER + RETURN) ---
-"Alt + Enter" = { exec = ["/usr/bin/open", "-na", "Ghostty"] }
+# --- Launch (Omarchy SUPER + key → Alt + key). TUIs focus if already open. ---
+"Alt + Enter" = { exec = ["/bin/sh", "-c", "$HOME/.local/bin/unmacos-term"] }
+"Alt + Ctrl + Enter" = { exec = ["/bin/sh", "-c", "$HOME/.local/bin/unmacos-term tmux new -A -s Work"] }
+"Alt + Shift + Enter" = { exec = ["/usr/bin/open", "-a", "Firefox"] }
+"Alt + Shift + B" = { exec = ["/usr/bin/open", "-a", "Firefox"] }
+"Alt + Shift + Ctrl + B" = { exec = ["/usr/bin/open", "-na", "Firefox", "--args", "--private-window"] }
+"Alt + Shift + M" = { exec = ["/bin/sh", "-c", "$HOME/.local/bin/unmacos-tui music spotify_player"] }
+"Alt + Shift + F" = { exec = ["/bin/sh", "-c", "$HOME/.local/bin/unmacos-tui files nnn -deH"] }
+"Alt + Shift + N" = { exec = ["/bin/sh", "-c", "$HOME/.local/bin/unmacos-tui editor nvim"] }
+"Alt + Shift + D" = { exec = ["/bin/sh", "-c", "$HOME/.local/bin/unmacos-tui docker lazydocker"] }
+"Alt + Shift + G" = { exec = ["/bin/sh", "-c", "$HOME/.local/bin/unmacos-tui git lazygit"] }
+"Alt + Shift + A" = { exec = ["/bin/sh", "-c", "$HOME/.local/bin/unmacos-tui ai claude"] }
+"Alt + Cmd + T" = { exec = ["/bin/sh", "-c", "$HOME/.local/bin/unmacos-tui top btop"] }
+"Alt + Shift + Slash" = { exec = ["/usr/bin/open", "-a", "1Password"] }
+"Alt + Shift + Ctrl + G" = { exec = ["/usr/bin/open", "-a", "WhatsApp"] }
+
+# --- Menus (television in a floating popup) ---
+"Alt + Space" = { exec = ["/bin/sh", "-c", "$HOME/.local/bin/unmacos-popup apps unmacos-menu apps"] }
+"Alt + Ctrl + Space" = { exec = ["/bin/sh", "-c", "$HOME/.local/bin/unmacos-popup menu unmacos-menu"] }
+"Alt + Escape" = { exec = ["/bin/sh", "-c", "$HOME/.local/bin/unmacos-popup system unmacos-menu system"] }
+"Alt + Ctrl + K" = { exec = ["/bin/sh", "-c", "$HOME/.local/bin/unmacos-popup keys unmacos-menu keybinds"] }
+"Alt + Ctrl + V" = { exec = ["/bin/sh", "-c", "$HOME/.local/bin/unmacos-popup clipboard unmacos-menu clipboard"] }
+"Alt + Ctrl + Period" = { exec = ["/bin/sh", "-c", "$HOME/.local/bin/unmacos-popup emoji unmacos-menu emoji"] }
+"Alt + Ctrl + W" = { exec = ["/bin/sh", "-c", "$HOME/.local/bin/unmacos-popup windows unmacos-menu windows"] }
+"Alt + Cmd + A" = { exec = ["/bin/sh", "-c", "$HOME/.local/bin/unmacos-popup audio unmacos-menu audio"] }
+"Alt + Cmd + B" = { exec = ["/bin/sh", "-c", "$HOME/.local/bin/unmacos-popup bluetooth unmacos-menu bluetooth"] }
+"Alt + Cmd + W" = { exec = ["/bin/sh", "-c", "$HOME/.local/bin/unmacos-menu wifi"] }
+"Alt + Ctrl + Shift + Space" = { exec = ["/bin/sh", "-c", "$HOME/.local/bin/unmacos-popup theme unmacos-menu theme"] }
+
+# --- System ---
+"Alt + Cmd + N" = { exec = ["/opt/homebrew/bin/nightlight", "toggle"] }
+"Alt + Cmd + L" = { exec = ["/usr/bin/pmset", "displaysleepnow"] }
+"Alt + Shift + S" = { exec = ["/usr/sbin/screencapture", "-i", "-c"] }
+"Alt + Shift + Space" = { exec = ["/bin/sh", "-c", "$HOME/.local/bin/unmacos-toggle-bar"] }
 
 # --- Rift ---
 "Alt + Shift + R" = "reload_config"

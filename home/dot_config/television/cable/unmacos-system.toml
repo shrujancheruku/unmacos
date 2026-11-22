@@ -1,0 +1,9 @@
+# UnMacOS picker, used by unmacos-menu system
+[metadata]
+name = "unmacos-system"
+description = "Lock, sleep, restart, shut down, log out"
+
+[source]
+command = '''printf "lock\tLock\nsleep\tSleep\nscreensaver\tScreen saver\nlogout\tLog out\nrestart\tRestart\nshutdown\tShut down\n"'''
+display = "{split:\\t:1}"
+output = "{split:\\t:0}"

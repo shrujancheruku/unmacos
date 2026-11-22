@@ -1,0 +1,63 @@
+#!/bin/bash
+# UnMacOS: on macOS 26+ (Tahoe, Golden Gate), turn off Apple Intelligence and
+# Liquid Glass to get as close to a Sequoia desktop as macOS allows.
+# Re-runs when this script or the profile changes.
+# profile hash: {{ include "dot_local/share/unmacos/profiles/unmacos-no-ai.mobileconfig" | sha256sum }}
+#
+# Opt out: UNMACOS_KEEP_AI=1 / UNMACOS_KEEP_GLASS=1 chezmoi apply
+# Undo:    remove the "UnMacOS: no Apple Intelligence" profile in Device Management,
+#          defaults delete -g com.apple.SwiftUI.DisableSolarium,
+#          sudo rm /Library/Preferences/FeatureFlags/Domain/WritingTools.plist
+set -euo pipefail
+
+major="$(sw_vers -productVersion | cut -d. -f1)"
+if (( major < 26 )); then
+  echo "==> macOS $major: no Apple Intelligence / Liquid Glass changes needed"
+  # Sequoia: still opt out of the Apple Intelligence waitlist/prompt
+  defaults write com.apple.CloudSubscriptionFeatures.optIn "545129924" -bool false 2>/dev/null || true
+  exit 0
+fi
+
+if [[ "${UNMACOS_KEEP_AI:-}" != 1 ]]; then
+  echo "==> Apple Intelligence off"
+  profile="$HOME/.local/share/unmacos/profiles/unmacos-no-ai.mobileconfig"
+  if profiles show -type configuration 2>/dev/null | grep -q "io.github.unmacos.no-ai"; then
+    echo "    profile already installed"
+  else
+    # macOS needs a person to approve profiles; this queues it in System Settings
+    open "$profile"
+    sleep 2
+    open "x-apple.systempreferences:com.apple.Profiles-Settings.extension" || true
+    echo "    Approve 'UnMacOS: no Apple Intelligence' in System Settings > General > Device Management"
+  fi
+
+  # Writing Tools popup in every text field
+  sudo mkdir -p /Library/Preferences/FeatureFlags/Domain
+  sudo defaults write /Library/Preferences/FeatureFlags/Domain/WritingTools LightweightUI_macOS -dict Enabled -bool false
+
+  # Siri, inline predictions and summaries (the profile enforces these; set them too)
+  defaults write com.apple.assistant.support "Assistant Enabled" -bool false
+  defaults write com.apple.Siri StatusMenuVisible -bool false
+  defaults write com.apple.Siri VoiceTriggerUserEnabled -bool false
+  defaults write NSGlobalDomain NSAutomaticInlinePredictionEnabled -bool false
+  defaults write com.apple.CloudSubscriptionFeatures.optIn "545129924" -bool false 2>/dev/null || true
+fi
+
+if [[ "${UNMACOS_KEEP_GLASS:-}" != 1 ]]; then
+  echo "==> Liquid Glass off"
+  # Solid backgrounds instead of glass (may need Full Disk Access for the terminal)
+  if ! defaults write com.apple.universalaccess reduceTransparency -bool true 2>/dev/null; then
+    echo "    Could not set Reduce Transparency: turn it on in"
+    echo "    System Settings > Accessibility > Display"
+  fi
+  # Pre-Liquid Glass look for SwiftUI apps; Control Center keeps the new UI so
+  # right-side menu bar items keep working
+  defaults write -g com.apple.SwiftUI.DisableSolarium -bool true
+  defaults write com.apple.ControlCenter com.apple.SwiftUI.DisableSolarium -bool false
+  if (( major >= 27 )); then
+    echo "    Also drag System Settings > Appearance > Liquid Glass to the minimum (no setting for scripts)"
+    open "x-apple.systempreferences:com.apple.Appearance-Settings.extension" || true
+  fi
+fi
+
+echo "Log out and back in to finish (Liquid Glass changes and Writing Tools need it)."

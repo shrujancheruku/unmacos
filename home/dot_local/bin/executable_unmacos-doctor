@@ -1,0 +1,61 @@
+#!/bin/bash
+# UnMacOS doctor: checks that the desktop is installed and running.
+#   unmacos-doctor        exit code = number of failures
+set -uo pipefail
+eval "$(/opt/homebrew/bin/brew shellenv 2>/dev/null)" || true
+export PATH="$HOME/.local/bin:$PATH"
+fail=0; warn=0
+ok()   { printf '  \033[32m✓\033[0m %s\n' "$1"; }
+bad()  { printf '  \033[31m✗\033[0m %s\n' "$1"; fail=$((fail+1)); }
+note() { printf '  \033[33m!\033[0m %s\n' "$1"; warn=$((warn+1)); }
+check() { if eval "$2" >/dev/null 2>&1; then ok "$1"; else bad "$1${3:+ ($3)}"; fi; }
+
+echo "UnMacOS doctor — macOS $(sw_vers -productVersion)"
+
+echo "Commands"
+for c in rift rift-cli sketchybar borders tv ghostty tmux nvim nnn btop lazygit lazydocker \
+         spotify_player SwitchAudioSource blueutil nightlight nowplaying-cli jq fd rg fzf \
+         chezmoi op clipse unmacos-tui unmacos-menu unmacos-popup unmacos-theme-render; do
+  if [[ "$c" == ghostty ]]; then check "Ghostty.app" '[[ -d /Applications/Ghostty.app ]]'
+  else check "$c" "command -v $c"; fi
+done
+
+echo "Desktop"
+check "Rift running" 'pgrep -xq rift' "rift service start; allow Accessibility"
+check "Rift answers (5 workspaces)" '[[ $(rift-cli query workspaces | jq length) -ge 5 ]]' "check Accessibility for rift"
+check "SketchyBar running" 'pgrep -xq sketchybar' "brew services restart sketchybar"
+check "SketchyBar has Rift workspaces" 'sketchybar --query rws.1' "rift-cli missing when the bar loaded?"
+check "SbarLua installed" '[[ -f $HOME/.local/share/sketchybar_lua/sketchybar.so ]]'
+check "borders running" 'pgrep -xq borders'
+check "clipse listener" 'launchctl print gui/$(id -u)/io.github.unmacos.clipse'
+pgrep -xq AeroSpace && bad "AeroSpace still running (quit it)"
+check "Separate Spaces per display" '[[ $(defaults read com.apple.spaces spans-displays 2>/dev/null || echo 0) == 0 ]]'
+check "Spaces not reordered" '[[ $(defaults read com.apple.dock mru-spaces) == 0 ]]'
+
+echo "Theme"
+check "Theme rendered ($(cat "$HOME/.local/state/unmacos/theme.name" 2>/dev/null || echo none))" '[[ -f $HOME/.local/state/unmacos/theme/sketchybar.lua ]]' "unmacos-theme-render"
+check "television theme link" '[[ -e $HOME/.config/television/themes/unmacos.toml ]]'
+check "btop theme link" '[[ -e $HOME/.config/btop/themes/unmacos.theme ]]'
+
+echo "Fonts"
+for f in sketchybar-app-font "GeistMonoNerdFontMono" "SF-Pro"; do
+  check "$f" "ls \$HOME/Library/Fonts /Library/Fonts 2>/dev/null | grep -qi '$f'"
+done
+
+echo "Pickers"
+check "tv has UnMacOS channels" '[[ $(tv list-channels | grep -c unmacos-) -ge 10 ]]'
+check "Spotlight index on (app picker, file search)" 'mdutil -s / | grep -q "enabled"'
+
+major="$(sw_vers -productVersion | cut -d. -f1)"
+if (( major >= 26 )); then
+  echo "macOS $major: Apple Intelligence / Liquid Glass"
+  if profiles show -type configuration 2>/dev/null | grep -q io.github.unmacos.no-ai; then ok "no-AI profile installed"
+  else note "no-AI profile not approved: System Settings > General > Device Management"; fi
+  check "Reduce Transparency on" '[[ $(defaults read com.apple.universalaccess reduceTransparency) == 1 ]]'
+  check "SwiftUI Solarium off" '[[ $(defaults read -g com.apple.SwiftUI.DisableSolarium) == 1 ]]'
+  check "Writing Tools popup off" 'defaults read /Library/Preferences/FeatureFlags/Domain/WritingTools LightweightUI_macOS | grep -q "Enabled = 0"'
+fi
+
+echo
+if (( fail == 0 )); then echo "All good ($warn notes)."; else echo "$fail problem(s), $warn note(s)."; fi
+exit "$fail"
