@@ -1,12 +1,14 @@
 // UnMacOS: fastfetch
 // Sized for a quarter-screen Ghostty tile on a 14" MacBook Pro (about 75 x 21
-// cells at font-size 16): a 7-line logo, 16 info lines, no line over 70 cols.
+// cells at font-size 16): a 13-line logo, 16 info lines, no line over 70 cols.
 // Colours are plain ANSI, so they follow the active UnMacOS theme.
 {
   "$schema": "https://github.com/fastfetch-cli/fastfetch/raw/dev/doc/json_schema.json",
   "logo": {
-    "type": "builtin",
-    "source": "macOS_small",
+    // Half-block Apple striped in theme colours (green, yellow, red, magenta, blue)
+    "type": "file",
+    "source": "~/.config/fastfetch/apple.txt",
+    "color": { "1": "green", "2": "yellow", "3": "red", "4": "magenta", "5": "blue" },
     "padding": { "top": 1, "left": 1, "right": 3 }
   },
   "display": {
