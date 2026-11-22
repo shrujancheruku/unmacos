@@ -1,0 +1,9 @@
+# UnMacOS picker, used by unmacos-menu weather
+[metadata]
+name = "unmacos-weather"
+description = "Weather location"
+
+[source]
+command = '''cur=$(unmacos-weather get); mark() { if [ "$1" = "$cur" ]; then printf "● "; else printf "  "; fi; }; printf ":auto\t%sAuto-detect (by IP)\n" "$(mark auto)"; printf ":custom\t  Type a place…\n"; unmacos-weather recent | while IFS= read -r p; do printf "%s\t%s%s\n" "$p" "$(mark "$p")" "$p"; done'''
+display = "{split:\\t:1}"
+output = "{split:\\t:0}"
