@@ -47,7 +47,7 @@ window that's already open. They all run in [Ghostty](https://ghostty.org) and l
 belong together.
 
 **One theme, everywhere, instantly.** Pick a theme and the bar, window borders, terminal, tmux, btop,
-Neovim and Firefox all change at once, even editors that are already open. Comes with 23 themes, including
+Neovim, Firefox and Spotify all change at once, even editors that are already open. Comes with 23 themes, including
 hand-tuned Tokyo Night and every Omarchy palette from Catppuccin to Gruvbox, Nord, Rosé Pine and
 Kanagawa. The picker shows each palette in colour before you commit, and every theme brings its
 own set of Omarchy wallpapers.
@@ -112,6 +112,7 @@ Then a few clicks macOS won't let a script make for you:
 | `Alt + Ctrl + Enter` | Terminal in the tmux session "Work" |
 | `Alt + Shift + B` | Browser (Firefox). Add `Ctrl` for a private window |
 | `Alt + Shift + M` / `F` / `N` | Music / files / Neovim |
+| `Alt + Ctrl + Shift + M` | Spotify app (live theme switching) |
 | `Alt + Shift + G` / `D` / `A` | lazygit / lazydocker / Claude |
 | `Alt + Cmd + T` | btop |
 | `Alt + Shift + /` | 1Password |
@@ -178,6 +179,15 @@ MacBooks. Change `UNMACOS_GAP` in `unmacos-toggle-bar` and the gaps in `dot_conf
 **Your own bits.** Put machine-only shell config in `~/.zshrc.local`. Swap the browser in
 `dot_config/rift/config.toml`, the Wi-Fi interface in `dot_config/sketchybar/items/widgets/wifi.lua`,
 and your extra apps in `Brewfile.personal`.
+
+**Keep Spotify's own look.** Spotify is themed with [Spicetify](https://spicetify.app) when both
+are installed (`Brewfile.personal`). Switching themes recolors an open Spotify live, without
+interrupting playback. For that, UnMacOS opens Spotify with a DevTools port on `127.0.0.1:9222`,
+which lets local programs running as you control Spotify's window. The app picker, the bar's music
+widget and `unmacos-spotify` open Spotify with the port. The Dock and Spotlight can't, so after
+opening it there the first switch reopens it once and resumes what was playing. Run `UNMACOS_KEEP_SPOTIFY=1 chezmoi apply` to skip it, or
+`spicetify restore` to undo. Spotify updates undo the patch; `chezmoi apply` (or
+`spicetify backup apply`) puts it back.
 
 **Keep Firefox's own theme.** Run `UNMACOS_KEEP_FIREFOX=1 chezmoi apply` before the first apply, or
 remove Pywalfox in Firefox's Add-ons. `home/.chezmoiscripts/run_onchange_after_80-firefox.sh` lists

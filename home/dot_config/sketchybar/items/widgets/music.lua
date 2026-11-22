@@ -114,7 +114,8 @@ end)
 
 for _, it in ipairs({ cover, title, artist }) do
 	it:subscribe("mouse.clicked", function()
-		sbar.exec([[open -a "Spotify"]])
+		-- unmacos-spotify adds the port that lets theme switches recolor Spotify live
+		sbar.exec(os.getenv("HOME") .. "/.local/bin/unmacos-spotify")
 	end)
 end
 

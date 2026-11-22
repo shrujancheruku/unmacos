@@ -99,6 +99,35 @@ if [[ "${UNMACOS_KEEP_FIREFOX:-}" != 1 ]] && ls "$HOME/Library/Application Suppo
   osascript -e "display notification \"Dark Reader > Settings > Advanced > Import Settings: $OUT/darkreader.json\" with title \"Firefox pages: $theme\"" >/dev/null 2>&1 || true
 fi
 # Neovim reloads itself: lua/plugins/unmacos-theme.lua watches $OUT
+# Spotify (Spicetify): bake the new color.ini into Spotify's colors.css, then
+# swap it into the open Spotify over DevTools (unmacos-spotify-recolor: live,
+# playback untouched). That needs Spotify launched with the debug port, so if
+# it wasn't (opened from the Dock), quit and reopen it with the port, resuming
+# playback; later switches are then live. `spicetify restart` can't do this: it
+# quits Spotify but doesn't relaunch it on macOS.
+if [[ "${UNMACOS_KEEP_SPOTIFY:-}" != 1 ]] && command -v spicetify >/dev/null 2>&1 \
+   && [[ "$(spicetify config current_theme 2>/dev/null)" == UnMacOS ]]; then
+  (
+    spicetify -q -n refresh || exit 0
+    pgrep -xq Spotify || exit 0
+    "$HOME/.local/bin/unmacos-spotify-recolor" && exit 0
+    spot() { osascript -e "if application \"Spotify\" is running then tell application \"Spotify\" to $1" 2>/dev/null || true; }
+    playing="$(spot 'player state as string')"
+    osascript -e 'tell application "Spotify" to quit' 2>/dev/null || pkill -x Spotify
+    for _ in $(seq 40); do pgrep -xq Spotify || break; sleep 0.25; done
+    pgrep -xq Spotify && { pkill -x Spotify; sleep 1; }
+    "$HOME/.local/bin/unmacos-spotify" -g
+    if [[ "$playing" == playing ]]; then
+      # Wait for the relaunched player to come up paused, then press play
+      for _ in $(seq 40); do
+        sleep 0.5
+        state="$(spot 'player state as string')"
+        [[ "$state" == playing ]] && break
+        [[ "$state" == paused ]] && spot play >/dev/null
+      done
+    fi
+  ) </dev/null >/dev/null 2>&1 &
+fi
 # The theme's wallpaper (downloaded on first use, so in the background).
 # UNMACOS_KEEP_WALLPAPER=1 leaves the wallpaper alone.
 if [[ "${UNMACOS_KEEP_WALLPAPER:-}" != 1 && -x "$HOME/.local/bin/unmacos-wallpaper" ]]; then

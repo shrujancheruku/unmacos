@@ -1,0 +1,18 @@
+#!/bin/bash
+# UnMacOS: open Spotify, with the DevTools port that lets theme switches recolor
+# it live (unmacos-spotify-recolor). Focuses Spotify if it's already open (macOS
+# ignores launch arguments then; the next theme switch reopens it with the port).
+#   unmacos-spotify [-g]     -g: open in the background, without focusing it
+# The port (127.0.0.1 only) is added only while Spicetify uses the UnMacOS theme
+# and UNMACOS_KEEP_SPOTIFY isn't 1. UNMACOS_SPOTIFY_PORT overrides 9222.
+set -euo pipefail
+export PATH="/opt/homebrew/bin:$PATH"
+
+bg=()
+[[ "${1:-}" == -g ]] && bg=(-g)
+
+if ! pgrep -xq Spotify && [[ "${UNMACOS_KEEP_SPOTIFY:-}" != 1 ]] && command -v spicetify >/dev/null 2>&1 \
+   && [[ "$(spicetify config current_theme 2>/dev/null)" == UnMacOS ]]; then
+  exec open ${bg[@]+"${bg[@]}"} -a Spotify --args --remote-debugging-port="${UNMACOS_SPOTIFY_PORT:-9222}"
+fi
+exec open ${bg[@]+"${bg[@]}"} -a Spotify

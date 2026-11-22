@@ -1,0 +1,43 @@
+#!/usr/bin/env bun
+// UnMacOS: recolor an open Spotify without restarting it.
+//   unmacos-spotify-recolor        exit 0 = recolored, non-zero = couldn't
+// Run after `spicetify -n refresh` has written the new colors.css. Talks to
+// Spotify's page over Chrome DevTools, so Spotify must have been launched with
+// --remote-debugging-port (unmacos-theme-render does that; the port listens on
+// 127.0.0.1 only). Swaps the colors.css stylesheet in place: no reload, no
+// flicker, playback untouched. UNMACOS_SPOTIFY_PORT overrides the port.
+const port = process.env.UNMACOS_SPOTIFY_PORT || "9222";
+const fail = (msg: string, code: number) => { console.error(`unmacos-spotify-recolor: ${msg}`); process.exit(code); };
+setTimeout(() => fail("timed out", 4), 5000);
+
+let pages: any[];
+try {
+  pages = await (await fetch(`http://127.0.0.1:${port}/json/list`)).json();
+} catch {
+  fail(`no DevTools on 127.0.0.1:${port} (Spotify not launched with --remote-debugging-port?)`, 2);
+}
+const page = pages!.find(p => p.type === "page" && String(p.url).startsWith("https://xpui.app.spotify.com/"));
+if (!page?.webSocketDebuggerUrl) fail("no Spotify xpui page", 2);
+
+// Load a fresh copy of colors.css next to the old one, then drop the old one,
+// so there's never a frame without colors.
+const expression = `new Promise((resolve, reject) => {
+  const old = document.querySelector('link[rel="stylesheet"][href^="colors.css"]');
+  if (!old) return reject(new Error("no colors.css link"));
+  const link = old.cloneNode();
+  link.href = "colors.css?unmacos=" + Date.now();
+  link.onload = () => { document.querySelectorAll('link[href^="colors.css"]').forEach(l => l !== link && l.remove()); resolve(true); };
+  link.onerror = () => { link.remove(); reject(new Error("colors.css failed to load")); };
+  old.after(link);
+})`;
+
+const ws = new WebSocket(page.webSocketDebuggerUrl);
+ws.onopen = () => ws.send(JSON.stringify({ id: 1, method: "Runtime.evaluate", params: { expression, awaitPromise: true, returnByValue: true } }));
+ws.onmessage = (e) => {
+  const msg = JSON.parse(String(e.data));
+  if (msg.id !== 1) return;
+  ws.close();
+  if (msg.result?.exceptionDetails || msg.error) fail(msg.result?.exceptionDetails?.exception?.description ?? JSON.stringify(msg.error), 3);
+  process.exit(0);
+};
+ws.onerror = () => fail("DevTools connection failed", 3);

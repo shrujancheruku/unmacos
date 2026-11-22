@@ -15,7 +15,7 @@ echo "UnMacOS doctor — macOS $(sw_vers -productVersion)"
 echo "Commands"
 for c in rift rift-cli sketchybar borders tv ghostty tmux nvim nnn btop lazygit lazydocker \
          spotify_player SwitchAudioSource blueutil nightlight nowplaying-cli jq fd rg fzf \
-         chezmoi op clipse unmacos-tui unmacos-menu unmacos-popup unmacos-paste unmacos-theme-render unmacos-theme-preview unmacos-keys unmacos-wallpaper unmacos-weather; do
+         chezmoi op clipse unmacos-tui unmacos-menu unmacos-popup unmacos-paste unmacos-theme-render unmacos-theme-preview unmacos-keys unmacos-spotify unmacos-spotify-recolor unmacos-wallpaper unmacos-weather; do
   if [[ "$c" == ghostty ]]; then check "Ghostty.app" '[[ -d /Applications/Ghostty.app ]]'
   else check "$c" "command -v $c"; fi
 done
@@ -37,6 +37,9 @@ check "Theme rendered ($(cat "$HOME/.local/state/unmacos/theme.name" 2>/dev/null
 check "television theme link" '[[ -e $HOME/.config/television/themes/unmacos.toml ]]'
 check "btop theme link" '[[ -e $HOME/.config/btop/themes/unmacos.theme ]]'
 check "Firefox theme (Pywalfox)" '[[ -f "$HOME/Library/Application Support/Mozilla/NativeMessagingHosts/pywalfox.json" && -e "${XDG_CACHE_HOME:-$HOME/.cache}/wal/colors.json" ]]'
+if command -v spicetify >/dev/null && [[ -d /Applications/Spotify.app ]]; then
+  check "Spotify theme (Spicetify)" '[[ $(spicetify config current_theme) == UnMacOS && -e $HOME/.config/spicetify/Themes/UnMacOS/color.ini ]]' "chezmoi apply, or spicetify backup apply after a Spotify update"
+fi
 
 echo "Fonts"
 for f in sketchybar-app-font "GeistMonoNerdFontMono" "SF-Pro"; do
