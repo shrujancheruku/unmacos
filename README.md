@@ -12,7 +12,7 @@
 [![chezmoi](https://img.shields.io/badge/dotfiles-chezmoi-9ece6a?style=for-the-badge)](https://www.chezmoi.io/)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-e0af68?style=for-the-badge)](LICENSE)
 
-<img src="docs/hero.png" alt="UnMacOS desktop: Neovim, spotify_player, fastfetch and btop tiled under SketchyBar" width="100%">
+<img src="docs/themes.gif" alt="UnMacOS switching live through Catppuccin, Gruvbox, Kanagawa, Everforest and Tokyo Night: Neovim, spotify_player, fastfetch, btop, the bar and the wallpaper all change together" width="100%">
 
 </div>
 
@@ -51,8 +51,6 @@ and Neovim all change at once, even editors that are already open. Comes with 23
 hand-tuned Tokyo Night and every Omarchy palette from Catppuccin to Gruvbox, Nord, Rosé Pine and
 Kanagawa. The picker shows each palette in colour before you commit, and every theme brings its
 own set of Omarchy wallpapers.
-
-<p align="center"><img src="docs/themes.gif" alt="Switching through Catppuccin, Gruvbox, Kanagawa, Everforest and Tokyo Night live" width="100%"></p>
 
 <p align="center"><img src="docs/menu-theme.png" alt="The theme picker, previewing a palette before applying it" width="100%"></p>
 
