@@ -2,7 +2,7 @@
 # UnMacOS installer: run on a fresh Mac.
 #   bash -c "$(curl -fsSL https://raw.githubusercontent.com/shrujancheruku/unmacos/main/install.sh)"
 #
-# 1. Xcode Command Line Tools  2. Homebrew  3. chezmoi init --apply
+# 1. Homebrew (+ Xcode Command Line Tools)  2. chezmoi init --apply
 # chezmoi then runs the home/run_* scripts: brew bundle, SbarLua, macOS settings,
 # theme, services. Re-runnable.
 set -euo pipefail
@@ -15,14 +15,12 @@ say() { printf '\n\033[1;34m==> %s\033[0m\n' "$1"; }
 [[ "$(uname -s)" == "Darwin" ]] || { echo "UnMacOS only runs on macOS."; exit 1; }
 [[ "$(uname -m)" == "arm64" ]] || echo "Warning: only tested on Apple silicon."
 
-say "Xcode Command Line Tools"
-if ! xcode-select -p >/dev/null 2>&1; then
-  xcode-select --install || true
-  echo "Finish the Command Line Tools installer window, then press Enter."
-  read -r _
-fi
+say "Administrator password (asked once)"
+sudo -v
+# Keep sudo cached until this script exits: Homebrew and some casks need it.
+while kill -0 "$$" 2>/dev/null; do sudo -n true; sleep 50; done 2>/dev/null &
 
-say "Homebrew"
+say "Homebrew (also installs the Xcode Command Line Tools)"
 if [[ ! -x /opt/homebrew/bin/brew ]]; then
   NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 fi
