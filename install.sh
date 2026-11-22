@@ -295,7 +295,7 @@ echo -e "${CYAN}"
 cat <<EOF
 
 📋 Next Steps:
-1. Configure your monitor setup in: ~/.config/sketchybar/items/aerospace_workspaces.lua
+1. Configure your monitor setup in: ~/.config/sketchybar/items/rift_workspaces.lua (or aerospace_workspaces.lua)
 2. Update WiFi interface in: ~/.config/sketchybar/items/wifi.lua  
 3. Set your location in: ~/.config/sketchybar/items/weather.lua
 4. Customize media player in: ~/.config/sketchybar/items/media.lua

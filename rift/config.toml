@@ -1,0 +1,183 @@
+# Rift config: Omarchy/Hyprland-style binary splitting on macOS
+# Linked to ~/.config/rift/config.toml by scripts/migrate-to-rift.sh
+#
+# Modifier: Alt (Option) stands in for Omarchy's SUPER.
+# Reference: https://acsandmann.github.io/rift-docs/ (built against rift.default.toml, v0.8.x)
+
+[settings]
+animate = false
+animation_duration = 0.2
+animation_fps = 0.0
+
+# Tile every Space by default, like Hyprland (Rift's default is opt-in per Space).
+default_disable = false
+
+focus_follows_mouse = true
+mouse_follows_focus = true
+mouse_hides_on_focus = false
+
+auto_focus_blacklist = ["com.apple.Spotlight", "com.raycast.macos"]
+
+hot_reload = true
+
+# Runs once at service start. Config reload does NOT rerun these: `rift service restart`.
+run_on_start = [
+  "/opt/homebrew/bin/brew services restart sketchybar",
+  "/bin/bash -c '$HOME/.config/borders/bordersrc'",
+  "/opt/homebrew/bin/rift-cli subscribe cli --event workspace_changed --command sh --args -c --args '/opt/homebrew/bin/sketchybar --trigger rift_workspace_changed RIFT_WORKSPACE_NAME=\"$RIFT_WORKSPACE_NAME\" RIFT_WORKSPACE_ID=\"$RIFT_WORKSPACE_ID\"'",
+  "/opt/homebrew/bin/rift-cli subscribe cli --event windows_changed --command sh --args -c --args '/opt/homebrew/bin/sketchybar --trigger rift_windows_changed RIFT_WORKSPACE_NAME=\"$RIFT_WORKSPACE_NAME\" RIFT_WINDOW_COUNT=\"$RIFT_WINDOW_COUNT\"'",
+]
+
+[settings.layout]
+# Binary space partitioning: each new window splits the focused one (Hyprland dwindle).
+mode = "bsp"
+window_insertion_point = "next_to_selection"
+
+[settings.layout.stack]
+stack_offset = 40.0
+default_orientation = "perpendicular"
+
+# Same gaps as the old AeroSpace config; bottom 0, top leaves room under the bar.
+[settings.layout.gaps.outer]
+top = 8
+left = 8
+bottom = 0
+right = 8
+
+[settings.layout.gaps.inner]
+horizontal = 8
+vertical = 8
+
+[settings.ui.menu_bar]
+enabled = false # SketchyBar draws the workspaces
+
+[settings.ui.stack_line]
+enabled = true
+
+[settings.gestures]
+enabled = false
+
+[settings.drag_drop]
+enabled = true
+modifier = "alt"
+action1 = "move"
+drop_action = "swap"
+
+[virtual_workspaces]
+mode = "per_display"
+enabled = true
+default_workspace_count = 5
+default_workspace = 0
+auto_assign_windows = true
+preserve_focus_per_workspace = true
+workspace_auto_back_and_forth = false
+prevent_wrapping = false
+# Names match the SketchyBar chip labels (items/rift_workspaces.lua)
+workspace_names = ["1", "2", "3", "4", "5"]
+workspace_rules = []
+
+app_rules = [
+  { title_substring = "Preferences", floating = true },
+  { title_substring = "Settings", ax_subrole = "AXDialog", floating = true },
+  { app_id = "com.apple.systempreferences", floating = true },
+  { app_id = "com.apple.ActivityMonitor", floating = true },
+]
+
+# [keys] replaces Rift's whole default keymap.
+# Omarchy key → Rift equivalent noted where they differ.
+[keys]
+# --- Tiling on/off for the current Space (Rift-specific) ---
+"Alt + Z" = "toggle_space_activated"
+
+# --- Focus (Omarchy: SUPER + arrows; hjkl kept from AeroSpace) ---
+"Alt + H" = { move_focus = "left" }
+"Alt + J" = { move_focus = "down" }
+"Alt + K" = { move_focus = "up" }
+"Alt + L" = { move_focus = "right" }
+"Alt + Left" = { move_focus = "left" }
+"Alt + Down" = { move_focus = "down" }
+"Alt + Up" = { move_focus = "up" }
+"Alt + Right" = { move_focus = "right" }
+
+# --- Swap / move window (Omarchy: SUPER + SHIFT + arrows) ---
+"Alt + Shift + H" = { move_node = "left" }
+"Alt + Shift + J" = { move_node = "down" }
+"Alt + Shift + K" = { move_node = "up" }
+"Alt + Shift + L" = { move_node = "right" }
+"Alt + Shift + Left" = { move_node = "left" }
+"Alt + Shift + Down" = { move_node = "down" }
+"Alt + Shift + Up" = { move_node = "up" }
+"Alt + Shift + Right" = { move_node = "right" }
+
+# --- Workspaces 1-5 (Rift indices are 0-based) ---
+"Alt + 1" = { switch_to_workspace = 0 }
+"Alt + 2" = { switch_to_workspace = 1 }
+"Alt + 3" = { switch_to_workspace = 2 }
+"Alt + 4" = { switch_to_workspace = 3 }
+"Alt + 5" = { switch_to_workspace = 4 }
+
+# Omarchy: SUPER + SHIFT + N moves the window and follows it
+"Alt + Shift + 1" = { move_window_to_workspace = { workspace = 0, follow = true } }
+"Alt + Shift + 2" = { move_window_to_workspace = { workspace = 1, follow = true } }
+"Alt + Shift + 3" = { move_window_to_workspace = { workspace = 2, follow = true } }
+"Alt + Shift + 4" = { move_window_to_workspace = { workspace = 3, follow = true } }
+"Alt + Shift + 5" = { move_window_to_workspace = { workspace = 4, follow = true } }
+
+# Omarchy: SUPER + SHIFT + ALT + N moves silently → here Alt + Ctrl + N
+"Alt + Ctrl + 1" = { move_window_to_workspace = { workspace = 0, follow = false } }
+"Alt + Ctrl + 2" = { move_window_to_workspace = { workspace = 1, follow = false } }
+"Alt + Ctrl + 3" = { move_window_to_workspace = { workspace = 2, follow = false } }
+"Alt + Ctrl + 4" = { move_window_to_workspace = { workspace = 3, follow = false } }
+"Alt + Ctrl + 5" = { move_window_to_workspace = { workspace = 4, follow = false } }
+
+# Omarchy: SUPER + TAB next, SUPER + SHIFT + TAB prev, SUPER + CTRL + TAB former
+"Alt + Tab" = "next_workspace"
+"Alt + Shift + Tab" = "prev_workspace"
+"Alt + Ctrl + Tab" = "switch_to_last_workspace"
+
+# --- Split / layout ---
+# Omarchy: SUPER + J toggles split. Alt + J is focus-down here, so use Alt + Slash.
+"Alt + Slash" = "toggle_orientation"
+"Alt + Ctrl + Equal" = "balance"
+"Alt + Comma" = "toggle_stack" # Hyprland group ≈ Rift stack
+"Alt + Ctrl + E" = "unjoin_windows"
+"Alt + Ctrl + Left" = { join_window = "left" }
+"Alt + Ctrl + Right" = { join_window = "right" }
+"Alt + Ctrl + Up" = { join_window = "up" }
+"Alt + Ctrl + Down" = { join_window = "down" }
+
+# Per-workspace layout engine
+"Alt + Ctrl + B" = { set_workspace_layout = { mode = "bsp" } }
+"Alt + Ctrl + T" = { set_workspace_layout = { mode = "traditional" } }
+"Alt + Ctrl + M" = { set_workspace_layout = { mode = "master_stack" } }
+"Alt + Ctrl + S" = { set_workspace_layout = { mode = "scrolling" } }
+
+# --- Window state ---
+"Alt + W" = "close_window"                                   # Omarchy: SUPER + W
+"Alt + T" = { toggle_window_floating = { center = true } }   # Omarchy: SUPER + T
+"Alt + Shift + T" = "toggle_focus_floating"
+"Alt + F" = "toggle_fullscreen"                              # Omarchy: SUPER + F
+"Alt + Shift + F" = "toggle_fullscreen_within_gaps"             # Omarchy: SUPER + ALT + F
+
+# --- Resize (Omarchy: SUPER + minus/equal width, SUPER + SHIFT height) ---
+"Alt + Minus" = { resize_window_shrink = "horizontal" }
+"Alt + Equal" = { resize_window_grow = "horizontal" }
+"Alt + Shift + Equal" = { resize_window_grow = "vertical" }
+"Alt + Shift + Minus" = { resize_window_shrink = "vertical" }
+"Alt + R" = { binding_mode = "resize" }
+
+# --- Launch (Omarchy: SUPER + RETURN) ---
+"Alt + Enter" = { exec = ["/usr/bin/open", "-na", "Ghostty"] }
+
+# --- Rift ---
+"Alt + Shift + R" = "reload_config"
+
+# Keep all [keys] entries above this line: binding mode tables scope what follows.
+[binding_modes.resize]
+"H" = { resize_window_shrink = "horizontal" }
+"L" = { resize_window_grow = "horizontal" }
+"J" = { resize_window_grow = "vertical" }
+"K" = { resize_window_shrink = "vertical" }
+"Equal" = "balance"
+"Escape" = { binding_mode = "default" }
+"Enter" = { binding_mode = "default" }

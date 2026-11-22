@@ -221,6 +221,34 @@ If not using the included Aerospace config, you'll need to modify the `WORKSPACE
 
 </details>
 
+<details>
+<summary><b>🪵 Rift Integration (Omarchy-style BSP tiling)</b></summary>
+<br>
+
+`items/init.lua` loads `items/rift_workspaces.lua` when `rift-cli` is installed and falls back to `aerospace_workspaces.lua` otherwise. The visuals are the same either way.
+
+- Rift config: `rift/config.toml` (symlinked to `~/.config/rift/config.toml`). It uses the `bsp` layout, 5 workspaces named `1`–`5`, 8px gaps and Alt as the main modifier.
+- Migrate: `./scripts/migrate-to-rift.sh` stops AeroSpace, installs Rift, links the config, starts the service and checks the bar.
+- Rift fires `rift_workspace_changed` and `rift_windows_changed` through the `run_on_start` subscriptions. Restart the service (`rift service restart`) after editing them.
+
+| Keys | Action |
+|---|---|
+| Alt + H/J/K/L or arrows | Focus |
+| Alt + Shift + H/J/K/L or arrows | Move/swap window |
+| Alt + 1–5 / Alt + Shift + 1–5 / Alt + Ctrl + 1–5 | Switch / move and follow / move silently |
+| Alt + Tab / Alt + Shift + Tab / Alt + Ctrl + Tab | Next / prev / last workspace |
+| Alt + / | Toggle split orientation |
+| Alt + Ctrl + = | Balance splits |
+| Alt + T / Alt + F / Alt + Shift + F | Float / fullscreen / fullscreen within gaps |
+| Alt + W | Close window |
+| Alt + -/= (Shift for vertical), Alt + R | Resize / resize mode |
+| Alt + , | Toggle stack |
+| Alt + Enter | Ghostty |
+| Alt + Z | Toggle tiling on this Space |
+| Alt + Ctrl + B/T/M/S | Layout: bsp / traditional / master-stack / scrolling |
+
+</details>
+
 ## 📁 Configuration Structure
 
 ```
@@ -229,7 +257,8 @@ If not using the included Aerospace config, you'll need to modify the `WORKSPACE
 ├── 📄 colors.lua             # Tokyo Night color scheme
 ├── 📄 settings.lua           # Global settings and styling
 ├── 📁 items/                 # Individual widget configurations
-│   ├── 📄 aerospace_workspaces.lua  # Multi-monitor workspace indicators
+│   ├── 📄 aerospace_workspaces.lua  # Multi-monitor workspace indicators (AeroSpace)
+│   ├── 📄 rift_workspaces.lua       # Workspace indicators (Rift)
 │   ├── 📄 wifi.lua          # WiFi status widget
 │   ├── 📄 battery.lua       # Battery indicator
 │   ├── 📄 cpu.lua           # CPU usage monitor
