@@ -60,7 +60,8 @@ finds you by IP; pin a city from the menu (Weather location) or `unmacos-weather
 whole screen? `Alt + Shift + Space` hides it and your windows grow to fill the space.
 
 **A calmer macOS.** On macOS 26 and later, UnMacOS switches off Apple Intelligence and turns Liquid
-Glass down as far as it goes, for a desktop as close to Sequoia as possible.
+Glass down as far as it goes, with 4px window corners to match the gaps, for a desktop as close to
+Sequoia as possible. It reapplies these after a macOS upgrade on the next `chezmoi apply`.
 
 **Rebuild any Mac in minutes.** The same command sets up a new Mac or restores one you've wiped.
 `unmacos-doctor` checks every piece and tells you what to fix, and `chezmoi update` keeps you current.
