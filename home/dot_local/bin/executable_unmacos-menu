@@ -5,7 +5,8 @@
 # Rift keys run this through unmacos-popup; it also works in any terminal.
 set -uo pipefail
 
-pick() { tv "unmacos-$1" 2>/dev/null | head -1; }
+# tv draws its UI on stderr, so never redirect it
+pick() { tv "unmacos-$1" | head -1; }
 
 # Paste into the app that was focused before the popup (needs Ghostty in
 # Accessibility). UNMACOS_NO_PASTE=1 only copies.

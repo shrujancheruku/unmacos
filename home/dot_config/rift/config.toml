@@ -5,9 +5,10 @@
 # Reference: https://acsandmann.github.io/rift-docs/ (built against rift.default.toml, v0.8.x)
 
 [settings]
-animate = false
+# Window animations, like Omarchy (Hyprland). Turn off live: rift-cli execute config set-animate false
+animate = true
 animation_duration = 0.2
-animation_fps = 60.0 # must be > 0: Rift 0.8.x crashes on 0 despite its docs
+animation_fps = 120.0 # ProMotion rate; must be > 0 (Rift 0.8.x crashes on 0 despite its docs)
 
 # Tile every Space by default, like Hyprland (Rift's default is opt-in per Space).
 default_disable = false
@@ -37,9 +38,10 @@ window_insertion_point = "next_to_selection"
 stack_offset = 40.0
 default_orientation = "perpendicular"
 
-# Same gaps as the old AeroSpace config; bottom 0, top leaves room under the bar.
+# 8px gaps everywhere except the bottom. top = SketchyBar height (40) + 8, so
+# windows sit one gap below the bar; unmacos-toggle-bar adjusts it live.
 [settings.layout.gaps.outer]
-top = 8
+top = 48
 left = 8
 bottom = 0
 right = 8

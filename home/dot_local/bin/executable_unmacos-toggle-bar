@@ -1,7 +1,22 @@
 #!/bin/bash
-# UnMacOS: show/hide SketchyBar (Omarchy: SUPER + SHIFT + SPACE)
-if [[ "$(sketchybar --query bar | jq -r .hidden)" == "on" ]]; then
-  sketchybar --bar hidden=off
-else
-  sketchybar --bar hidden=on
+# UnMacOS: show/hide SketchyBar (Omarchy: SUPER + SHIFT + SPACE) and move the
+# tiling area with it: windows sit one gap below the bar, or one gap below the
+# top of the screen when the bar is hidden.
+#   unmacos-toggle-bar          toggle
+#   unmacos-toggle-bar --sync   only fix the gaps for the bar's current state
+export PATH="/opt/homebrew/bin:$PATH"
+GAP="${UNMACOS_GAP:-8}"   # keep in sync with settings.layout.gaps in rift/config.toml
+
+bar="$(sketchybar --query bar)"
+hidden="$(jq -r .hidden <<<"$bar")"
+if [[ "${1:-}" != "--sync" ]]; then
+  if [[ "$hidden" == "on" ]]; then hidden=off; else hidden=on; fi
+  sketchybar --bar hidden="$hidden"
 fi
+
+if [[ "$hidden" == "on" ]]; then
+  top="$GAP"
+else
+  top="$(jq -r --argjson g "$GAP" '(.height // 0) + (.y_offset // 0) + $g' <<<"$bar")"
+fi
+rift-cli execute config set-outer-gaps "$top" "$GAP" 0 "$GAP" >/dev/null
