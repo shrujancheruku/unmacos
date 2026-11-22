@@ -43,7 +43,8 @@ belong together.
 **One theme, everywhere, instantly.** Pick a theme and the bar, window borders, terminal, tmux, btop
 and Neovim all change at once, even editors that are already open. Comes with 23 themes, including
 hand-tuned Tokyo Night and every Omarchy palette from Catppuccin to Gruvbox, Nord, Rosé Pine and
-Kanagawa. The picker shows each palette in colour before you commit.
+Kanagawa. The picker shows each palette in colour before you commit, and every theme brings its
+own set of Omarchy wallpapers.
 
 **A status bar worth looking at.** [SketchyBar](https://github.com/FelixKratz/SketchyBar) replaces
 the menu bar with your workspaces, now playing, volume, Wi-Fi, CPU, battery and weather. Need the
@@ -134,6 +135,7 @@ Then a few clicks macOS won't let a script make for you:
 | Keys | Does |
 |---|---|
 | `Alt + Shift + Space` | Hide or show the bar |
+| `Alt + Cmd + Space` | Next wallpaper for the theme |
 | `Alt + Shift + S` | Screenshot to the clipboard |
 | `Alt + Cmd + N` / `L` | Night light / lock |
 | `Alt + Shift + R` | Reload Rift |
@@ -144,6 +146,11 @@ Then a few clicks macOS won't let a script make for you:
 Omarchy's format, so any Omarchy theme drops straight in. Copy one, change the colours, and pick it
 from the menu or run `unmacos-theme-render <name>`. A theme can also ship its own app config (say, a
 `ghostty.conf`) to replace the generated one.
+
+**Wallpapers.** Switching theme sets its first wallpaper; `Alt + Cmd + Space` cycles through the
+rest. They're Omarchy's, downloaded the first time you use a theme (`unmacos-wallpaper fetch --all`
+gets them all). Add your own to `~/.config/unmacos/backgrounds/<theme>/`, or set
+`UNMACOS_KEEP_WALLPAPER=1` to leave your wallpaper alone.
 
 **Animations.** Windows glide into place. Prefer them to snap? Run
 `rift-cli execute config set-animate false`.
@@ -174,8 +181,8 @@ home/                      everything chezmoi puts in your home folder
   dot_config/rift/         tiling and keybindings
   dot_config/sketchybar/   the bar (Lua)
   dot_config/television/   the menus
-  dot_local/bin/           unmacos-* commands: menu, keys, popup, paste, tui, theme-render, theme-preview, doctor
-  dot_local/share/unmacos/ themes, theme templates, emoji list, configuration profile
+  dot_local/bin/           unmacos-* commands: menu, keys, wallpaper, popup, paste, tui, theme-render, theme-preview, doctor
+  dot_local/share/unmacos/ themes, theme templates, wallpaper list, emoji list, configuration profile
 ```
 
 Themes render from `templates/*.tpl` into `~/.local/state/unmacos/theme/`, and every app reads its
@@ -185,7 +192,7 @@ colours from there. That's why one switch reaches them all.
 
 UnMacOS stands on the shoulders of:
 
-- [Omarchy](https://github.com/basecamp/omarchy): the workflow, keybindings, menus, theme format and 22 of the themes (MIT, see `home/dot_local/share/unmacos/licenses/omarchy.txt`)
+- [Omarchy](https://github.com/basecamp/omarchy): the workflow, keybindings, menus, theme format, 22 of the themes, and the wallpapers it downloads (MIT, see `home/dot_local/share/unmacos/licenses/omarchy.txt`)
 - [Rift](https://github.com/acsandmann/rift): the window manager
 - [FelixKratz](https://github.com/FelixKratz): SketchyBar, SbarLua, JankyBorders and the dotfiles this bar started from
 - [television](https://github.com/alexpasmantier/television), [clipse](https://github.com/savedra1/clipse), [spotify_player](https://github.com/aome510/spotify-player), [nnn](https://github.com/jarun/nnn), [Ghostty](https://ghostty.org)

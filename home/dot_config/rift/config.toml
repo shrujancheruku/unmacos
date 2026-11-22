@@ -207,6 +207,7 @@ app_rules = [
 # --- System ---
 "Alt + Shift + Space" = { exec = ["/bin/sh", "-c", "$HOME/.local/bin/unmacos-toggle-bar"] }   #: Hide or show the bar
 "Alt + Shift + S" = { exec = ["/usr/sbin/screencapture", "-i", "-c"] }   #: Screenshot to clipboard
+"Alt + Cmd + Space" = { exec = ["/bin/sh", "-c", "$HOME/.local/bin/unmacos-wallpaper next"] }   #: Next wallpaper
 "Alt + Cmd + N" = { exec = ["/opt/homebrew/bin/nightlight", "toggle"] }   #: Night light
 "Alt + Cmd + L" = { exec = ["/usr/bin/pmset", "displaysleepnow"] }   #: Lock
 "Alt + Shift + R" = "reload_config"                          #: Reload Rift

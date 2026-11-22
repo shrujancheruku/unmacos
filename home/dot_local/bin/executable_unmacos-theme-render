@@ -70,4 +70,9 @@ pgrep -xq tmux && tmux source-file "$OUT/tmux.conf" >/dev/null 2>&1 || true
 pkill -USR2 -x ghostty >/dev/null 2>&1 || true   # Ghostty reloads its config on SIGUSR2
 pkill -USR2 -x btop >/dev/null 2>&1 || true
 # Neovim reloads itself: lua/plugins/unmacos-theme.lua watches $OUT
+# The theme's wallpaper (downloaded on first use, so in the background).
+# UNMACOS_KEEP_WALLPAPER=1 leaves the wallpaper alone.
+if [[ "${UNMACOS_KEEP_WALLPAPER:-}" != 1 && -x "$HOME/.local/bin/unmacos-wallpaper" ]]; then
+  ( "$HOME/.local/bin/unmacos-wallpaper" theme "$theme" >/dev/null 2>&1 & )
+fi
 exit 0
