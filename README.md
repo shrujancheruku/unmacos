@@ -42,7 +42,7 @@ This installs the Xcode Command Line Tools and Homebrew, then runs `chezmoi init
 
 Then finish the steps macOS doesn't let scripts do:
 
-1. **System Settings → Privacy & Security → Accessibility**: allow `rift`. Allow Ghostty too, for paste-back from the clipboard and emoji pickers.
+1. **System Settings → Privacy & Security → Accessibility**: allow `rift` and `clipse` (clipse asks when it starts). Allow Ghostty too, for paste-back from the clipboard and emoji pickers. Then run `rift service restart`.
 2. **Log out and back in.** This applies the Spaces, hidden menu bar and Liquid Glass changes.
 3. macOS 26+: approve **UnMacOS: no Apple Intelligence** in *System Settings → General → Device Management*.
 4. Run `unmacos-doctor` to check everything.

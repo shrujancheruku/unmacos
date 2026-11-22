@@ -37,10 +37,12 @@ say "Done"
 cat <<'EOF'
 
 Manual steps macOS doesn't allow scripts to do:
-  1. System Settings > Privacy & Security > Accessibility: allow rift (and sketchybar if asked)
+  1. System Settings > Privacy & Security > Accessibility: turn on rift and clipse
+     (it asks when it starts), and Ghostty for paste-back. Then: rift service restart
   2. Log out and back in (Spaces and menu bar settings take effect)
   3. spotify_player: run it once to log in to Spotify
   4. 1Password: sign in, then Settings > Developer > "Integrate with 1Password CLI"
   5. On macOS 26+: approve the "UnMacOS: no Apple Intelligence" profile in
      System Settings > General > Device Management (opened for you)
+  6. Run unmacos-doctor
 EOF
