@@ -32,7 +32,7 @@ rebuilt for the Mac.
 Five workspaces per display, and four layouts to pick from: split, stacked, main-and-side, or
 scrolling. Powered by [Rift](https://github.com/acsandmann/rift).
 
-<p align="center"><img src="docs/tiling.gif" alt="Windows tiling themselves as they open, then switching to the main-and-side layout" width="100%"></p>
+<p align="center"><img src="docs/tiling.gif" alt="Rift moving tiled windows around: resizing, swapping, and switching between the split and main-and-side layouts" width="100%"></p>
 
 **Everything is one keystroke away.** `Alt + Space` launches apps. `Alt + Ctrl + V` brings back
 anything you've copied. `Alt + Ctrl + .` finds an emoji. `Alt + Escape` locks, sleeps or restarts.
