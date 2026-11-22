@@ -46,6 +46,7 @@ brew "tlrc"
 brew "fastfetch"
 brew "wget"
 brew "go"            # Builds clipse (clipboard history)
+brew "uv"            # Installs pywalfox (Firefox theme)
 brew "chezmoi"
 brew "zsh-autosuggestions"
 brew "zsh-syntax-highlighting"

@@ -36,6 +36,7 @@ echo "Theme"
 check "Theme rendered ($(cat "$HOME/.local/state/unmacos/theme.name" 2>/dev/null || echo none))" '[[ -f $HOME/.local/state/unmacos/theme/sketchybar.lua ]]' "unmacos-theme-render"
 check "television theme link" '[[ -e $HOME/.config/television/themes/unmacos.toml ]]'
 check "btop theme link" '[[ -e $HOME/.config/btop/themes/unmacos.theme ]]'
+check "Firefox theme (Pywalfox)" '[[ -f "$HOME/Library/Application Support/Mozilla/NativeMessagingHosts/pywalfox.json" && -e "${XDG_CACHE_HOME:-$HOME/.cache}/wal/colors.json" ]]'
 
 echo "Fonts"
 for f in sketchybar-app-font "GeistMonoNerdFontMono" "SF-Pro"; do
