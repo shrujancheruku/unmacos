@@ -1,417 +1,195 @@
 <div align="center">
 
-# 🎨 SketchyBar Configuration
+# UnMacOS
 
-**A Tokyo Night-inspired SketchyBar setup for macOS with Aerospace integration**
+### Your Mac, without the mouse.
 
-[![macOS](https://img.shields.io/badge/macOS-12%2B-000000?style=for-the-badge&logo=apple)](https://www.apple.com/macos/)
-[![SketchyBar](https://img.shields.io/badge/SketchyBar-Latest-4285F4?style=for-the-badge)](https://github.com/FelixKratz/SketchyBar)
-[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg?style=for-the-badge)](https://www.gnu.org/licenses/gpl-3.0)
+**Tiling windows, instant fuzzy menus, terminal apps and a desktop-wide theme you can switch live. The Omarchy workflow on macOS, installed with one command.**
 
-</div>
-
----
-
-## 🔍 Overview
-
-A personal **SketchyBar** configuration for **macOS**, designed to work seamlessly with **Aerospace** window manager. Built on Felix Kratz's excellent SbarLua framework, this configuration extends the original with Tokyo Night theming, custom widgets, and multi-monitor workspace integration.
-
-<div align="center">
-
-### ✨ Key Features
-
-| Feature                          | Description                                               |
-| -------------------------------- | --------------------------------------------------------- |
-| 🌙 **Tokyo Night Theme**         | Beautiful dark colorscheme matching Neovim setup          |
-| 🖥️ **Multi-Monitor Support**     | Native Aerospace workspace indicators across displays     |
-| 📊 **Rich Widgets**              | WiFi, battery, CPU, media player, and weather integration |
-| 🎯 **Smart Workspaces**          | Auto-hiding empty workspaces with app icons               |
-| 🎨 **Custom Icons**              | Extended app icon font for beautiful visual indicators    |
-| ✈️ **Aerospace Config Included** | Pre-configured `.aerospace.toml` for seamless integration |
+[![macOS](https://img.shields.io/badge/macOS-15%20→%2027-000000?style=for-the-badge&logo=apple)](https://www.apple.com/macos/)
+[![Rift](https://img.shields.io/badge/WM-Rift-7aa2f7?style=for-the-badge)](https://github.com/acsandmann/rift)
+[![SketchyBar](https://img.shields.io/badge/Bar-SketchyBar-bb9af7?style=for-the-badge)](https://github.com/FelixKratz/SketchyBar)
+[![chezmoi](https://img.shields.io/badge/dotfiles-chezmoi-9ece6a?style=for-the-badge)](https://www.chezmoi.io/)
+[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-e0af68?style=for-the-badge)](LICENSE)
 
 </div>
 
-## 📋 Table of Contents
-
-- [What the Installer Does](#-what-the-installer-does)
-- [Installation](#-installation)
-- [Required Customization](#-required-customization)
-- [Configuration Structure](#-configuration-structure)
-- [Verification & Troubleshooting](#-verification--troubleshooting)
-- [Customization Tips](#-customization-tips)
-- [Credits](#-credits--acknowledgments)
-- [Roadmap](#-roadmap)
-
-## 🤖 What the Installer Does
-
-The provided `install.sh` script automates the complete setup process through 5 stages:
-
-<details open>
-<summary><b>Stage 1: Homebrew Dependencies</b></summary>
-<br>
-
-Installs all required packages:
-
-- `lua` - Core language for SbarLua framework
-- `switchaudio-osx` - Audio device switching functionality
-- `nowplaying-cli` - Media player integration
-- `pnpm` - Package manager for building app font
-- `sketchybar` - The main status bar application
-
-</details>
-
-<details open>
-<summary><b>Stage 2: Fonts Installation</b></summary>
-<br>
-
-Downloads and installs essential fonts:
-
-- Apple SF Symbols, SF Mono, and SF Pro fonts
-- Victor Mono Nerd Font for coding elements
-- Custom `sketchybar-app-font` with app icons (builds from source)
-
-</details>
-
-<details open>
-<summary><b>Stage 3: SbarLua Framework</b></summary>
-<br>
-
-Installs Felix's Lua framework that powers this configuration
-
-</details>
-
-<details open>
-<summary><b>Stage 4: Configuration Setup</b></summary>
-<br>
-
-- Backs up existing configuration
-- Clones this repository to the correct location
-- Sets up proper file permissions
-
-</details>
-
-<details open>
-<summary><b>Stage 5: Service Initialization</b></summary>
-<br>
-
-Restarts SketchyBar with the new configuration and validates installation
-
-</details>
-
-## 🔧 Installation
-
-### Prerequisites
-
-<details open>
-<summary>Required software</summary>
-<br>
-
-- **macOS 12+**: Required for SketchyBar compatibility
-- **Homebrew**: Package manager for installing dependencies
-- **Aerospace**: Window manager for workspace integration
-- **Git**: For cloning the configuration repository
-
-</details>
-
-### Quick Installation
-
-<details open>
-<summary><b>One-Command Setup</b></summary>
-<br>
-
-```bash
-# Clone the repository
-git clone https://github.com/NoamFav/sketchybar.git
-cd sketchybar
-
-# Make installer executable and run
-chmod +x install.sh
-./install.sh
+```sh
+bash -c "$(curl -fsSL https://raw.githubusercontent.com/shrujancheruku/unmacos/main/install.sh)"
 ```
 
-The installer handles everything automatically. After completion, your status bar will restart with the new configuration.
+macOS is a great operating system wrapped in a desktop built for the trackpad. UnMacOS keeps the
+OS and replaces the desktop. Windows arrange themselves, every app and setting is a keystroke away,
+and the whole screen shares one look. It's [Omarchy](https://omarchy.org)'s keyboard-first desktop,
+rebuilt for the Mac.
 
-</details>
+## Why you'll like it
 
-## ⚙️ Required Customization
+**Windows that tile themselves.** Open a window and it takes its place next to the others, with even
+4px gaps and a highlighted border on the one you're using. No dragging, no resizing, no overlapping.
+Five workspaces per display, and four layouts to pick from: split, stacked, main-and-side, or
+scrolling. Powered by [Rift](https://github.com/acsandmann/rift).
 
-> **⚠️ Early Stage Notice:**  
-> This configuration is still under active development.  
-> Some widgets and integrations are unfinished, experimental, or tailored to my setup.  
-> Expect changes, and feel free to tweak for your own workflow.
-> The git integrations is still under development and far from finished (and working for that matter)
+**Everything is one keystroke away.** `Alt + Space` launches apps. `Alt + Ctrl + V` brings back
+anything you've copied. `Alt + Ctrl + .` finds an emoji. `Alt + Escape` locks, sleeps or restarts.
+Every menu is a fuzzy finder ([television](https://github.com/alexpasmantier/television)): type a
+few letters, press Enter, and the result is pasted straight into the app you came from.
 
-<details open>
-<summary><b>🖥️ Multi-Monitor Setup (CRITICAL)</b></summary>
-<br>
+**Terminal apps that feel like apps.** Music, files, Git, Docker, system monitor, editor and
+Claude, each on its own key. Press the key and the app opens; press it again and it jumps to the
+window that's already open. They all run in [Ghostty](https://ghostty.org) and look like they
+belong together.
 
-The Aerospace workspace configuration in `~/.config/sketchybar/items/aerospace_workspaces.lua` is set up for my specific 3-monitor layout:
+**One theme, everywhere, instantly.** Pick a theme and the bar, window borders, terminal, tmux, btop
+and Neovim all change at once, even editors that are already open. Comes with 23 themes, including
+hand-tuned Tokyo Night and every Omarchy palette from Catppuccin to Gruvbox, Nord, Rosé Pine and
+Kanagawa. The picker shows each palette in colour before you commit.
 
-```lua
-local WORKSPACE_LAYOUT = {
-	{ display = 3, workspaces = { "1", "2", "3", "4", "5", "6", "7", "8", "9" } }, -- left monitor
-	{ display = 1, workspaces = { "Q", "W", "E", "R", "T", "Y", "U", "I", "O", "P" } }, -- middle monitor
-	{ display = 2, workspaces = { "A", "S", "D", "F", "G", "Z", "X", "C", "V", "B" } }, -- right monitor
-}
+**A status bar worth looking at.** [SketchyBar](https://github.com/FelixKratz/SketchyBar) replaces
+the menu bar with your workspaces, now playing, volume, Wi-Fi, CPU, battery and weather. Need the
+whole screen? `Alt + Shift + Space` hides it and your windows grow to fill the space.
+
+**A calmer macOS.** On macOS 26 and later, UnMacOS switches off Apple Intelligence and turns Liquid
+Glass down as far as it goes, for a desktop as close to Sequoia as possible.
+
+**Rebuild any Mac in minutes.** The same command sets up a new Mac or restores one you've wiped.
+`unmacos-doctor` checks every piece and tells you what to fix, and `chezmoi update` keeps you current.
+
+## Get started
+
+On a Mac with Apple silicon, run:
+
+```sh
+bash -c "$(curl -fsSL https://raw.githubusercontent.com/shrujancheruku/unmacos/main/install.sh)"
 ```
 
-**You MUST modify this:**
+It asks for your password once, installs Homebrew and everything else, then asks three questions:
 
-- Update display numbers to match your monitor arrangement
-- Change workspace names to match your Aerospace configuration
-- For single monitor setups, use `display = "active"` and combine all workspaces
+| Question | What it's for |
+|---|---|
+| Git name and email | Your `~/.gitconfig`. Stays on your Mac |
+| Use 1Password? | Reads secrets (the Spotify player's `client_id`) from 1Password |
+| Personal apps? | My own extra apps from `Brewfile.personal`. Say no unless you're me |
 
-</details>
+Then a few clicks macOS won't let a script make for you:
 
-<details open>
-<summary><b>🛜 WiFi Interface Configuration</b></summary>
-<br>
+1. **System Settings → Privacy & Security → Accessibility**: turn on `rift` and `clipse`, then run
+   `rift service restart`.
+2. **Log out and back in.**
+3. The first menu you open makes Ghostty ask to run a command: allow it.
+4. On macOS 26 and later, approve **UnMacOS: no Apple Intelligence** in
+   *System Settings → General → Device Management*.
+5. Run `unmacos-doctor`. When it says *All good*, you're done.
 
-The WiFi widget requires your specific network interface:
+## Learn the keys
 
-1. **Find your interface:**
+`Alt` does what `SUPER` does in Omarchy, so Omarchy muscle memory works here: Omarchy's `ALT` is
+`Ctrl`, and its `CTRL` is `Cmd`. Forgot one? `Alt + Ctrl + K` searches them all.
 
-   ```bash
-   networksetup -listallhardwareports
-   ```
+**Launch**
 
-2. **Look for "Wi-Fi"** and note the "Device" name (usually `en0`, `en1`, etc.)
+| Keys | Opens |
+|---|---|
+| `Alt + Enter` | Terminal |
+| `Alt + Ctrl + Enter` | Terminal in the tmux session "Work" |
+| `Alt + Shift + B` | Browser (Firefox). Add `Ctrl` for a private window |
+| `Alt + Shift + M` / `F` / `N` | Music / files / Neovim |
+| `Alt + Shift + G` / `D` / `A` | lazygit / lazydocker / Claude |
+| `Alt + Cmd + T` | btop |
+| `Alt + Shift + /` | 1Password |
 
-3. **Update `items/wifi.lua`** with your interface name (currently set to `en8`)
+**Menus**
 
-</details>
+| Keys | Menu |
+|---|---|
+| `Alt + Space` | Apps |
+| `Alt + Ctrl + Space` | Everything UnMacOS can do |
+| `Alt + Ctrl + V` / `Alt + Ctrl + .` | Clipboard history / emoji |
+| `Alt + Ctrl + W` | Jump to any window |
+| `Alt + Cmd + A` / `B` / `W` | Sound output / Bluetooth / Wi-Fi |
+| `Alt + Ctrl + Shift + Space` | Themes |
+| `Alt + Escape` | Lock, sleep, restart, shut down |
 
-<details>
-<summary><b>🌤️ Weather Location</b></summary>
-<br>
+**Windows and workspaces**
 
-Update the weather widget location in `items/weather.lua` on line 67 (an easier way will be added later)
+| Keys | Does |
+|---|---|
+| `Alt + H J K L` | Focus left, down, up, right |
+| `Alt + Shift + H J K L` | Move the window |
+| `Alt + 1–5` | Go to a workspace |
+| `Alt + Shift + 1–5` | Take the window there (`Ctrl` instead of `Shift` sends it and stays) |
+| `Alt + Tab` / `Alt + Shift + Tab` / `Alt + Ctrl + Tab` | Next / previous / last workspace |
+| `Alt + W` | Close |
+| `Alt + T` | Float or tile |
+| `Alt + F` / `Alt + Cmd + F` | Fullscreen / fullscreen inside the gaps |
+| `Alt + G` / `Alt + Ctrl + G` | Stack / unstack |
+| `Alt + /` | Flip the split |
+| `Alt + −` / `Alt + =` | Narrower / wider (`Shift` for height, `Alt + R` for resize mode) |
+| `Alt + Ctrl + B` / `T` / `M` / `S` | Layout: split, traditional, main-and-side, scrolling |
+| `Alt + Z` | Tiling on or off for this Space |
 
-</details>
+**Everything else**
 
-<details>
-<summary><b>🎵 Media Player Integration</b></summary>
-<br>
+| Keys | Does |
+|---|---|
+| `Alt + Shift + Space` | Hide or show the bar |
+| `Alt + Shift + S` | Screenshot to the clipboard |
+| `Alt + Cmd + N` / `L` | Night light / lock |
+| `Alt + Shift + R` | Reload Rift |
 
-The media widget (`items/media.lua`) uses **osascript** for **Apple Music**. For other players:
+## Make it yours
 
-- **Spotify**: Replace osascript commands with Spotify equivalents
-- **Universal**: Use `nowplaying-cli` for broader player support (already installed)
+**Themes.** Each theme is a single `colors.toml` in `~/.local/share/unmacos/themes/<name>/`, in
+Omarchy's format, so any Omarchy theme drops straight in. Copy one, change the colours, and pick it
+from the menu or run `unmacos-theme-render <name>`. A theme can also ship its own app config (say, a
+`ghostty.conf`) to replace the generated one.
 
-</details>
+**Animations.** Windows glide into place. Prefer them to snap? Run
+`rift-cli execute config set-animate false`.
 
-<details>
-<summary><b>✈️ Aerospace Integration</b></summary>
-<br>
+**Gaps.** 4px everywhere you can see, adjusted for the window borders and for the notch on
+MacBooks. Change `UNMACOS_GAP` in `unmacos-toggle-bar` and the gaps in `dot_config/rift/config.toml`.
 
-This configuration includes a pre-configured `.aerospace.toml` that matches the SketchyBar workspace layout. Features include:
+**Your own bits.** Put machine-only shell config in `~/.zshrc.local`. Swap the browser in
+`dot_config/rift/config.toml`, the Wi-Fi interface in `dot_config/sketchybar/items/widgets/wifi.lua`,
+and your extra apps in `Brewfile.personal`.
 
-- **Multi-monitor workspace assignment** - Workspaces distributed across displays
-- **Seamless integration** - SketchyBar automatically detects and displays workspace status
-- **Click interactions** - Left-click to switch, right-click to move windows
-- **Auto-hiding workspaces** - Empty workspaces hide automatically (except focused)
+**Keep Apple Intelligence or Liquid Glass.** Run `UNMACOS_KEEP_AI=1 chezmoi apply` or
+`UNMACOS_KEEP_GLASS=1 chezmoi apply`. The header of
+`home/.chezmoiscripts/run_onchange_after_40-no-ai-no-glass.sh.tmpl` lists exactly what changes and
+how to undo it.
 
-**Setup Instructions:**
+## Under the hood
 
-1. Copy the included `.aerospace.toml` to `~/.aerospace.toml`
-2. Restart Aerospace: `aerospace reload-config`
-3. The SketchyBar will automatically sync with your workspace layout as long as it matches with your monitor layout.
-
-If not using the included Aerospace config, you'll need to modify the `WORKSPACE_LAYOUT` in `aerospace_workspaces.lua` to match your setup.
-
-</details>
-
-## 📁 Configuration Structure
+UnMacOS is a [chezmoi](https://www.chezmoi.io/) repo. `install.sh` installs Homebrew and chezmoi;
+chezmoi writes the configs and runs the setup scripts.
 
 ```
-~/.config/sketchybar/
-├── 📄 sketchybarrc           # Main configuration entry point
-├── 📄 colors.lua             # Tokyo Night color scheme
-├── 📄 settings.lua           # Global settings and styling
-├── 📁 items/                 # Individual widget configurations
-│   ├── 📄 aerospace_workspaces.lua  # Multi-monitor workspace indicators
-│   ├── 📄 wifi.lua          # WiFi status widget
-│   ├── 📄 battery.lua       # Battery indicator
-│   ├── 📄 cpu.lua           # CPU usage monitor
-│   ├── 📄 media.lua         # Now playing widget
-│   ├── 📄 weather.lua       # Weather information
-│   └── 📄 ...               # Other widgets
-├── 📁 helpers/              # Utility functions
-│   ├── 📄 app_icons.lua     # App name to icon mappings
-│   └── 📄 ...               # Other helper functions
-└── 📁 scripts/              # External shell scripts
+install.sh                 bootstrap: Homebrew, chezmoi
+Brewfile                   the desktop and terminal tools
+Brewfile.personal          optional extra apps
+home/                      everything chezmoi puts in your home folder
+  .chezmoiscripts/         packages, SbarLua, macOS settings, no-AI/no-glass, theme, services, clipse
+  dot_config/rift/         tiling and keybindings
+  dot_config/sketchybar/   the bar (Lua)
+  dot_config/television/   the menus
+  dot_local/bin/           unmacos-* commands: menu, popup, paste, tui, theme-render, theme-preview, doctor
+  dot_local/share/unmacos/ themes, theme templates, emoji list, configuration profile
 ```
 
-## 🔍 Verification & Troubleshooting
+Themes render from `templates/*.tpl` into `~/.local/state/unmacos/theme/`, and every app reads its
+colours from there. That's why one switch reaches them all.
 
-### App Font Test
+## Credits
 
-<details open>
-<summary><b>Verify Icon Font Installation</b></summary>
-<br>
+UnMacOS stands on the shoulders of:
 
-```bash
-# Test the app icons font
-sketchybar --add item icon.test right
-sketchybar --set icon.test label.font="sketchybar-app-font:Regular:18.0" label="figma"
-```
+- [Omarchy](https://github.com/basecamp/omarchy): the workflow, keybindings, menus, theme format and 22 of the themes (MIT, see `home/dot_local/share/unmacos/licenses/omarchy.txt`)
+- [Rift](https://github.com/acsandmann/rift): the window manager
+- [FelixKratz](https://github.com/FelixKratz): SketchyBar, SbarLua, JankyBorders and the dotfiles this bar started from
+- [television](https://github.com/alexpasmantier/television), [clipse](https://github.com/savedra1/clipse), [spotify_player](https://github.com/aome510/spotify-player), [nnn](https://github.com/jarun/nnn), [Ghostty](https://ghostty.org)
+- [sketchybar-app-font](https://github.com/kvndrsslr/sketchybar-app-font), [Tokyo Night](https://github.com/folke/tokyonight.nvim), and [Unicode's emoji data](https://www.unicode.org/license.txt)
 
-You should see the Figma icon. If not:
+## License
 
-```bash
-# Restart the font daemon
-sudo killall -9 fontd
-fc-cache -f
-```
-
-</details>
-
-### Common Issues
-
-<details>
-<summary><b>Troubleshooting Guide</b></summary>
-<br>
-
-| Issue                      | Solution                                          |
-| -------------------------- | ------------------------------------------------- |
-| **Workspaces not showing** | Check Aerospace config matches `WORKSPACE_LAYOUT` |
-| **WiFi widget broken**     | Update network interface in `wifi.lua`            |
-| **Font issues**            | Run `fc-cache -f` and restart SketchyBar          |
-| **Permission errors**      | Ensure SketchyBar has accessibility permissions   |
-| **Colors incorrect**       | Verify Tokyo Night theme files are loaded         |
-
-</details>
-
-## 🎨 Customization Tips
-
-<div align="center">
-
-| Customization        | Location              | Description                                  |
-| -------------------- | --------------------- | -------------------------------------------- |
-| **Colors**           | `colors.lua`          | Tokyo Night theme modifications              |
-| **Fonts**            | `settings.lua`        | Font families and sizes                      |
-| **Widget Position**  | Individual item files | Left, center, or right positioning           |
-| **Update Frequency** | Widget files          | Refresh intervals for dynamic content        |
-| **New Widgets**      | `items/` directory    | Create new files following existing patterns |
-
-</div>
-
-<details>
-<summary><b>Advanced Customization Examples</b></summary>
-<br>
-
-```lua
--- Change update frequency for CPU widget
-cpu:subscribe("cpu_update", function()
-    -- Custom logic here
-end)
-
--- Modify color scheme
-local colors = require("colors")
-colors.primary = "#your_color_here"
-
--- Add custom widget
-local custom_widget = sbar.add("item", "custom", {
-    position = "right",
-    -- Additional properties
-})
-```
-
-</details>
-
-## 🙏 Credits & Acknowledgments
-
-<div align="center">
-
-### 🌟 Primary Credits
-
-</div>
-
-<details open>
-<summary><b>🎯 FelixKratz</b></summary>
-<br>
-
-The foundation of this entire configuration:
-
-- **[SketchyBar](https://github.com/FelixKratz/SketchyBar)** - The revolutionary status bar application
-- **[SbarLua](https://github.com/FelixKratz/SbarLua)** - Elegant Lua framework for modern configs
-- **[Original Dotfiles](https://github.com/FelixKratz/dotfiles)** - Inspiration and structural foundation
-- **Ongoing Development** - Continuous improvements to the ecosystem
-
-_Without Felix's groundbreaking work, none of this would exist._
-
-</details>
-
-<details>
-<summary><b>🎨 Additional Contributors</b></summary>
-<br>
-
-- **[kvndrsslr](https://github.com/kvndrsslr/sketchybar-app-font)** - Beautiful app icons font
-- **[Tokyo Night](https://github.com/folke/tokyonight.nvim)** - Stunning color scheme inspiration
-- **[Aerospace Team](https://github.com/nikitabobko/AeroSpace)** - Excellent tiling window manager
-
-</details>
-
-## 🚀 Roadmap
-
-<details open>
-<summary><b>🚧 Currently Working On</b></summary>
-<br>
-
-- [ ] **Centralized Settings** - Move hardcoded values to unified configuration
-- [ ] **Improved Error Handling** - Better dependency validation and error messages
-- [ ] **Single-Monitor Documentation** - Comprehensive guide for single-display setups
-- [ ] **Automatic Interface Detection** - Smart WiFi interface discovery
-- [ ] **Multi-Player Media Support** - Spotify, YouTube Music, and other services
-
-</details>
-
-<details>
-<summary><b>🎯 Planned Features</b></summary>
-<br>
-
-- [ ] **Configuration Wizard** - Interactive setup for easy customization
-- [ ] **Display Auto-Detection** - Automatic workspace layout generation
-- [ ] **Theme Variants** - Multiple colorscheme options beyond Tokyo Night
-- [ ] **Window Manager Agnostic** - Support for yabai and other managers
-- [ ] **Plugin System** - Modular widget architecture for extensibility
-
-</details>
-
-<details>
-<summary><b>🐛 Known Issues</b></summary>
-<br>
-
-- Workspace indicators may flicker during rapid workspace switching
-- Font installation can be inconsistent on some macOS versions
-- Media widget limited to Apple Music (osascript dependency)
-- Weather widget hardcoded to Maastricht location
-- WiFi widget requires manual interface configuration
-
-</details>
-
-## 📜 License
-
-This project is licensed under the **GNU GPL v3** - see [LICENSE](LICENSE) file for details.
-
-This preserves the open-source nature of Felix's original work while allowing free use and modification.
-
-## 💡 Contributing
-
-Since this is a personal configuration, contributions are welcome for:
-
-- 🐛 **Bug Reports** - Compatibility issues and fixes
-- 💡 **Feature Suggestions** - Improvements for common use cases
-- 🔧 **Modifications** - Share your customizations and forks
-
-For major changes, please open an issue first to discuss your proposed modifications.
-
-<div align="center">
-
----
-
-**Built with ❤️ on macOS using Felix's excellent SketchyBar and SbarLua**
-
-_Inspired by Tokyo Night • Powered by Aerospace • Enhanced for productivity_
-
-</div>
+[GPL-3.0](LICENSE)

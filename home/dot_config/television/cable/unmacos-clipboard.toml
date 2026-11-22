@@ -1,0 +1,12 @@
+# UnMacOS picker, used by unmacos-menu clipboard
+[metadata]
+name = "unmacos-clipboard"
+description = "Clipboard history"
+
+[source]
+command = '''f="$HOME/.config/clipse/clipboard_history.json"; [ -f "$f" ] || f="$HOME/Library/Application Support/clipse/clipboard_history.json"; jq -r '.clipboardHistory | to_entries[] | select(.value.filePath == "null" or .value.filePath == null) | "\(.key)\t\(if .value.pinned then "★ " else "" end)\(.value.value | gsub("[\\n\\t]"; " ") | .[0:120])"' "$f"'''
+display = "{split:\\t:1}"
+output = "{split:\\t:0}"
+
+[preview]
+command = '''f="$HOME/.config/clipse/clipboard_history.json"; [ -f "$f" ] || f="$HOME/Library/Application Support/clipse/clipboard_history.json"; jq -r ".clipboardHistory[{split:\t:0}].value" "$f"'''

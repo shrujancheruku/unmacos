@@ -1,0 +1,12 @@
+# UnMacOS picker, used by unmacos-menu theme
+[metadata]
+name = "unmacos-theme"
+description = "Switch theme"
+
+[source]
+command = '''cur=$(cat "$HOME/.local/state/unmacos/theme.name" 2>/dev/null); unmacos-theme-render --list | while read -r t; do if [ "$t" = "$cur" ]; then printf "%s\t● %s\n" "$t" "$t"; else printf "%s\t  %s\n" "$t" "$t"; fi; done'''
+display = "{split:\\t:1}"
+output = "{split:\\t:0}"
+
+[preview]
+command = '''unmacos-theme-preview "{split:\t:0}"'''

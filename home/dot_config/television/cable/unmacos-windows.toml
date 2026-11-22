@@ -1,0 +1,9 @@
+# UnMacOS picker, used by unmacos-menu windows
+[metadata]
+name = "unmacos-windows"
+description = "Focus a window"
+
+[source]
+command = '''rift-cli query windows 2>/dev/null | jq -r '.[] | "\(.id|tojson)\t\(.app_name // "?")  —  \(.title)"''''
+display = "{split:\\t:1}"
+output = "{split:\\t:0}"

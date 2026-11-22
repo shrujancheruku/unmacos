@@ -1,0 +1,33 @@
+#!/bin/bash
+# UnMacOS: show/hide SketchyBar and move Rift's tiling area with it.
+#   unmacos-toggle-bar          toggle the bar
+#   unmacos-toggle-bar --sync   only fix the gaps for the bar's current state
+# Gaps are visible gaps: JankyBorders draws its border outside each window, so
+# the border width is added on top (see the gaps section in rift/config.toml).
+export PATH="/opt/homebrew/bin:$PATH"
+GAP="${UNMACOS_GAP:-4}"            # visible gap
+BORDER="${UNMACOS_BORDER:-6}"      # JankyBorders width
+ITEM_H="${UNMACOS_BAR_ITEM_HEIGHT:-28}"  # height of the bar's pills (sketchybar default.lua)
+
+bar="$(sketchybar --query bar)"
+hidden="$(jq -r .hidden <<<"$bar")"
+if [[ "${1:-}" != "--sync" ]]; then
+  if [[ "$hidden" == "on" ]]; then hidden=off; else hidden=on; fi
+  sketchybar --bar hidden="$hidden"
+fi
+
+side=$((GAP + BORDER))
+if [[ "$hidden" == "on" ]]; then
+  want="$side"
+else
+  # Pills are centred in the bar, so their bottom edge is at y_offset + (height + pill) / 2
+  want="$(jq -r --argjson p "$ITEM_H" --argjson s "$side" \
+    '((.y_offset // 0) + ((.height // 0) + $p) / 2 + $s) | floor' <<<"$bar")"
+fi
+# Rift's tiling area starts below what macOS reserves at the top of the main
+# display (32px under a MacBook notch, 0 elsewhere), so subtract that.
+inset="$(rift-cli query displays 2>/dev/null \
+  | jq -r '[.[] | select(.frame.origin.x == 0) | .frame.origin.y][0] // 0 | floor' 2>/dev/null || echo 0)"
+[[ "$inset" =~ ^[0-9]+$ ]] || inset=0
+top=$((want - inset)); ((top < 0)) && top=0
+rift-cli execute config set-outer-gaps "$top" "$side" 0 "$side" >/dev/null

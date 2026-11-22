@@ -1,0 +1,11 @@
+# UnMacOS: Ghostty
+font-family = "Geist Mono Nerd Font Mono"
+font-size = 16
+background-opacity = 0.95
+background-blur = true
+keybind = shift+enter=text:\x1b\r
+# Rift restores layout; Ghostty should not
+window-save-state = never
+
+# Colours from the active UnMacOS theme (unmacos-theme-render)
+config-file = ?{{ .chezmoi.homeDir }}/.local/state/unmacos/theme/ghostty.conf

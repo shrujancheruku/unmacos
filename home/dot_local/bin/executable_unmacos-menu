@@ -1,0 +1,71 @@
+#!/bin/bash
+# UnMacOS: Omarchy-style menus built on television (tv).
+#   unmacos-menu [main|apps|windows|clipboard|emoji|audio|bluetooth|wifi|theme|
+#                 nightlight|screenshot|keybinds|update|system]
+# Rift keys run this through unmacos-popup; it also works in any terminal.
+set -uo pipefail
+
+# tv draws its UI on stderr, so never redirect it
+pick() { tv "unmacos-$1" | head -1; }
+
+# Paste into the app that was focused before the popup. Under unmacos-popup this
+# only leaves a request; the popup pastes after it closes (see unmacos-popup).
+# Run directly in a terminal it pastes itself. UNMACOS_NO_PASTE=1 only copies.
+paste_back() {
+  [[ "${UNMACOS_NO_PASTE:-}" == 1 ]] && return 0
+  if [[ -n "${UNMACOS_PASTE_FILE:-}" ]]; then
+    : > "$UNMACOS_PASTE_FILE"
+  else
+    unmacos-paste
+  fi
+}
+
+run() {
+  case "$1" in
+    main)
+      sel="$(pick main)" && [[ -n "$sel" ]] && run "$sel" ;;
+    apps)
+      sel="$(pick apps)" && [[ -n "$sel" ]] && open "$sel" ;;
+    windows)
+      sel="$(pick windows)" && [[ -n "$sel" ]] && rift-cli execute window focus --window-id "$sel" ;;
+    clipboard)
+      sel="$(pick clipboard)" || return
+      [[ -n "$sel" ]] || return
+      f="$HOME/.config/clipse/clipboard_history.json"
+      [[ -f "$f" ]] || f="$HOME/Library/Application Support/clipse/clipboard_history.json"
+      jq -j ".clipboardHistory[$sel].value" "$f" | pbcopy && paste_back ;;
+    emoji)
+      sel="$(pick emoji)" && [[ -n "$sel" ]] && printf '%s' "$sel" | pbcopy && paste_back ;;
+    audio)
+      sel="$(pick audio)" && [[ -n "$sel" ]] && SwitchAudioSource -t output -s "$sel" >/dev/null ;;
+    bluetooth)
+      sel="$(pick bluetooth)" || return
+      [[ -n "$sel" ]] || return
+      if [[ "$(blueutil --is-connected "$sel")" == 1 ]]; then blueutil --disconnect "$sel"; else blueutil --connect "$sel"; fi ;;
+    wifi)
+      # No Wi-Fi TUI on modern macOS (SSIDs need Location access)
+      open "x-apple.systempreferences:com.apple.wifi-settings-extension" ;;
+    theme)
+      sel="$(pick theme)" && [[ -n "$sel" ]] && unmacos-theme-render "$sel" ;;
+    nightlight)
+      nightlight toggle ;;
+    screenshot)
+      screencapture -i -c ;;
+    keybinds)
+      pick keybinds >/dev/null ;;
+    update)
+      chezmoi update && echo "UnMacOS updated" && sleep 1 ;;
+    system)
+      case "$(pick system)" in
+        lock) pmset displaysleepnow ;;
+        sleep) pmset sleepnow ;;
+        screensaver) open -a ScreenSaverEngine ;;
+        logout) osascript -e 'tell application "System Events" to log out' ;;
+        restart) osascript -e 'tell application "System Events" to restart' ;;
+        shutdown) osascript -e 'tell application "System Events" to shut down' ;;
+      esac ;;
+    *) echo "unmacos-menu: unknown menu '$1'" >&2; return 2 ;;
+  esac
+}
+
+run "${1:-main}"

@@ -1,0 +1,32 @@
+#!/bin/bash
+# UnMacOS: run a command in a small floating Ghostty window that closes when
+# the command exits. Rift floats any window titled "float:*" (see app_rules).
+#   unmacos-popup <title> <command...>
+#
+# Paste-back: the command can ask for a paste by creating $UNMACOS_PASTE_FILE
+# (unmacos-menu does this after copying). Once the popup has closed, this script
+# refocuses the window that was active before and sends Cmd+V. It runs as a
+# child of Rift, so it uses Rift's Accessibility permission; nothing else needs it.
+set -euo pipefail
+title="$1"; shift
+export PATH="$HOME/.local/bin:/opt/homebrew/bin:/opt/homebrew/sbin:/usr/bin:/bin:/usr/sbin:/sbin"
+
+prev="$(rift-cli query windows 2>/dev/null | jq -c 'map(select(.is_focused))[0].id // empty' 2>/dev/null || true)"
+req="$(mktemp -u "${TMPDIR:-/tmp}/unmacos-paste.XXXXXX")"
+
+(
+  # -W waits until this Ghostty instance quits (after its only window closes)
+  /usr/bin/open -W -na Ghostty --args \
+    --title="float:$title" \
+    --quit-after-last-window-closed=true \
+    --window-save-state=never \
+    --window-width=110 --window-height=28 \
+    -e /usr/bin/env PATH="$PATH" UNMACOS_PASTE_FILE="$req" "$@"
+  if [[ -e "$req" ]]; then
+    rm -f "$req"
+    [[ -n "$prev" ]] && rift-cli execute window focus --window-id "$prev" >/dev/null 2>&1 || true
+    sleep 0.15
+    unmacos-paste
+  fi
+) >/dev/null 2>&1 &
+disown

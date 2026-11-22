@@ -1,0 +1,45 @@
+#!/usr/bin/env bash
+# UnMacOS: draw a theme's palette as coloured swatches (used by the theme picker).
+#   unmacos-theme-preview <theme>
+set -euo pipefail
+SHARE="${UNMACOS_SHARE:-$HOME/.local/share/unmacos}"
+f="$SHARE/themes/${1:?theme}/colors.toml"
+[[ -f "$f" ]] || { echo "no theme '$1'"; exit 1; }
+
+# Plain variables, not an associative array: macOS ships bash 3.2
+while IFS='=' read -r k v; do
+  k="${k//[[:space:]]/}"; [[ "$k" =~ ^[a-z_]+$ ]] || continue
+  v="${v#*\"}"; printf -v "c_$k" '%s' "${v%%\"*}"
+done < "$f"
+c() { local n="c_$1"; printf '%s' "${!n:-${2:-}}"; }
+
+rgb() { local h="${1#\#}"; printf '%d;%d;%d' "0x${h:0:2}" "0x${h:2:2}" "0x${h:4:2}"; }
+bg="$(rgb "$(c background)")"; fg="$(rgb "$(c foreground)")"
+R=$'\e[0m'
+# swatch <key> <label>: a colour block, the key and its hex
+sw() {
+  local v; v="$(c "$1")"
+  [[ "$v" =~ ^#[0-9a-fA-F]{6}$ ]] || { printf '  %-8s %-18s %s\n' "" "$2" "-"; return; }
+  printf '  \e[48;2;%sm        %s %-18s \e[2m%s%s\n' "$(rgb "$v")" "$R" "$2" "$v" "$R"
+}
+# pair <a> <b>: normal and bright terminal colours side by side
+pair() {
+  printf '  \e[48;2;%sm       %s \e[48;2;%sm       %s %s\n' \
+    "$(rgb "$(c "$1")")" "$R" "$(rgb "$(c "bright_$1" "$(c "$1")")")" "$R" "$1"
+}
+
+printf '\e[1m%s\e[0m  \e[2m(%s)%s\n\n' "$1" "$(c mode dark)" "$R"
+# Sample, drawn in the theme's own colours
+printf '  \e[48;2;%sm\e[38;2;%sm %-40s %s\n' "$bg" "$fg" "" "$R"
+printf '  \e[48;2;%sm\e[38;2;%sm  \e[38;2;%sm❯ \e[38;2;%smgit \e[38;2;%smstatus \e[38;2;%sm# clean  %-13s%s\n' \
+  "$bg" "$fg" "$(rgb "$(c green)")" "$(rgb "$(c blue)")" "$fg" "$(rgb "$(c dark_foreground)")" "" "$R"
+printf '  \e[48;2;%sm\e[38;2;%sm  \e[38;2;%smerror \e[38;2;%smwarn \e[38;2;%sminfo \e[48;2;%sm\e[38;2;%sm selected %s\e[48;2;%sm%-11s%s\n' \
+  "$bg" "$fg" "$(rgb "$(c red)")" "$(rgb "$(c yellow)")" "$(rgb "$(c cyan)")" \
+  "$(rgb "$(c selection)")" "$fg" "" "$bg" "" "$R"
+printf '  \e[48;2;%sm\e[38;2;%sm %-40s %s\n\n' "$bg" "$fg" "" "$R"
+
+printf '\e[1mUI%s\n' "$R"
+sw accent accent; sw background background; sw lighter_background "lighter bg"
+sw selection selection; sw muted muted; sw foreground foreground
+printf '\n\e[1mTerminal%s  \e[2mnormal   bright%s\n' "$R" "$R"
+for k in red yellow green cyan blue magenta; do pair "$k"; done

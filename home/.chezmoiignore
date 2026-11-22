@@ -1,0 +1,7 @@
+# Not deployed to $HOME
+README.md
+LICENSE
+
+# Runtime state and caches that apps write themselves
+.config/sketchybar/helpers/**/bin
+.config/nvim/lazy-lock.json.bak

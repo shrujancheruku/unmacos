@@ -1,0 +1,9 @@
+# UnMacOS picker, used by unmacos-menu bluetooth
+[metadata]
+name = "unmacos-bluetooth"
+description = "Connect or disconnect a Bluetooth device"
+
+[source]
+command = '''blueutil --paired --format json | jq -r '.[] | "\(.address)\t\(if .connected then "●" else " " end) \(.name // .address)"''''
+display = "{split:\\t:1}"
+output = "{split:\\t:0}"

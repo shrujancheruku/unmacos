@@ -1,0 +1,15 @@
+#!/bin/bash
+# UnMacOS: install Homebrew packages. Re-runs when a Brewfile changes.
+# Brewfile hash: {{ include "../Brewfile" | sha256sum }}
+# Personal hash: {{ include "../Brewfile.personal" | sha256sum }} (personal = {{ .personal }})
+set -euo pipefail
+if [[ ! -x /opt/homebrew/bin/brew ]]; then
+  NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+fi
+eval "$(/opt/homebrew/bin/brew shellenv)"
+echo "==> brew bundle (core)"
+brew bundle --file="{{ .chezmoi.workingTree }}/Brewfile"
+{{- if .personal }}
+echo "==> brew bundle (personal)"
+brew bundle --file="{{ .chezmoi.workingTree }}/Brewfile.personal" || echo "Some personal apps failed; continuing."
+{{- end }}

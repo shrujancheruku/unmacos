@@ -1,0 +1,10 @@
+# UnMacOS picker, used by unmacos-menu emoji
+# List: ~/.local/share/unmacos/emoji.tsv (Unicode 15.1, renders on Sequoia+)
+[metadata]
+name = "unmacos-emoji"
+description = "Copy an emoji"
+
+[source]
+command = '''grep -v '^#' "$HOME/.local/share/unmacos/emoji.tsv"'''
+display = "{split:\\t:1}"
+output = "{split:\\t:0}"

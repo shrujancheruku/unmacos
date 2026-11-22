@@ -1,0 +1,9 @@
+# UnMacOS picker, used by unmacos-menu audio
+[metadata]
+name = "unmacos-audio"
+description = "Switch audio output"
+
+[source]
+command = '''cur=$(SwitchAudioSource -c -t output); SwitchAudioSource -a -t output | while IFS= read -r d; do if [ "$d" = "$cur" ]; then printf "%s\t● %s\n" "$d" "$d"; else printf "%s\t  %s\n" "$d" "$d"; fi; done'''
+display = "{split:\\t:1}"
+output = "{split:\\t:0}"

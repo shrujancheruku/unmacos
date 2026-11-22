@@ -1,0 +1,44 @@
+#!/bin/bash
+# UnMacOS: open a TUI in its own Ghostty window, or focus it if already open
+# (Omarchy's launch-or-focus).
+#   unmacos-tui <name> <command...>      e.g. unmacos-tui music spotify_player
+#   unmacos-tui - <command...>           always a new window (not tracked)
+# Windows share one Ghostty process via AppleScript; the window id per name is
+# remembered in ~/.local/state/unmacos/tui/.
+set -euo pipefail
+[[ $# -ge 2 ]] || { echo "usage: unmacos-tui <name> <command...>" >&2; exit 2; }
+name="$1"; shift
+state="$HOME/.local/state/unmacos/tui"
+mkdir -p "$state"
+wid=""
+[[ "$name" != "-" ]] && wid="$(cat "$state/$name" 2>/dev/null || true)"
+
+path="$HOME/.local/bin:/opt/homebrew/bin:/opt/homebrew/sbin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
+cmd="/usr/bin/env PATH=$path"
+for a in "$@"; do cmd+=" $(printf '%q' "$a")"; done
+
+new="$(osascript - "$wid" "$cmd" "$HOME" <<'AS'
+on run argv
+	set wid to item 1 of argv
+	set c to item 2 of argv
+	tell application "Ghostty"
+		if wid is not "" then
+			try
+				set w to first window whose id is wid
+				activate window w
+				activate
+				return id of w
+			end try
+		end if
+		set cfg to new surface configuration
+		set command of cfg to c
+		set initial working directory of cfg to item 3 of argv
+		set w to new window with configuration cfg
+		activate
+		return id of w
+	end tell
+end run
+AS
+)"
+[[ "$name" != "-" ]] && echo "$new" > "$state/$name"
+exit 0
