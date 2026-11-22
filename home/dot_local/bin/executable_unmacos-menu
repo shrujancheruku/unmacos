@@ -1,7 +1,7 @@
 #!/bin/bash
 # UnMacOS: Omarchy-style menus built on television (tv).
 #   unmacos-menu [main|apps|windows|clipboard|emoji|audio|bluetooth|wifi|theme|
-#                 wallpaper|nightlight|screenshot|keybinds|update|system]
+#                 wallpaper|weather|nightlight|screenshot|keybinds|update|system]
 # Rift keys run this through unmacos-popup; it also works in any terminal.
 set -uo pipefail
 
@@ -49,6 +49,16 @@ run() {
       sel="$(pick theme)" && [[ -n "$sel" ]] && unmacos-theme-render "$sel" ;;
     wallpaper)
       unmacos-wallpaper next ;;
+    weather)
+      sel="$(pick weather)" || return
+      case "$sel" in
+        "") return ;;
+        :auto) unmacos-weather set auto ;;
+        :custom)
+          read -rp "City, airport code, zip or lat,lon: " sel
+          [[ -n "$sel" ]] && { unmacos-weather set "$sel" || sleep 2; } ;;
+        *) unmacos-weather set "$sel" ;;
+      esac ;;
     nightlight)
       nightlight toggle ;;
     screenshot)

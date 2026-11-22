@@ -55,7 +55,8 @@ own set of Omarchy wallpapers.
 <p align="center"><img src="docs/menu-theme.png" alt="The theme picker, previewing a palette before applying it" width="100%"></p>
 
 **A status bar worth looking at.** [SketchyBar](https://github.com/FelixKratz/SketchyBar) replaces
-the menu bar with your workspaces, now playing, volume, Wi-Fi, CPU, battery and weather. Need the
+the menu bar with your workspaces, now playing, volume, Wi-Fi, CPU, battery and weather. The weather
+finds you by IP; pin a city from the menu (Weather location) or `unmacos-weather set Tokyo`. Need the
 whole screen? `Alt + Shift + Space` hides it and your windows grow to fill the space.
 
 **A calmer macOS.** On macOS 26 and later, UnMacOS switches off Apple Intelligence and turns Liquid
@@ -191,7 +192,7 @@ home/                      everything chezmoi puts in your home folder
   dot_config/rift/         tiling and keybindings
   dot_config/sketchybar/   the bar (Lua)
   dot_config/television/   the menus
-  dot_local/bin/           unmacos-* commands: menu, keys, wallpaper, popup, paste, tui, theme-render, theme-preview, doctor
+  dot_local/bin/           unmacos-* commands: menu, keys, wallpaper, weather, popup, paste, tui, theme-render, theme-preview, doctor
   dot_local/share/unmacos/ themes, theme templates, wallpaper list, emoji list, configuration profile
 ```
 

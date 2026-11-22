@@ -1,0 +1,45 @@
+#!/bin/bash
+# UnMacOS: where the sketchybar weather chip looks.
+#   unmacos-weather                 print the current location ("auto" when detected by IP)
+#   unmacos-weather set <place>     a city, airport code, zip or "lat,lon"; checked against wttr.in
+#   unmacos-weather set auto        detect it from your IP (the default)
+#   unmacos-weather recent          places used before, newest first
+# Stored in ~/.local/state/unmacos/weather.location; the bar refreshes right away.
+set -uo pipefail
+export PATH="$HOME/.local/bin:/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin"
+
+STATE="${UNMACOS_STATE:-$HOME/.local/state/unmacos}"
+LOC="$STATE/weather.location"
+RECENT="$STATE/weather.recent"
+
+current() { local l; l="$(command cat "$LOC" 2>/dev/null)"; echo "${l:-auto}"; }
+
+set_location() {
+  local place="$*"
+  place="$(printf '%s' "$place" | tr -s '[:space:]' ' ' | sed 's/^ //; s/ $//')"
+  [[ -n "$place" ]] || { echo "unmacos-weather: give a place or 'auto'" >&2; return 2; }
+  mkdir -p "$STATE"
+  if [[ "$place" == auto ]]; then
+    : > "$LOC"
+  else
+    # wttr.in answers 500 / "Unknown location" for places it can't find
+    local q found
+    q="$(printf '%s' "$place" | sed 's/ /+/g')"
+    found="$(curl -fsS -m 10 "https://wttr.in/$q?format=%l" 2>/dev/null)"
+    if [[ -z "$found" || "$found" == *nknown* || "$found" == *"not found"* ]]; then
+      echo "unmacos-weather: wttr.in doesn't know '$place'" >&2; return 1
+    fi
+    printf '%s\n' "$place" > "$LOC"
+    { printf '%s\n' "$place"; grep -vixF -- "$place" "$RECENT" 2>/dev/null || true; } | head -8 > "$RECENT.tmp" \
+      && mv "$RECENT.tmp" "$RECENT"
+  fi
+  sketchybar --trigger weather_update >/dev/null 2>&1 || true
+  echo "Weather: $(current)"
+}
+
+case "${1:-get}" in
+  get) current ;;
+  set) shift; set_location "$@" ;;
+  recent) command cat "$RECENT" 2>/dev/null || true ;;
+  *) echo "usage: unmacos-weather [get|set <place>|set auto|recent]" >&2; exit 2 ;;
+esac

@@ -2,6 +2,26 @@
 local colors = require("colors")
 local settings = require("settings")
 
+-- Location: set with `unmacos-weather set <place>` or the menu (Weather location).
+-- An empty or missing file means wttr.in detects it from your IP.
+local LOCATION_FILE = os.getenv("HOME") .. "/.local/state/unmacos/weather.location"
+
+local function wttr_url(query)
+	local loc = ""
+	local f = io.open(LOCATION_FILE, "r")
+	if f then
+		loc = (f:read("*l") or ""):match("^%s*(.-)%s*$")
+		f:close()
+	end
+	-- wttr.in wants "+" for spaces; percent-encode anything else unusual
+	loc = loc:gsub(" ", "+"):gsub("[^%w%+%-%.,~@]", function(c)
+		return string.format("%%%02X", string.byte(c))
+	end)
+	return "https://wttr.in/" .. loc .. "?" .. query
+end
+
+sbar.add("event", "weather_update")
+
 -- === Compact chip (icon + temp) ===
 local weather = sbar.add("item", "widgets.weather", {
 	position = "right",
@@ -64,7 +84,7 @@ local h6 = add_row("widgets.weather.row.h6", "Next 6h", "—")
 
 -- === CHIP REFRESH (icon + temp)
 local function refresh_chip()
-	sbar.exec([[curl -s 'https://wttr.in/HoiAn?format=%t+%C' | tr -d '\n']], function(out)
+	sbar.exec("curl -s '" .. wttr_url("format=%t+%C") .. "' | tr -d '\\n'", function(out)
 		if not out or out == "" then
 			return
 		end
@@ -93,7 +113,7 @@ end
 
 -- === POPUP REFRESH (details) — harden PATH for jq when launched by services
 local function refresh_popup()
-	local url = "https://wttr.in/HoiAn?format=j1"
+	local url = wttr_url("format=j1")
 	local cmd = [[/bin/bash -lc '
     export PATH="/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin"
     curl -fsSL "]] .. url .. [[" | jq -r "
@@ -158,6 +178,12 @@ end)
 weather:subscribe({ "routine", "system_woke" }, function()
 	refresh_chip()
 	sbar.delay(300, refresh_popup) -- soft refresh even if popup closed
+end)
+
+-- Location changed (unmacos-weather set): repaint now
+weather:subscribe("weather_update", function()
+	refresh_chip()
+	refresh_popup()
 end)
 
 -- Spacing after widget
