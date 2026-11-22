@@ -1,0 +1,98 @@
+#!/bin/bash
+# UnMacOS: theme wallpapers, like Omarchy's backgrounds.
+#   unmacos-wallpaper theme [name]   set the theme's first wallpaper (default: current theme)
+#   unmacos-wallpaper next           next wallpaper for the current theme (Alt + Cmd + Space)
+#   unmacos-wallpaper set <file>     set any image on every display
+#   unmacos-wallpaper list [name]    the theme's wallpapers, in order
+#   unmacos-wallpaper fetch [name|--all]
+#
+# A theme's wallpapers are your own images in ~/.config/unmacos/backgrounds/<theme>/
+# followed by Omarchy's, which are downloaded on first use (see wallpapers.tsv)
+# into ~/.local/share/unmacos/backgrounds/<theme>/ and checked against their hashes.
+set -uo pipefail
+export PATH="$HOME/.local/bin:/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin"
+
+SHARE="${UNMACOS_SHARE:-$HOME/.local/share/unmacos}"
+STATE="${UNMACOS_STATE:-$HOME/.local/state/unmacos}"
+MANIFEST="$SHARE/wallpapers.tsv"
+CACHE="$SHARE/backgrounds"
+MINE="$HOME/.config/unmacos/backgrounds"
+
+current_theme() { command cat "$STATE/theme.name" 2>/dev/null || echo tokyo-night; }
+
+fetch() {
+  local theme="$1" commit sha file dest tmp ok=0
+  commit="$(awk -F'\t' '$1 == "commit" {print $2}' "$MANIFEST")"
+  mkdir -p "$CACHE/$theme"
+  while IFS=$'\t' read -r sha file; do
+    dest="$CACHE/$theme/$file"
+    [[ -f "$dest" && "$(git hash-object "$dest")" == "$sha" ]] && continue
+    tmp="$(mktemp "$CACHE/$theme/.download.XXXXXX")"
+    if curl -fsSL --retry 2 -o "$tmp" \
+         "https://raw.githubusercontent.com/basecamp/omarchy/$commit/themes/$theme/backgrounds/$file" \
+       && [[ "$(git hash-object "$tmp")" == "$sha" ]]; then
+      mv "$tmp" "$dest"
+    else
+      rm -f "$tmp"; echo "unmacos-wallpaper: couldn't download $theme/$file" >&2; ok=1
+    fi
+  done < <(awk -F'\t' -v t="$theme" '$1 == t {print $2 "\t" $3}' "$MANIFEST")
+  return $ok
+}
+
+list() {
+  local theme="$1" d
+  for d in "$MINE/$theme" "$CACHE/$theme"; do
+    [[ -d "$d" ]] || continue
+    find "$d" -maxdepth 1 -type f \( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' \
+      -o -iname '*.webp' -o -iname '*.heic' \) | LC_ALL=C sort
+  done
+}
+
+# NSWorkspace sets the picture without asking for Automation permission.
+# Fill the screen, cropping if needed, on every display.
+set_picture() {
+  local file="$1"
+  [[ -f "$file" ]] || { echo "unmacos-wallpaper: no such file: $file" >&2; return 1; }
+  osascript -l JavaScript - "$file" >/dev/null <<'JS' || return 1
+ObjC.import("AppKit");
+function run(argv) {
+  const url = $.NSURL.fileURLWithPath(argv[0]);
+  const ws = $.NSWorkspace.sharedWorkspace;
+  const opts = $.NSMutableDictionary.alloc.init;
+  opts.setObjectForKey($.NSNumber.numberWithInt(3), $.NSWorkspaceDesktopImageScalingKey);
+  opts.setObjectForKey($.NSNumber.numberWithBool(true), $.NSWorkspaceDesktopImageAllowClippingKey);
+  const screens = $.NSScreen.screens;
+  for (let i = 0; i < screens.count; i++) {
+    const err = Ref();
+    if (!ws.setDesktopImageURLForScreenOptionsError(url, screens.objectAtIndex(i), opts, err))
+      throw new Error("couldn't set the wallpaper");
+  }
+}
+JS
+  mkdir -p "$STATE"; printf '%s\n' "$file" > "$STATE/wallpaper"
+}
+
+cmd="${1:-theme}"; shift || true
+case "$cmd" in
+  theme)
+    theme="${1:-$(current_theme)}"
+    fetch "$theme" || true
+    first="$(list "$theme" | head -1)"
+    [[ -n "$first" ]] || { echo "unmacos-wallpaper: no wallpapers for '$theme' yet" >&2; exit 1; }
+    set_picture "$first" ;;
+  next)
+    theme="$(current_theme)"
+    [[ -n "$(list "$theme")" ]] || fetch "$theme" || true
+    now="$(command cat "$STATE/wallpaper" 2>/dev/null || true)"
+    next="$(list "$theme" | awk -v now="$now" 'NR == 1 {first = $0} seen {print; found = 1; exit} $0 == now {seen = 1} END {if (!found) print first}')"
+    [[ -n "$next" ]] || { echo "unmacos-wallpaper: no wallpapers for '$theme'" >&2; exit 1; }
+    set_picture "$next" ;;
+  set)   set_picture "${1:?usage: unmacos-wallpaper set <file>}" ;;
+  list)  list "${1:-$(current_theme)}" ;;
+  fetch)
+    if [[ "${1:-}" == --all ]]; then
+      rc=0; for t in $(awk -F'\t' '$1 != "commit" && $1 !~ /^#/ {print $1}' "$MANIFEST" | uniq); do fetch "$t" || rc=1; done; exit $rc
+    fi
+    fetch "${1:-$(current_theme)}" ;;
+  *) sed -n '2,8p' "$0" | sed 's/^# \{0,1\}//'; exit 2 ;;
+esac

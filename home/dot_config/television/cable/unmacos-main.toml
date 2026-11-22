@@ -4,6 +4,6 @@ name = "unmacos-main"
 description = "UnMacOS menu"
 
 [source]
-command = '''printf "apps\tApps\nwindows\tWindows\nclipboard\tClipboard\nemoji\tEmoji\naudio\tAudio output\nbluetooth\tBluetooth\nwifi\tWi-Fi\ntheme\tTheme\nnightlight\tNight light\nscreenshot\tScreenshot\nkeybinds\tKeybindings\nupdate\tUpdate UnMacOS\nsystem\tSystem\n"'''
+command = '''printf "apps\tApps\nwindows\tWindows\nclipboard\tClipboard\nemoji\tEmoji\naudio\tAudio output\nbluetooth\tBluetooth\nwifi\tWi-Fi\ntheme\tTheme\nwallpaper\tNext wallpaper\nnightlight\tNight light\nscreenshot\tScreenshot\nkeybinds\tKeybindings\nupdate\tUpdate UnMacOS\nsystem\tSystem\n"'''
 display = "{split:\\t:1}"
 output = "{split:\\t:0}"

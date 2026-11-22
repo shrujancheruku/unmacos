@@ -15,7 +15,7 @@ echo "UnMacOS doctor — macOS $(sw_vers -productVersion)"
 echo "Commands"
 for c in rift rift-cli sketchybar borders tv ghostty tmux nvim nnn btop lazygit lazydocker \
          spotify_player SwitchAudioSource blueutil nightlight nowplaying-cli jq fd rg fzf \
-         chezmoi op clipse unmacos-tui unmacos-menu unmacos-popup unmacos-paste unmacos-theme-render unmacos-theme-preview unmacos-keys; do
+         chezmoi op clipse unmacos-tui unmacos-menu unmacos-popup unmacos-paste unmacos-theme-render unmacos-theme-preview unmacos-keys unmacos-wallpaper; do
   if [[ "$c" == ghostty ]]; then check "Ghostty.app" '[[ -d /Applications/Ghostty.app ]]'
   else check "$c" "command -v $c"; fi
 done
