@@ -75,6 +75,10 @@ pgrep -xq tmux && tmux source-file "$OUT/tmux.conf" >/dev/null 2>&1 || true
 # process, so find it with ps.
 ghostty_pids="$(ps -axo pid=,ucomm= | awk '$2 == "ghostty" {print $1}')"
 [[ -n "$ghostty_pids" ]] && kill -USR2 $ghostty_pids >/dev/null 2>&1 || true
+# btop rewrites btop.conf on exit, so a theme picked in btop's own menu sticks
+# and hides ours. Point it back at the rendered theme, then SIGUSR2 reloads it.
+btop_conf="$HOME/.config/btop/btop.conf"
+[[ -f "$btop_conf" ]] && sed -i '' 's/^color_theme = .*/color_theme = "unmacos"/' "$btop_conf"
 pkill -USR2 -x btop >/dev/null 2>&1 || true
 # Neovim reloads itself: lua/plugins/unmacos-theme.lua watches $OUT
 # The theme's wallpaper (downloaded on first use, so in the background).

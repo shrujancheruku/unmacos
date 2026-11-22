@@ -12,6 +12,8 @@
 [![chezmoi](https://img.shields.io/badge/dotfiles-chezmoi-9ece6a?style=for-the-badge)](https://www.chezmoi.io/)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-e0af68?style=for-the-badge)](LICENSE)
 
+<img src="docs/hero.png" alt="UnMacOS desktop: Neovim, spotify_player, fastfetch and btop tiled under SketchyBar" width="100%">
+
 </div>
 
 ```sh
@@ -30,10 +32,14 @@ rebuilt for the Mac.
 Five workspaces per display, and four layouts to pick from: split, stacked, main-and-side, or
 scrolling. Powered by [Rift](https://github.com/acsandmann/rift).
 
+<p align="center"><img src="docs/tiling.gif" alt="Windows tiling themselves as they open, then switching to the main-and-side layout" width="100%"></p>
+
 **Everything is one keystroke away.** `Alt + Space` launches apps. `Alt + Ctrl + V` brings back
 anything you've copied. `Alt + Ctrl + .` finds an emoji. `Alt + Escape` locks, sleeps or restarts.
 Every menu is a fuzzy finder ([television](https://github.com/alexpasmantier/television)): type a
 few letters, press Enter, and the result is pasted straight into the app you came from.
+
+<p align="center"><img src="docs/menu-apps.png" alt="The app launcher, a fuzzy finder over every installed app" width="100%"></p>
 
 **Terminal apps that feel like apps.** Music, files, Git, Docker, system monitor, editor and
 Claude, each on its own key. Press the key and the app opens; press it again and it jumps to the
@@ -45,6 +51,10 @@ and Neovim all change at once, even editors that are already open. Comes with 23
 hand-tuned Tokyo Night and every Omarchy palette from Catppuccin to Gruvbox, Nord, Rosé Pine and
 Kanagawa. The picker shows each palette in colour before you commit, and every theme brings its
 own set of Omarchy wallpapers.
+
+<p align="center"><img src="docs/themes.gif" alt="Switching through Catppuccin, Gruvbox, Kanagawa, Everforest and Tokyo Night live" width="100%"></p>
+
+<p align="center"><img src="docs/menu-theme.png" alt="The theme picker, previewing a palette before applying it" width="100%"></p>
 
 **A status bar worth looking at.** [SketchyBar](https://github.com/FelixKratz/SketchyBar) replaces
 the menu bar with your workspaces, now playing, volume, Wi-Fi, CPU, battery and weather. Need the
@@ -86,6 +96,8 @@ Then a few clicks macOS won't let a script make for you:
 
 `Alt` does what `SUPER` does in Omarchy, so Omarchy muscle memory works here: Omarchy's `ALT` is
 `Ctrl`, and its `CTRL` is `Cmd`. Forgot one? `Alt + Ctrl + K` shows them all on one screen; press `/` to search.
+
+<p align="center"><img src="docs/menu-keys.png" alt="The keyboard shortcut cheatsheet" width="100%"></p>
 
 **Launch**
 
