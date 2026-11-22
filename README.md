@@ -84,7 +84,7 @@ Then a few clicks macOS won't let a script make for you:
 ## Learn the keys
 
 `Alt` does what `SUPER` does in Omarchy, so Omarchy muscle memory works here: Omarchy's `ALT` is
-`Ctrl`, and its `CTRL` is `Cmd`. Forgot one? `Alt + Ctrl + K` searches them all.
+`Ctrl`, and its `CTRL` is `Cmd`. Forgot one? `Alt + Ctrl + K` shows them all on one screen; press `/` to search.
 
 **Launch**
 
@@ -104,6 +104,7 @@ Then a few clicks macOS won't let a script make for you:
 |---|---|
 | `Alt + Space` | Apps |
 | `Alt + Ctrl + Space` | Everything UnMacOS can do |
+| `Alt + Ctrl + K` | Every shortcut on one screen |
 | `Alt + Ctrl + V` / `Alt + Ctrl + .` | Clipboard history / emoji |
 | `Alt + Ctrl + W` | Jump to any window |
 | `Alt + Cmd + A` / `B` / `W` | Sound output / Bluetooth / Wi-Fi |
@@ -173,7 +174,7 @@ home/                      everything chezmoi puts in your home folder
   dot_config/rift/         tiling and keybindings
   dot_config/sketchybar/   the bar (Lua)
   dot_config/television/   the menus
-  dot_local/bin/           unmacos-* commands: menu, popup, paste, tui, theme-render, theme-preview, doctor
+  dot_local/bin/           unmacos-* commands: menu, keys, popup, paste, tui, theme-render, theme-preview, doctor
   dot_local/share/unmacos/ themes, theme templates, emoji list, configuration profile
 ```
 
