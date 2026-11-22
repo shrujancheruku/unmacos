@@ -1,0 +1,36 @@
+#!/bin/bash
+# UnMacOS: the Spotify app follows the UnMacOS theme through Spicetify.
+#   Points Spicetify at Themes/UnMacOS (color.ini links to the rendered
+#   spicetify-color.ini) and patches Spotify. unmacos-theme-render then runs
+#   recolors an open Spotify live on every theme switch, over a DevTools port
+#   on 127.0.0.1:9222 (spotify_launch_flags; while it's open, local programs
+#   running as you can drive Spotify's UI).
+# Only runs when both Spotify.app and spicetify are installed (Brewfile.personal).
+# Opt out: UNMACOS_KEEP_SPOTIFY=1 chezmoi apply
+# Undo:    spicetify restore
+set -euo pipefail
+[[ "${UNMACOS_KEEP_SPOTIFY:-}" == 1 ]] && exit 0
+eval "$(/opt/homebrew/bin/brew shellenv)"
+command -v spicetify >/dev/null && [[ -d /Applications/Spotify.app ]] || exit 0
+
+echo "==> Spotify theme (Spicetify)"
+"$HOME/.local/bin/unmacos-theme-render" >/dev/null 2>&1 || true
+# `--`: stop spicetify reading the --remote-debugging-port value as its own flag
+spicetify -q config -- \
+  spotify_path "/Applications/Spotify.app/Contents/Resources" \
+  prefs_path "$HOME/Library/Application Support/Spotify/prefs" \
+  current_theme UnMacOS color_scheme UnMacOS \
+  inject_css 1 replace_colors 1 overwrite_assets 0 inject_theme_js 0 \
+  spotify_launch_flags "--remote-debugging-port=9222"
+# Spotify updates replace the patched files; a fresh backup is needed after one.
+# -n: spicetify's restart quits Spotify but doesn't relaunch it on macOS, so
+# reopen an open Spotify here instead (with the port, for live recoloring).
+if ! spicetify -q -n backup apply 2>/dev/null; then
+  spicetify -q -n restore backup apply
+fi
+if pgrep -xq Spotify; then
+  osascript -e 'tell application "Spotify" to quit' 2>/dev/null || true
+  for _ in $(seq 40); do pgrep -xq Spotify || break; sleep 0.25; done
+  pgrep -xq Spotify && { pkill -x Spotify; sleep 1; }
+  "$HOME/.local/bin/unmacos-spotify" -g
+fi

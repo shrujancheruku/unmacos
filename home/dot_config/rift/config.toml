@@ -181,6 +181,7 @@ app_rules = [
 "Alt + Shift + B" = { exec = ["/usr/bin/open", "-a", "Firefox"] }   #: Browser
 "Alt + Shift + Ctrl + B" = { exec = ["/usr/bin/open", "-na", "Firefox", "--args", "--private-window"] }   #: Private browser window
 "Alt + Shift + M" = { exec = ["/bin/sh", "-c", "$HOME/.local/bin/unmacos-tui music spotify_player"] }   #: Music
+"Alt + Ctrl + Shift + M" = { exec = ["/bin/sh", "-c", "$HOME/.local/bin/unmacos-spotify"] }   #: Spotify app
 "Alt + Shift + F" = { exec = ["/bin/sh", "-c", "$HOME/.local/bin/unmacos-tui files nnn -deH"] }   #: Files
 "Alt + Shift + N" = { exec = ["/bin/sh", "-c", "$HOME/.local/bin/unmacos-tui editor nvim"] }   #: Neovim
 "Alt + Shift + D" = { exec = ["/bin/sh", "-c", "$HOME/.local/bin/unmacos-tui docker lazydocker"] }   #: Docker

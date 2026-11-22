@@ -25,7 +25,9 @@ run() {
     main)
       sel="$(pick main)" && [[ -n "$sel" ]] && run "$sel" ;;
     apps)
-      sel="$(pick apps)" && [[ -n "$sel" ]] && open "$sel" ;;
+      sel="$(pick apps)" && [[ -n "$sel" ]] || return 0
+      # Spotify goes through unmacos-spotify, which adds the live-theming port
+      case "$sel" in */Spotify.app) unmacos-spotify ;; *) open "$sel" ;; esac ;;
     windows)
       sel="$(pick windows)" && [[ -n "$sel" ]] && rift-cli execute window focus --window-id "$sel" ;;
     clipboard)
