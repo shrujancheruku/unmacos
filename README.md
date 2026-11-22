@@ -46,8 +46,8 @@ Claude, each on its own key. Press the key and the app opens; press it again and
 window that's already open. They all run in [Ghostty](https://ghostty.org) and look like they
 belong together.
 
-**One theme, everywhere, instantly.** Pick a theme and the bar, window borders, terminal, tmux, btop
-and Neovim all change at once, even editors that are already open. Comes with 23 themes, including
+**One theme, everywhere, instantly.** Pick a theme and the bar, window borders, terminal, tmux, btop,
+Neovim and Firefox all change at once, even editors that are already open. Comes with 23 themes, including
 hand-tuned Tokyo Night and every Omarchy palette from Catppuccin to Gruvbox, Nord, Rosé Pine and
 Kanagawa. The picker shows each palette in colour before you commit, and every theme brings its
 own set of Omarchy wallpapers.
@@ -90,7 +90,9 @@ Then a few clicks macOS won't let a script make for you:
 3. The first menu you open makes Ghostty ask to run a command: allow it.
 4. On macOS 26 and later, approve **UnMacOS: no Apple Intelligence** in
    *System Settings → General → Device Management*.
-5. Run `unmacos-doctor`. When it says *All good*, you're done.
+5. Open Firefox, click the **Pywalfox** toolbar icon and choose **Fetch Pywal colors** once. After that
+   Firefox follows every theme switch.
+6. Run `unmacos-doctor`. When it says *All good*, you're done.
 
 ## Learn the keys
 
@@ -173,6 +175,10 @@ MacBooks. Change `UNMACOS_GAP` in `unmacos-toggle-bar` and the gaps in `dot_conf
 **Your own bits.** Put machine-only shell config in `~/.zshrc.local`. Swap the browser in
 `dot_config/rift/config.toml`, the Wi-Fi interface in `dot_config/sketchybar/items/widgets/wifi.lua`,
 and your extra apps in `Brewfile.personal`.
+
+**Keep Firefox's own theme.** Run `UNMACOS_KEEP_FIREFOX=1 chezmoi apply` before the first apply, or
+remove Pywalfox in Firefox's Add-ons. `home/.chezmoiscripts/run_onchange_after_80-firefox.sh` lists
+the rest of the undo.
 
 **Keep Apple Intelligence or Liquid Glass.** Run `UNMACOS_KEEP_AI=1 chezmoi apply` or
 `UNMACOS_KEEP_GLASS=1 chezmoi apply`. The header of

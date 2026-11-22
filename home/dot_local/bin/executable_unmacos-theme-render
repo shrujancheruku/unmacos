@@ -59,6 +59,14 @@ mv "$tmp/out" "$OUT"
 echo "$theme" > "$STATE/theme.name"
 echo "unmacos: theme '$theme' rendered to $OUT"
 
+# Firefox (Pywalfox) reads pywal's colors file. Link it to ours, unless real
+# pywal owns it.
+wal="${XDG_CACHE_HOME:-$HOME/.cache}/wal/colors.json"
+if [[ ! -e "$wal" || -L "$wal" ]]; then
+  mkdir -p "$(dirname "$wal")"
+  ln -sfn "$OUT/pywal-colors.json" "$wal"
+fi
+
 [[ "${UNMACOS_NO_RELOAD:-}" == 1 ]] && exit 0
 
 # --- Live reload (best effort) ---
@@ -80,6 +88,8 @@ ghostty_pids="$(ps -axo pid=,ucomm= | awk '$2 == "ghostty" {print $1}')"
 btop_conf="$HOME/.config/btop/btop.conf"
 [[ -f "$btop_conf" ]] && sed -i '' 's/^color_theme = .*/color_theme = "unmacos"/' "$btop_conf"
 pkill -USR2 -x btop >/dev/null 2>&1 || true
+# Firefox: Pywalfox's extension rereads the colors on `pywalfox update`
+[[ -x "$HOME/.local/bin/pywalfox" ]] && "$HOME/.local/bin/pywalfox" update >/dev/null 2>&1 || true
 # Neovim reloads itself: lua/plugins/unmacos-theme.lua watches $OUT
 # The theme's wallpaper (downloaded on first use, so in the background).
 # UNMACOS_KEEP_WALLPAPER=1 leaves the wallpaper alone.

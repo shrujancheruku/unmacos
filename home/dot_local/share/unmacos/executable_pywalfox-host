@@ -1,0 +1,5 @@
+#!/bin/sh
+# UnMacOS: Firefox native messaging host for Pywalfox. Firefox runs this with
+# its own arguments (manifest path, extension id), which the pywalfox CLI
+# rejects, so start the daemon explicitly. Errors: ~/Library/Logs/unmacos-pywalfox.log
+exec "$HOME/.local/bin/pywalfox" start 2>>"$HOME/Library/Logs/unmacos-pywalfox.log"
