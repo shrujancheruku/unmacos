@@ -62,17 +62,24 @@ echo "unmacos: theme '$theme' rendered to $OUT"
 [[ "${UNMACOS_NO_RELOAD:-}" == 1 ]] && exit 0
 
 # --- Live reload (best effort) ---
+# The theme picker runs in a popup terminal that closes as soon as this script
+# exits, which sends SIGHUP and kills the background jobs below (the wallpaper)
+# before they start. Ignore it here so they inherit that and outlive the popup.
+trap '' HUP
 mode="$(awk -F'"' '/^mode/ {print $2}' "$src/colors.toml")"
 osascript -e "tell application \"System Events\" to tell appearance preferences to set dark mode to $([[ "$mode" == light ]] && echo false || echo true)" >/dev/null 2>&1 || true
 pgrep -xq sketchybar && sketchybar --reload >/dev/null 2>&1 || true
 pgrep -xq borders && [[ -x "$HOME/.config/borders/bordersrc" ]] && "$HOME/.config/borders/bordersrc" >/dev/null 2>&1 &
 pgrep -xq tmux && tmux source-file "$OUT/tmux.conf" >/dev/null 2>&1 || true
-pkill -USR2 -x ghostty >/dev/null 2>&1 || true   # Ghostty reloads its config on SIGUSR2
+# Ghostty reloads its config on SIGUSR2. pgrep/pkill can't see the Ghostty app
+# process, so find it with ps.
+ghostty_pids="$(ps -axo pid=,ucomm= | awk '$2 == "ghostty" {print $1}')"
+[[ -n "$ghostty_pids" ]] && kill -USR2 $ghostty_pids >/dev/null 2>&1 || true
 pkill -USR2 -x btop >/dev/null 2>&1 || true
 # Neovim reloads itself: lua/plugins/unmacos-theme.lua watches $OUT
 # The theme's wallpaper (downloaded on first use, so in the background).
 # UNMACOS_KEEP_WALLPAPER=1 leaves the wallpaper alone.
 if [[ "${UNMACOS_KEEP_WALLPAPER:-}" != 1 && -x "$HOME/.local/bin/unmacos-wallpaper" ]]; then
-  ( "$HOME/.local/bin/unmacos-wallpaper" theme "$theme" >/dev/null 2>&1 & )
+  ( "$HOME/.local/bin/unmacos-wallpaper" theme "$theme" </dev/null >/dev/null 2>&1 & )
 fi
 exit 0
