@@ -27,6 +27,8 @@ hot_reload = true
 run_on_start = [
   "/opt/homebrew/bin/brew services restart sketchybar",
   "/bin/bash -c '$HOME/.config/borders/bordersrc'",
+  # Fit the top gap to this display and the bar (notched MacBooks reserve 32px)
+  "/bin/bash -c 'sleep 3; $HOME/.local/bin/unmacos-toggle-bar --sync'",
   "/opt/homebrew/bin/rift-cli subscribe cli --event workspace_changed --command sh --args -c --args '/opt/homebrew/bin/sketchybar --trigger rift_workspace_changed RIFT_WORKSPACE_NAME=\"$RIFT_WORKSPACE_NAME\" RIFT_WORKSPACE_ID=\"$RIFT_WORKSPACE_ID\"'",
   "/opt/homebrew/bin/rift-cli subscribe cli --event windows_changed --command sh --args -c --args '/opt/homebrew/bin/sketchybar --trigger rift_windows_changed RIFT_WORKSPACE_NAME=\"$RIFT_WORKSPACE_NAME\" RIFT_WINDOW_COUNT=\"$RIFT_WINDOW_COUNT\"'",
 ]
@@ -43,7 +45,8 @@ default_orientation = "perpendicular"
 # A visible 4px gap everywhere except the bottom. Rift measures gaps between
 # window frames, but JankyBorders draws its 6px border outside the frame, so:
 #   inner = 4 + 6 + 6, sides = 4 + 6, top = 34 (bottom of the bar's pills) + 4 + 6
-# unmacos-toggle-bar recomputes top live when the bar is hidden or shown.
+# top below is for screens without a notch. At start, and whenever the bar is
+# hidden or shown, unmacos-toggle-bar recomputes it for the actual display.
 [settings.layout.gaps.outer]
 top = 44
 left = 10
