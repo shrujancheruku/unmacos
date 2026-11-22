@@ -7,7 +7,7 @@
 [settings]
 animate = false
 animation_duration = 0.2
-animation_fps = 0.0
+animation_fps = 60.0 # must be > 0: Rift 0.8.x crashes on 0 despite its docs
 
 # Tile every Space by default, like Hyprland (Rift's default is opt-in per Space).
 default_disable = false
