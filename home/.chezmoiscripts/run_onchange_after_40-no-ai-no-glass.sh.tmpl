@@ -1,12 +1,15 @@
 #!/bin/bash
 # UnMacOS: on macOS 26+ (Tahoe, Golden Gate), turn off Apple Intelligence and
 # Liquid Glass to get as close to a Sequoia desktop as macOS allows.
-# Re-runs when this script or the profile changes.
+# Re-runs when this script, the profile or the macOS version changes (upgrades
+# reset these settings).
 # profile hash: {{ include "dot_local/share/unmacos/profiles/unmacos-no-ai.mobileconfig" | sha256sum }}
+# macOS: {{ output "sw_vers" "-productVersion" | trim }}
 #
 # Opt out: UNMACOS_KEEP_AI=1 / UNMACOS_KEEP_GLASS=1 chezmoi apply
 # Undo:    remove the "UnMacOS: no Apple Intelligence" profile in Device Management,
 #          defaults delete -g com.apple.SwiftUI.DisableSolarium,
+#          defaults delete -g NSConvolutionOverride1 (and NSConvolutionOverride2),
 #          sudo rm /Library/Preferences/FeatureFlags/Domain/WritingTools.plist
 set -euo pipefail
 
@@ -54,6 +57,10 @@ if [[ "${UNMACOS_KEEP_GLASS:-}" != 1 ]]; then
   # right-side menu bar items keep working
   defaults write -g com.apple.SwiftUI.DisableSolarium -bool true
   defaults write com.apple.ControlCenter com.apple.SwiftUI.DisableSolarium -bool false
+  # Small window corners (private AppKit key; 1 = windows/sheets, 2 = panels).
+  # 4px matches the Rift gaps. Apps pick it up when they relaunch.
+  defaults write -g NSConvolutionOverride1 -float 4
+  defaults write -g NSConvolutionOverride2 -float 4
   if (( major >= 27 )); then
     echo "    Also drag System Settings > Appearance > Liquid Glass to the minimum (no setting for scripts)"
     open "x-apple.systempreferences:com.apple.Appearance-Settings.extension" || true

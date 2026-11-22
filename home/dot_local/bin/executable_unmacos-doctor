@@ -53,6 +53,7 @@ if (( major >= 26 )); then
   else note "no-AI profile not approved: System Settings > General > Device Management"; fi
   check "Reduce Transparency on" '[[ $(defaults read com.apple.universalaccess reduceTransparency) == 1 ]]'
   check "SwiftUI Solarium off" '[[ $(defaults read -g com.apple.SwiftUI.DisableSolarium) == 1 ]]'
+  check "Small window corners" '[[ $(defaults read -g NSConvolutionOverride1) == 4 ]]'
   check "Writing Tools popup off" 'defaults read /Library/Preferences/FeatureFlags/Domain/WritingTools LightweightUI_macOS | grep -q "Enabled = 0"'
 fi
 
