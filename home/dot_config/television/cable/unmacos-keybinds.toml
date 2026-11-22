@@ -1,9 +1,9 @@
-# UnMacOS picker, used by unmacos-menu keybinds
+# UnMacOS picker, used by unmacos-menu keybinds and "/" in unmacos-keys
 [metadata]
 name = "unmacos-keybinds"
-description = "Rift keybindings"
+description = "Keyboard shortcuts"
 
 [source]
-command = '''sed -n "/^\[keys\]/,/^\[binding_modes/p" "$HOME/.config/rift/config.toml" | grep "^\"" | sed -E "s/^\"([^\"]+)\" *= *(.*)$/\1\t\1	\2/" | awk -F"\t" '{printf "%s\t%-26s %s\n", $1, $2, $3}''''
+command = '''unmacos-keys --list | awk -F"\t" '{printf "%s\t%-28s %s   · %s\n", $2, $2, $3, $1}' '''
 display = "{split:\\t:1}"
 output = "{split:\\t:0}"
