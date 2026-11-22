@@ -45,6 +45,7 @@ Manual steps macOS doesn't allow scripts to do:
   4. 1Password: sign in, then Settings > Developer > "Integrate with 1Password CLI"
   5. On macOS 26+: approve the "UnMacOS: no Apple Intelligence" profile in
      System Settings > General > Device Management (opened for you)
-  6. Firefox: click the Pywalfox toolbar icon > Fetch Pywal colors (once)
+  6. Firefox: click the Pywalfox toolbar icon > Fetch Pywal colors (once). For pages:
+     Dark Reader > Settings > Advanced > Import ~/.local/state/unmacos/theme/darkreader.json
   7. Run unmacos-doctor
 EOF
