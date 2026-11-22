@@ -8,12 +8,16 @@ set -uo pipefail
 # tv draws its UI on stderr, so never redirect it
 pick() { tv "unmacos-$1" | head -1; }
 
-# Paste into the app that was focused before the popup (needs Ghostty in
-# Accessibility). UNMACOS_NO_PASTE=1 only copies.
+# Paste into the app that was focused before the popup. Under unmacos-popup this
+# only leaves a request; the popup pastes after it closes (see unmacos-popup).
+# Run directly in a terminal it pastes itself. UNMACOS_NO_PASTE=1 only copies.
 paste_back() {
   [[ "${UNMACOS_NO_PASTE:-}" == 1 ]] && return 0
-  nohup /bin/sh -c 'sleep 0.4; osascript -e "tell application \"System Events\" to keystroke \"v\" using command down"' >/dev/null 2>&1 &
-  disown
+  if [[ -n "${UNMACOS_PASTE_FILE:-}" ]]; then
+    : > "$UNMACOS_PASTE_FILE"
+  else
+    unmacos-paste
+  fi
 }
 
 run() {

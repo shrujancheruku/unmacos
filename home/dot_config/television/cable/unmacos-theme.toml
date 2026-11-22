@@ -9,4 +9,4 @@ display = "{split:\\t:1}"
 output = "{split:\\t:0}"
 
 [preview]
-command = '''cat "$HOME/.local/share/unmacos/themes/{split:\t:0}/colors.toml"'''
+command = '''unmacos-theme-preview "{split:\t:0}"'''

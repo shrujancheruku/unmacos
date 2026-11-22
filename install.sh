@@ -38,7 +38,8 @@ cat <<'EOF'
 
 Manual steps macOS doesn't allow scripts to do:
   1. System Settings > Privacy & Security > Accessibility: turn on rift and clipse
-     (it asks when it starts), and Ghostty for paste-back. Then: rift service restart
+     (it asks when it starts). Then: rift service restart
+     The first menu you open makes Ghostty ask to run a command: allow it.
   2. Log out and back in (Spaces and menu bar settings take effect)
   3. spotify_player: run it once to log in to Spotify
   4. 1Password: sign in, then Settings > Developer > "Integrate with 1Password CLI"

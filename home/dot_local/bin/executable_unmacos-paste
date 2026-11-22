@@ -1,0 +1,11 @@
+#!/bin/bash
+# UnMacOS: press Cmd+V in the focused app by posting key events directly
+# (CoreGraphics, so it needs Accessibility but not Automation of System Events).
+exec /usr/bin/osascript -l JavaScript -e '
+ObjC.import("CoreGraphics");
+function key(down) {
+  var e = $.CGEventCreateKeyboardEvent(null, 9, down); // 9 = V
+  $.CGEventSetFlags(e, 0x100000);                      // Command
+  $.CGEventPost(0, e);                                 // HID event tap
+}
+key(true); key(false);' >/dev/null

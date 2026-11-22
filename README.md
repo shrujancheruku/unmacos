@@ -21,7 +21,7 @@ One command sets up a fresh Mac, and the same command rebuilds it after a wipe.
 - **Borders**: [JankyBorders](https://github.com/FelixKratz/JankyBorders) around the focused window
 - **TUIs over apps**: spotify_player, nnn, btop, lazygit, lazydocker, Neovim (LazyVim), tmux in [Ghostty](https://ghostty.org)
 - **Menus**: [television](https://github.com/alexpasmantier/television) for apps, windows, clipboard, emoji, audio, Bluetooth, theme, keybindings and system
-- **Theme system**: one `colors.toml` per theme, rendered into every app with live reload (Omarchy-compatible)
+- **Theme system**: one `colors.toml` per theme, rendered into every app with live reload. Ships Tokyo Night plus the 22 other Omarchy themes, with a palette preview in the picker
 - **Quieter macOS**: on macOS 26+ the installer turns off Apple Intelligence and Liquid Glass, to get as close to a Sequoia desktop as possible
 
 ## Install
@@ -42,7 +42,7 @@ This installs the Xcode Command Line Tools and Homebrew, then runs `chezmoi init
 
 Then finish the steps macOS doesn't let scripts do:
 
-1. **System Settings → Privacy & Security → Accessibility**: allow `rift` and `clipse` (clipse asks when it starts). Allow Ghostty too, for paste-back from the clipboard and emoji pickers. Then run `rift service restart`.
+1. **System Settings → Privacy & Security → Accessibility**: allow `rift` and `clipse` (clipse asks when it starts). Then run `rift service restart`. (Paste-back from the clipboard and emoji pickers uses Rift's permission, so Ghostty doesn't need it.) The first time a menu opens, Ghostty asks whether to allow running a command: allow it.
 2. **Log out and back in.** This applies the Spaces, hidden menu bar and Liquid Glass changes.
 3. macOS 26+: approve **UnMacOS: no Apple Intelligence** in *System Settings → General → Device Management*.
 4. Run `unmacos-doctor` to check everything.
@@ -103,8 +103,11 @@ unmacos-theme-render tokyo-night     # or Alt + Ctrl + Shift + Space
 ```
 
 Switching a theme updates these live: SketchyBar, borders, Ghostty, tmux, btop and Neovim (open editors
-switch too). television and fzf pick it up the next time they open. To add a theme, copy
-`themes/tokyo-night`, change `colors.toml`, and delete the override files you don't want.
+switch too). television and fzf pick it up the next time they open. To add a theme, copy any
+`themes/<name>/colors.toml` (an Omarchy `colors.toml` works as is) and change the colours.
+
+Tokyo Night is UnMacOS's own, hand-tuned theme. The other 22 are Omarchy's palettes, converted by
+adding `border_inactive` and `bar_border` (and `orange`/`brown` where missing) from their own colours.
 
 ## What's in the repo
 
@@ -118,12 +121,17 @@ home/                      chezmoi source → $HOME
   dot_config/sketchybar/   bar (Lua)
   dot_config/television/   pickers (cable channels)
   dot_config/{ghostty,tmux,nvim,btop,borders,spotify-player,…}
-  dot_local/bin/           unmacos-* helpers (menu, tui, popup, theme-render, doctor)
+  dot_local/bin/           unmacos-* helpers (menu, tui, popup, paste, theme-render, theme-preview, doctor)
   dot_local/share/unmacos/ themes, templates, configuration profile
 ```
 
 ## Things to change for your Mac
 
+- **Gaps** are 4px you can see. JankyBorders draws its 6px border outside each window, so Rift's gaps
+  include it: inner 16, sides 10, top 44. Change `UNMACOS_GAP`/`UNMACOS_BORDER` in `unmacos-toggle-bar`
+  and the gaps section of `dot_config/rift/config.toml` together.
+- **Animations**: `rift-cli execute config set-animate false` turns them off. Rift moves real windows, so
+  a new window slides in from wherever macOS first put it; Hyprland-style compositor effects aren't possible.
 - **Wi-Fi widget** uses interface `en0` (`dot_config/sketchybar/items/widgets/wifi.lua`).
 - **Browser** is Firefox. Change the `Alt + Shift + B` lines in `dot_config/rift/config.toml`.
 - **Personal apps**: edit `Brewfile.personal`, or answer no.
@@ -144,7 +152,8 @@ Opt out with `UNMACOS_KEEP_AI=1` / `UNMACOS_KEEP_GLASS=1 chezmoi apply`. The scr
 
 - [FelixKratz](https://github.com/FelixKratz): SketchyBar, SbarLua, JankyBorders and the dotfiles this bar started from
 - [acsandmann/rift](https://github.com/acsandmann/rift): the window manager
-- [Omarchy](https://github.com/basecamp/omarchy): the keybindings, menus and theme format UnMacOS copies
+- [Omarchy](https://github.com/basecamp/omarchy): the keybindings, menus, theme format and 22 theme palettes (MIT, see `home/dot_local/share/unmacos/licenses/omarchy.txt`)
+- [Unicode emoji data](https://www.unicode.org/license.txt): the emoji picker's list
 - [television](https://github.com/alexpasmantier/television), [clipse](https://github.com/savedra1/clipse), [spotify_player](https://github.com/aome510/spotify-player), [nnn](https://github.com/jarun/nnn)
 - [kvndrsslr/sketchybar-app-font](https://github.com/kvndrsslr/sketchybar-app-font), [Tokyo Night](https://github.com/folke/tokyonight.nvim)
 
