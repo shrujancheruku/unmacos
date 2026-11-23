@@ -48,15 +48,15 @@ window_insertion_point = "next_to_selection"
 stack_offset = 40.0
 default_orientation = "perpendicular"
 
-# A visible 4px gap everywhere except the bottom. Rift measures gaps between
-# window frames, but JankyBorders draws its 6px border outside the frame, so:
-#   inner = 4 + 6 + 6, sides = 4 + 6, top = 34 (bottom of the bar's pills) + 4 + 6
+# A visible 4px gap on every side. Rift measures gaps between window frames,
+# but JankyBorders draws its 6px border outside the frame, so:
+#   inner = 4 + 6 + 6, sides and bottom = 4 + 6, top = 37 (bottom of the bar's chips) + 4 + 6
 # top below is for screens without a notch. At start, and whenever the bar is
 # hidden or shown, unmacos-toggle-bar recomputes it for the actual display.
 [settings.layout.gaps.outer]
-top = 44
+top = 47
 left = 10
-bottom = 0
+bottom = 10
 right = 10
 
 [settings.layout.gaps.inner]
