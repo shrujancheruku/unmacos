@@ -15,9 +15,15 @@ animation_fps = 120.0 # ProMotion rate; must be > 0 (Rift 0.8.x crashes on 0 des
 # Tile every Space by default, like Hyprland (Rift's default is opt-in per Space).
 default_disable = false
 
+# Focus follows mouse: the tile under the pointer is the focused one.
+# Mouse follows focus: keyboard focus changes warp the pointer to the centre of
+# the newly focused window and hide it until the mouse is physically moved, like
+# AeroSpace's `move-mouse window-lazy-center` (so a stray click or Alt + W can't
+# hit the wrong window). Hiding is set up only when the service starts, so
+# changing mouse_hides_on_focus needs `rift service restart`, not a reload.
 focus_follows_mouse = true
 mouse_follows_focus = true
-mouse_hides_on_focus = false
+mouse_hides_on_focus = true
 
 auto_focus_blacklist = ["com.apple.Spotlight", "com.raycast.macos"]
 
