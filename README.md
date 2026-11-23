@@ -4,7 +4,7 @@
 
 ### macOS is built for a trackpad. This is the desktop for the keyboard.
 
-**Tiling windows, instant fuzzy menus, terminal apps and one theme across the whole screen, switched live. [Omarchy](https://omarchy.org)'s workflow on a Mac, installed with one command.**
+**Tiling windows, instant fuzzy menus, terminal apps and one theme across the whole screen, switched live. [Omarchy](https://omarchy.org)-inspired workflow on a Mac, installed with one command.**
 
 [![macOS](https://img.shields.io/badge/macOS-15%20→%2027-000000?style=for-the-badge&logo=apple)](https://www.apple.com/macos/)
 [![Rift](https://img.shields.io/badge/WM-Rift-7aa2f7?style=for-the-badge)](https://github.com/acsandmann/rift)
