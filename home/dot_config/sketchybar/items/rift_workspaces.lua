@@ -1,7 +1,7 @@
 -- ~/.config/sketchybar/items/rift_workspaces.lua
 --
 -- Rift Workspace Integration for SketchyBar
--- Same visuals as aerospace_workspaces.lua, backed by `rift-cli`.
+-- Workspace chips backed by `rift-cli`.
 --
 -- Data comes from one call, `rift-cli query workspaces`, which returns a JSON
 -- array of workspaces (see rift-protocol WorkspaceData):
@@ -36,10 +36,10 @@ local STYLE = {
 	chip_border = colors.black,
 	chip_height = 26,
 	bracket_border = colors.bg2,
-	active_icon_highlight = colors.red,
+	active_icon_highlight = colors.accent,
 	active_label_highlight = colors.white,
 	inactive_icon_color = colors.white,
-	inactive_label_color = colors.grey,
+	inactive_label_color = colors.with_alpha(colors.white, 0.45), -- grey is ~2:1 on bg1
 }
 
 -- Fired by the subscriptions in ~/.config/rift/config.toml (run_on_start)
@@ -61,13 +61,13 @@ for i, ws in ipairs(WORKSPACES) do
 		icon = {
 			font = { family = settings.font.numbers },
 			string = ws,
-			padding_left = 15,
+			padding_left = 16,
 			padding_right = 8,
 			color = STYLE.inactive_icon_color,
 			highlight_color = STYLE.active_icon_highlight,
 		},
 		label = {
-			padding_right = 20,
+			padding_right = 16,
 			color = STYLE.inactive_label_color,
 			highlight_color = STYLE.active_label_highlight,
 			font = "sketchybar-app-font:Regular:16.0",

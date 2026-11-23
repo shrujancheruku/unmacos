@@ -10,7 +10,8 @@ local cpu = sbar.add("graph", "widgets.cpu", 42, {
 	position = "right",
 	graph = { color = colors.blue },
 	background = {
-		height = 22,
+		height = 16,
+        y_offset = -4, -- graph sits below the cpu % label instead of under it
 		color = { alpha = 0 },
 		border_color = { alpha = 0 },
 		drawing = true,

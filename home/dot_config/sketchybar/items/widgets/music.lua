@@ -30,7 +30,7 @@ local cover = sbar.add("item", "widgets.music.cover", {
 	icon = { drawing = false },
 	label = { drawing = false },
 	padding_left = 0,
-	padding_right = 6,
+	padding_right = 0, -- set to 6 once artwork exists, so no gap without it
 	updates = true,
 })
 
@@ -42,13 +42,13 @@ local artist = sbar.add("item", "widgets.music.artist", {
 	width = 0, -- overlay
 	padding_left = 5,
 	padding_right = 0,
-	y_offset = -6, -- top line
+	y_offset = -6, -- bottom line (negative = down)
 	icon = { drawing = false },
 	label = {
 		max_chars = MAX_CHARS,
 		align = "left",
-		font = { style = settings.font.style_map["Semibold"], size = 7 },
-		color = colors.grey,
+		font = { style = settings.font.style_map["Semibold"], size = 8 },
+		color = colors.with_alpha(colors.white, 0.6),
 	},
 })
 
@@ -56,7 +56,7 @@ local title = sbar.add("item", "widgets.music.title", {
 	position = side(),
 	padding_left = 5,
 	padding_right = 6,
-	y_offset = 6, -- bottom line
+	y_offset = 6, -- top line
 	icon = { drawing = false },
 	label = {
 		max_chars = MAX_CHARS,
@@ -93,7 +93,7 @@ sbar.add(
 	"bracket",
 	"widgets.music.bracket",
 	{ btn_prev.name, btn_pp.name, btn_next.name, artist.name, title.name, cover.name },
-	{ background = { color = colors.bg1, border_color = colors.black, border_width = 1, height = 26 } }
+	{ background = { color = colors.bg1 } } -- same h28 / 2px bg2 border as the other widgets
 )
 
 sbar.add("item", "widgets.music.padding", {
@@ -215,6 +215,7 @@ local function refresh_once()
 		sbar.exec("/usr/bin/osascript -e '" .. APPLESCRIPT_ART:gsub("'", [["]]) .. "'", function(ok)
 			if ok and ok:match("ok") then
 				cover:set({
+					padding_right = 6,
 					background = {
 						height = COVER_SIZE,
 						image = { string = ART_PATH, scale = COVER_SCALE, corner_radius = COVER_RADIUS },

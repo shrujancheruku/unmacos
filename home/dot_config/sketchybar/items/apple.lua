@@ -17,6 +17,7 @@ local apple = sbar.add("item", {
 		color = colors.bg2,
 		border_color = colors.black,
 		border_width = 1,
+		height = 26,
 	},
 	padding_left = 1,
 	padding_right = 1,
@@ -27,10 +28,10 @@ local apple = sbar.add("item", {
 sbar.add("bracket", { apple.name }, {
 	background = {
 		color = colors.transparent,
-		height = 30,
+		height = 28,
 		border_color = colors.grey,
 	},
 })
 
 -- Padding item required because of bracket
-sbar.add("item", { width = 7 })
+sbar.add("item", { width = settings.group_paddings })

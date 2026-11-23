@@ -26,9 +26,7 @@ sbar.add("event", "weather_update")
 local weather = sbar.add("item", "widgets.weather", {
 	position = "right",
 	icon = { string = "􀇃" }, -- default cloud.sun
-	label = { string = "…°", font = { style = settings.font.style_map["Bold"], size = 12 } },
-	padding_left = 6,
-	padding_right = 6,
+	label = { string = "…°" },
 	update_freq = 600, -- 10 min
 })
 

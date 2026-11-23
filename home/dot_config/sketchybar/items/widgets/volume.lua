@@ -83,7 +83,7 @@ volume_percent:subscribe("volume_change", function(env)
 
 	local lead = ""
 	if volume < 10 then
-		lead = ""
+		lead = "\u{2007}" -- figure space keeps the chip width fixed
 	end
 
 	volume_icon:set({ label = icon })
