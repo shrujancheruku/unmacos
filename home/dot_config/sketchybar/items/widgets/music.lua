@@ -4,8 +4,8 @@ local icons = require("icons")
 local settings = require("settings")
 
 -- --- tuning ---------------------------------------------------------------
-local COVER_SIZE = 26
-local COVER_SCALE = 0.04
+local COVER_SIZE = 22
+local COVER_SCALE = 0.034
 local COVER_RADIUS = 5
 local SHOW_ON_RIGHT = false
 local POLL_SECONDS = 2.0
@@ -29,39 +29,39 @@ local cover = sbar.add("item", "widgets.music.cover", {
 	},
 	icon = { drawing = false },
 	label = { drawing = false },
-	padding_left = 0,
-	padding_right = 6,
+	padding_left = 0, -- both set to 4 once artwork exists, so no gap without it
+	padding_right = 0,
 	updates = true,
 })
 
 -- Two-line stack (artist top, title bottom)
-local MAX_CHARS = 26
+local MAX_CHARS = 24
 
 local artist = sbar.add("item", "widgets.music.artist", {
 	position = side(),
 	width = 0, -- overlay
-	padding_left = 5,
+	padding_left = 12,
 	padding_right = 0,
-	y_offset = -6, -- top line
+	y_offset = -7, -- bottom line (negative = down)
 	icon = { drawing = false },
 	label = {
 		max_chars = MAX_CHARS,
 		align = "left",
-		font = { style = settings.font.style_map["Semibold"], size = 7 },
-		color = colors.grey,
+		font = { style = settings.font.style_map["Semibold"], size = 10 },
+		color = colors.dim,
 	},
 })
 
 local title = sbar.add("item", "widgets.music.title", {
 	position = side(),
-	padding_left = 5,
-	padding_right = 6,
-	y_offset = 6, -- bottom line
+	padding_left = 12,
+	padding_right = 14, -- gap before the controls
+	y_offset = 6, -- top line
 	icon = { drawing = false },
 	label = {
 		max_chars = MAX_CHARS,
 		align = "left",
-		font = { style = settings.font.style_map["Bold"], size = 9 },
+		font = { style = settings.font.style_map["Bold"], size = 11 },
 		color = colors.white,
 	},
 })
@@ -69,31 +69,31 @@ local title = sbar.add("item", "widgets.music.title", {
 -- Controls
 local btn_prev = sbar.add("item", "widgets.music.prev", {
 	position = side(),
-	icon = { string = icons.media.back, font = { size = 12.0 } },
+	icon = { string = icons.media.back, font = { size = 13.0 } },
 	label = { drawing = false },
-	padding_left = 2,
-	padding_right = 2,
+	padding_left = 0,
+	padding_right = 4,
 })
 local btn_pp = sbar.add("item", "widgets.music.pp", {
 	position = side(),
-	icon = { string = icons.media.play_pause, font = { size = 12.0 } },
+	icon = { string = icons.media.play_pause, font = { size = 13.0 } },
 	label = { drawing = false },
-	padding_left = 2,
-	padding_right = 2,
+	padding_left = 4,
+	padding_right = 4,
 })
 local btn_next = sbar.add("item", "widgets.music.next", {
 	position = side(),
-	icon = { string = icons.media.forward, font = { size = 12.0 } },
+	icon = { string = icons.media.forward, font = { size = 13.0 } },
 	label = { drawing = false },
-	padding_left = 2,
-	padding_right = 6,
+	padding_left = 4,
+	padding_right = 10,
 })
 -- Chip bracket around (cover + texts + controls)
 sbar.add(
 	"bracket",
 	"widgets.music.bracket",
 	{ btn_prev.name, btn_pp.name, btn_next.name, artist.name, title.name, cover.name },
-	{ background = { color = colors.bg1, border_color = colors.black, border_width = 1, height = 26 } }
+	{ background = { color = colors.bg1 } } -- same h28 / 2px bg2 border as the other widgets
 )
 
 sbar.add("item", "widgets.music.padding", {
@@ -215,6 +215,8 @@ local function refresh_once()
 		sbar.exec("/usr/bin/osascript -e '" .. APPLESCRIPT_ART:gsub("'", [["]]) .. "'", function(ok)
 			if ok and ok:match("ok") then
 				cover:set({
+					padding_left = 4,
+					padding_right = 4,
 					background = {
 						height = COVER_SIZE,
 						image = { string = ART_PATH, scale = COVER_SCALE, corner_radius = COVER_RADIUS },

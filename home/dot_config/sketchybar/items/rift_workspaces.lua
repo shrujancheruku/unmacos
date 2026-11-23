@@ -1,7 +1,7 @@
 -- ~/.config/sketchybar/items/rift_workspaces.lua
 --
 -- Rift Workspace Integration for SketchyBar
--- Same visuals as aerospace_workspaces.lua, backed by `rift-cli`.
+-- Workspace chips backed by `rift-cli`.
 --
 -- Data comes from one call, `rift-cli query workspaces`, which returns a JSON
 -- array of workspaces (see rift-protocol WorkspaceData):
@@ -33,13 +33,12 @@ local WORKSPACES = { "1", "2", "3", "4", "5" }
 
 local STYLE = {
 	chip_bg = colors.bg1,
-	chip_border = colors.black,
-	chip_height = 26,
-	bracket_border = colors.bg2,
-	active_icon_highlight = colors.red,
+	chip_border = colors.ring, -- same ring as every other chip
+	active_border = colors.accent,
+	active_icon_highlight = colors.accent,
 	active_label_highlight = colors.white,
-	inactive_icon_color = colors.white,
-	inactive_label_color = colors.grey,
+	inactive_icon_color = colors.dim,
+	inactive_label_color = colors.dim,
 }
 
 -- Fired by the subscriptions in ~/.config/rift/config.toml (run_on_start)
@@ -50,7 +49,7 @@ sbar.add("event", "rift_windows_changed")
 -- ITEMS
 -- ============================================================================
 
-local workspace_items = {} -- name -> { item, bracket, pad }
+local workspace_items = {} -- name -> { item, pad }
 
 for i, ws in ipairs(WORKSPACES) do
 	local rift_index = i - 1
@@ -61,37 +60,21 @@ for i, ws in ipairs(WORKSPACES) do
 		icon = {
 			font = { family = settings.font.numbers },
 			string = ws,
-			padding_left = 15,
+			padding_left = 12,
 			padding_right = 8,
 			color = STYLE.inactive_icon_color,
 			highlight_color = STYLE.active_icon_highlight,
 		},
 		label = {
-			padding_right = 20,
+			padding_right = 12,
 			color = STYLE.inactive_label_color,
 			highlight_color = STYLE.active_label_highlight,
 			font = "sketchybar-app-font:Regular:16.0",
 			y_offset = -1,
 		},
-		padding_right = 1,
-		padding_left = 1,
-		background = {
-			color = STYLE.chip_bg,
-			border_width = 1,
-			height = STYLE.chip_height,
-			border_color = STYLE.chip_border,
-		},
-		drawing = "off",
-	})
-
-	local bracket = sbar.add("bracket", { item.name }, {
-		display = DISPLAY,
-		background = {
-			color = colors.transparent,
-			border_color = STYLE.bracket_border,
-			height = STYLE.chip_height + 2,
-			border_width = 2,
-		},
+		padding_right = 0,
+		padding_left = 0,
+		background = { color = STYLE.chip_bg, border_color = STYLE.chip_border },
 		drawing = "off",
 	})
 
@@ -111,7 +94,7 @@ for i, ws in ipairs(WORKSPACES) do
 		end
 	end)
 
-	workspace_items[ws] = { item = item, bracket = bracket, pad = pad }
+	workspace_items[ws] = { item = item, pad = pad }
 end
 
 -- ============================================================================
@@ -138,7 +121,6 @@ local function render(ws, data)
 	local drawing = visible and "on" or "off"
 
 	w.item:set({ drawing = drawing })
-	w.bracket:set({ drawing = drawing })
 	w.pad:set({ drawing = drawing })
 	if not visible then
 		return
@@ -148,10 +130,7 @@ local function render(ws, data)
 	w.item:set({
 		icon = { highlight = is_focused },
 		label = { string = label, highlight = is_focused },
-		background = { border_color = is_focused and STYLE.chip_border or STYLE.bracket_border },
-	})
-	w.bracket:set({
-		background = { border_color = is_focused and colors.grey or STYLE.bracket_border },
+		background = { border_color = is_focused and STYLE.active_border or STYLE.chip_border },
 	})
 end
 

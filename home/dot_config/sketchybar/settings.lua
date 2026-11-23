@@ -1,6 +1,7 @@
 return {
-  paddings = 3,
-  group_paddings = 5,
+  paddings = 4,
+  group_paddings = 6,
+  chip_height = 30, -- every chip; unmacos-toggle-bar reads it for the window gap
 
   icons = "sf-symbols", -- alternatively available: NerdFont
 

@@ -7,7 +7,7 @@ local battery = sbar.add("item", "widgets.battery", {
 	icon = {
 		font = {
 			style = settings.font.style_map["Regular"],
-			size = 19.0,
+			size = 16.0,
 		},
 	},
 	label = { font = { family = settings.font.numbers } },
@@ -63,7 +63,7 @@ battery:subscribe({ "routine", "power_source_change", "system_woke" }, function(
 
 		local lead = ""
 		if found and charge < 10 then
-			lead = ""
+			lead = "\u{2007}" -- figure space keeps the chip width fixed
 		end
 
 		battery:set({
