@@ -91,7 +91,7 @@ Then a few clicks macOS won't let a script make for you:
 4. On macOS 26 and later, approve **UnMacOS: no Apple Intelligence** in
    *System Settings → General → Device Management*.
 5. Open Firefox, click the **Pywalfox** toolbar icon and choose **Fetch Pywal colors** once. After that
-   Firefox follows every theme switch. For web pages, import
+   Firefox follows every theme switch, with toolbar icons and highlights in the theme's accent. For web pages, import
    `~/.local/state/unmacos/theme/darkreader.json` in **Dark Reader → Settings → Advanced → Import
    Settings** (`Cmd + Shift + G` in the file picker takes a path). Pages don't switch live: a
    notification reminds you to import again after each theme switch.
