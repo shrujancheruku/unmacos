@@ -96,6 +96,9 @@ app_rules = [
   { title_substring = "Settings", ax_subrole = "AXDialog", floating = true },
   { app_id = "com.apple.systempreferences", floating = true },
   { app_id = "com.apple.ActivityMonitor", floating = true },
+  # Mullvad VPN's window is the dropdown under its menu bar icon: when Rift
+  # moved or focused it, it lost focus and closed. Leave it alone entirely.
+  { app_id = "net.mullvad.vpn", manage = false },
   # unmacos-popup windows (menus, pickers): floating, centred (position is a
   # fraction of the free space; size is in points)
   # The cheatsheet (title "float:keys") gets a bigger window; listed first.
