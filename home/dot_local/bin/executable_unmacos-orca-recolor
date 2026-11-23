@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+# UnMacOS: recolor Orca (onorca.dev) to the current theme, live.
+#   unmacos-orca-recolor     exit 0 = recolored, 2 = Orca not running, 1 = failed
+# ~/.local/share/unmacos/orca-plugin is a content-only Orca plugin ("UnMacOS"
+# app theme + terminal palette, no code, no approval). This copies the rendered
+# orca-app.json and orca-terminal.json into it and has Orca reload it. Orca
+# keeps it loaded as a development folder (Settings > Plugins), so it survives
+# restarts. Pick "UnMacOS" once as Orca's app theme (dark and light) and
+# terminal theme; after that every theme switch recolors Orca in place.
+set -euo pipefail
+
+STATE="${UNMACOS_STATE:-$HOME/.local/state/unmacos}"
+PLUGIN="${UNMACOS_SHARE:-$HOME/.local/share/unmacos}/orca-plugin"
+command -v orca >/dev/null || { echo "unmacos-orca-recolor: no orca CLI" >&2; exit 1; }
+pgrep -xq Orca || { echo "unmacos-orca-recolor: Orca not running" >&2; exit 2; }
+
+mkdir -p "$PLUGIN/themes" "$PLUGIN/terminal"
+cp "$STATE/theme/orca-app.json" "$PLUGIN/themes/unmacos.json"
+cp "$STATE/theme/orca-terminal.json" "$PLUGIN/terminal/unmacos.json"
+
+# Load once (then Orca remembers the folder), else reload what changed
+if orca plugin list --json 2>/dev/null | jq -e '.result.plugins[] | select(.pluginKey == "local.unmacos" and .isDev)' >/dev/null; then
+  orca plugin dev reload "$PLUGIN" --json >/dev/null
+else
+  orca plugin dev load "$PLUGIN" --json >/dev/null
+fi

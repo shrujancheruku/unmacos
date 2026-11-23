@@ -47,7 +47,7 @@ window that's already open. They all run in [Ghostty](https://ghostty.org) and l
 belong together.
 
 **One theme, everywhere, instantly.** Pick a theme and the bar, window borders, terminal, tmux, btop,
-Neovim, Firefox and Spotify all change at once, even editors that are already open. Comes with 23 themes, including
+Neovim, Firefox, Spotify and Orca all change at once, even editors that are already open. Comes with 23 themes, including
 hand-tuned Tokyo Night and every Omarchy palette from Catppuccin to Gruvbox, Nord, Rosé Pine and
 Kanagawa. The picker shows each palette in colour before you commit, and every theme brings its
 own set of Omarchy wallpapers.
@@ -188,6 +188,12 @@ widget and `unmacos-spotify` open Spotify with the port. The Dock and Spotlight 
 opening it there the first switch reopens it once and resumes what was playing. Run `UNMACOS_KEEP_SPOTIFY=1 chezmoi apply` to skip it, or
 `spicetify restore` to undo. Spotify updates undo the patch; `chezmoi apply` (or
 `spicetify backup apply`) puts it back.
+
+**Orca.** Switching themes recolors [Orca](https://onorca.dev) live through a local, content-only
+plugin (`~/.local/share/unmacos/orca-plugin`, loaded as a development folder). Once, in Orca's
+Settings, pick **UnMacOS** as the app theme (dark and light) and the terminal theme. Set
+`UNMACOS_KEEP_ORCA=1` to leave Orca alone, or `orca plugin dev unload ~/.local/share/unmacos/orca-plugin`
+to remove it.
 
 **Keep Firefox's own theme.** Run `UNMACOS_KEEP_FIREFOX=1 chezmoi apply` before the first apply, or
 remove Pywalfox in Firefox's Add-ons. `home/.chezmoiscripts/run_onchange_after_80-firefox.sh` lists

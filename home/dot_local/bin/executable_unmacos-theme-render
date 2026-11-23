@@ -99,6 +99,11 @@ if [[ "${UNMACOS_KEEP_FIREFOX:-}" != 1 ]] && ls "$HOME/Library/Application Suppo
   osascript -e "display notification \"Dark Reader > Settings > Advanced > Import Settings: $OUT/darkreader.json\" with title \"Firefox pages: $theme\"" >/dev/null 2>&1 || true
 fi
 # Neovim reloads itself: lua/plugins/unmacos-theme.lua watches $OUT
+# Orca: push the palette into its settings over its runtime socket (live).
+# UNMACOS_KEEP_ORCA=1 leaves Orca's theme alone.
+if [[ "${UNMACOS_KEEP_ORCA:-}" != 1 && -x "$HOME/.local/bin/unmacos-orca-recolor" ]] && pgrep -xq Orca; then
+  "$HOME/.local/bin/unmacos-orca-recolor" </dev/null >/dev/null 2>&1 &
+fi
 # Spotify (Spicetify): bake the new color.ini into Spotify's colors.css, then
 # swap it into the open Spotify over DevTools (unmacos-spotify-recolor: live,
 # playback untouched). That needs Spotify launched with the debug port, so if

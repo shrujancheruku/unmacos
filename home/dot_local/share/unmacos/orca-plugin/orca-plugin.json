@@ -1,0 +1,19 @@
+{
+  "manifestVersion": 2,
+  "id": "unmacos",
+  "name": "UnMacOS",
+  "version": "1.0.0",
+  "description": "The current UnMacOS theme, kept in sync by unmacos-theme-render.",
+  "engines": {
+    "orca": ">=1.4.246"
+  },
+  "execution": "data",
+  "contributes": {
+    "themes": [
+      { "id": "unmacos", "title": "UnMacOS", "path": "themes/unmacos.json" }
+    ],
+    "terminalThemes": [
+      { "id": "unmacos", "title": "UnMacOS", "path": "terminal/unmacos.json" }
+    ]
+  }
+}
