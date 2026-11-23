@@ -63,11 +63,14 @@ echo "$theme" > "$STATE/theme.name"
 echo "unmacos: theme '$theme' rendered to $OUT"
 
 # Firefox (Pywalfox) reads pywal's colors file. Link it to ours, unless real
-# pywal owns it.
+# pywal owns it. Pywalfox's built-in templates read fixed slots and expect
+# color0 to be dark (dark mode: color10 = icons and highlights; light mode:
+# color0 = text, color7 = background), so light themes get their own layout.
 wal="${XDG_CACHE_HOME:-$HOME/.cache}/wal/colors.json"
 if [[ ! -e "$wal" || -L "$wal" ]]; then
   mkdir -p "$(dirname "$wal")"
-  ln -sfn "$OUT/pywal-colors.json" "$wal"
+  pywal="pywal-colors.json"; [[ "$mode_is_dark" == 0 ]] && pywal="pywal-colors-light.json"
+  ln -sfn "$OUT/$pywal" "$wal"
 fi
 
 [[ "${UNMACOS_NO_RELOAD:-}" == 1 ]] && exit 0
