@@ -1,7 +1,10 @@
 #!/bin/bash
-# UnMacOS: install Homebrew packages. Re-runs when a Brewfile changes.
+# UnMacOS: install Homebrew packages. Re-runs when a Brewfile or your app choices change.
 # Brewfile hash: {{ include "../Brewfile" | sha256sum }}
-# Personal hash: {{ include "../Brewfile.personal" | sha256sum }} (personal = {{ .personal }})
+# App groups: {{ .apps | join " " }}; skipped: {{ .apps_skip | join ", " }}
+{{- range .apps }}
+# {{ . }} hash: {{ include (printf "../brew/%s.Brewfile" .) | sha256sum }}
+{{- end }}
 set -euo pipefail
 if [[ ! -x /opt/homebrew/bin/brew ]]; then
   NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
@@ -9,7 +12,17 @@ fi
 eval "$(/opt/homebrew/bin/brew shellenv)"
 echo "==> brew bundle (core)"
 brew bundle --file="{{ .chezmoi.workingTree }}/Brewfile"
-{{- if .personal }}
-echo "==> brew bundle (personal)"
-brew bundle --file="{{ .chezmoi.workingTree }}/Brewfile.personal" || echo "Some personal apps failed; continuing."
+{{- if .apps }}
+
+# The chosen groups in one Brewfile, without the apps you unticked
+picked="$(mktemp -t unmacos-brewfile)"
+trap 'rm -f "$picked"' EXIT
+for g in{{ range .apps }} {{ . | quote }}{{ end }}; do
+  cat "{{ .chezmoi.workingTree }}/brew/$g.Brewfile"
+done | awk -v skip={{ .apps_skip | join "|" | quote }} '
+  BEGIN { n = split(skip, s, "|"); for (i = 1; i <= n; i++) drop[s[i]] = 1 }
+  /^(brew|cask|mas) "/ { split($0, q, "\""); id = q[2]; sub(/.*\//, "", id); if (id in drop) next }
+  { print }' > "$picked"
+echo "==> brew bundle ({{ .apps | join ", " }})"
+brew bundle --file="$picked" || echo "Some optional apps failed; continuing."
 {{- end }}

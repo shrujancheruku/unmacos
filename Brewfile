@@ -1,6 +1,6 @@
 # UnMacOS — core desktop
 # Everything the Omarchy-style desktop and terminal setup needs.
-# Personal apps live in Brewfile.personal (installed only when you opt in).
+# Optional app groups live in brew/*.Brewfile (pick them with unmacos-setup).
 
 # --- Taps ---
 tap "acsandmann/tap"       # Rift window manager
@@ -18,6 +18,7 @@ brew "blueutil"                                      # Bluetooth picker
 brew "smudge/smudge/nightlight", trusted: true       # Night Shift toggle
 brew "television"                                    # Launcher and every picker
 brew "mas"                                           # Mac App Store CLI
+brew "gum"                                           # unmacos-setup wizard
 
 # --- Terminal ---
 cask "ghostty"

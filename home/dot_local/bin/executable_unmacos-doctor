@@ -15,10 +15,14 @@ echo "UnMacOS doctor — macOS $(sw_vers -productVersion)"
 echo "Commands"
 for c in rift rift-cli sketchybar borders tv ghostty tmux nvim nnn btop lazygit lazydocker \
          spotify_player SwitchAudioSource blueutil nightlight nowplaying-cli jq fd rg fzf \
-         chezmoi op clipse unmacos-tui unmacos-menu unmacos-popup unmacos-paste unmacos-theme-render unmacos-theme-preview unmacos-keys unmacos-spotify unmacos-spotify-recolor unmacos-orca-recolor unmacos-accent unmacos-wallpaper unmacos-firefox-wallpaper unmacos-weather; do
+         chezmoi gum op clipse unmacos-setup unmacos-tui unmacos-menu unmacos-popup unmacos-paste unmacos-theme-render unmacos-theme-preview unmacos-keys unmacos-spotify unmacos-spotify-recolor unmacos-orca-recolor unmacos-accent unmacos-wallpaper unmacos-firefox-wallpaper unmacos-weather; do
   if [[ "$c" == ghostty ]]; then check "Ghostty.app" '[[ -d /Applications/Ghostty.app ]]'
   else check "$c" "command -v $c"; fi
 done
+
+echo "Setup"
+if [[ -f "$HOME/.config/unmacos/setup.toml" ]]; then ok "Answers saved (~/.config/unmacos/setup.toml)"
+else note "No saved answers yet: run unmacos-setup"; fi
 
 echo "Desktop"
 check "Rift running" 'pgrep -xq rift' "rift service start; allow Accessibility"
@@ -37,6 +41,9 @@ check "Theme rendered ($(cat "$HOME/.local/state/unmacos/theme.name" 2>/dev/null
 check "television theme link" '[[ -e $HOME/.config/television/themes/unmacos.toml ]]'
 check "btop theme link" '[[ -e $HOME/.config/btop/themes/unmacos.theme ]]'
 check "Firefox theme (Pywalfox)" '[[ -f "$HOME/Library/Application Support/Mozilla/NativeMessagingHosts/pywalfox.json" && -e "${XDG_CACHE_HOME:-$HOME/.cache}/wal/colors.json" ]]'
+if [[ -d /Applications/Firefox.app ]] && ! ( [[ -r "$HOME/.config/unmacos/prefs.sh" ]] && . "$HOME/.config/unmacos/prefs.sh"; [[ "${UNMACOS_KEEP_FIREFOX:-}" == 1 || "${UNMACOS_KEEP_FIREFOX_WALLPAPER:-}" == 1 ]] ); then
+  check "Firefox live new tab wallpaper" 'cmp -s $HOME/.local/share/unmacos/firefox/unmacos.cfg /Applications/Firefox.app/Contents/Resources/unmacos.cfg' "unmacos-firefox-wallpaper (a Firefox update removes it), then restart Firefox"
+fi
 if command -v spicetify >/dev/null && [[ -d /Applications/Spotify.app ]]; then
   check "Spotify theme (Spicetify)" '[[ $(spicetify config current_theme) == UnMacOS && -e $HOME/.config/spicetify/Themes/UnMacOS/color.ini ]]' "chezmoi apply, or spicetify backup apply after a Spotify update"
 fi

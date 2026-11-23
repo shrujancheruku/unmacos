@@ -12,6 +12,8 @@
 #          defaults delete -g NSConvolutionOverride1 (and NSConvolutionOverride2),
 #          sudo rm /Library/Preferences/FeatureFlags/Domain/WritingTools.plist
 set -euo pipefail
+# Your unmacos-setup choices: {{ .keep | toJson }}
+[[ -r "$HOME/.config/unmacos/prefs.sh" ]] && . "$HOME/.config/unmacos/prefs.sh"
 
 major="$(sw_vers -productVersion | cut -d. -f1)"
 if (( major < 26 )); then
@@ -34,9 +36,11 @@ if [[ "${UNMACOS_KEEP_AI:-}" != 1 ]]; then
     echo "    Approve 'UnMacOS: no Apple Intelligence' in System Settings > General > Device Management"
   fi
 
-  # Writing Tools popup in every text field
-  sudo mkdir -p /Library/Preferences/FeatureFlags/Domain
-  sudo defaults write /Library/Preferences/FeatureFlags/Domain/WritingTools LightweightUI_macOS -dict Enabled -bool false
+  # Writing Tools popup in every text field (needs sudo, so only when it isn't off yet)
+  if ! defaults read /Library/Preferences/FeatureFlags/Domain/WritingTools LightweightUI_macOS 2>/dev/null | grep -q "Enabled = 0"; then
+    sudo mkdir -p /Library/Preferences/FeatureFlags/Domain
+    sudo defaults write /Library/Preferences/FeatureFlags/Domain/WritingTools LightweightUI_macOS -dict Enabled -bool false
+  fi
 
   # Siri, inline predictions and summaries (the profile enforces these; set them too)
   defaults write com.apple.assistant.support "Assistant Enabled" -bool false

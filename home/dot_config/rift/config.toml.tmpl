@@ -1,12 +1,12 @@
 # Rift config: Omarchy/Hyprland-style binary splitting on macOS
-# Linked to ~/.config/rift/config.toml by scripts/migrate-to-rift.sh
+# chezmoi template: animate and the focus/mouse settings come from unmacos-setup.
 #
 # Modifier: Alt (Option) stands in for Omarchy's SUPER.
 # Reference: https://acsandmann.github.io/rift-docs/ (built against rift.default.toml, v0.8.x)
 
 [settings]
 # Window animations, like Omarchy (Hyprland). Turn off live: rift-cli execute config set-animate false
-animate = true
+animate = {{ .desktop.animate }}
 animation_duration = 0.15
 # Fast start, soft landing: new windows spend less time sliding into place
 animation_easing = "ease_out_cubic"
@@ -21,9 +21,9 @@ default_disable = false
 # AeroSpace's `move-mouse window-lazy-center` (so a stray click or Alt + W can't
 # hit the wrong window). Hiding is set up only when the service starts, so
 # changing mouse_hides_on_focus needs `rift service restart`, not a reload.
-focus_follows_mouse = true
-mouse_follows_focus = true
-mouse_hides_on_focus = true
+focus_follows_mouse = {{ .desktop.focus_follows_mouse }}
+mouse_follows_focus = {{ .desktop.mouse_follows_focus }}
+mouse_hides_on_focus = {{ .desktop.mouse_hides_on_focus }}
 
 auto_focus_blacklist = ["com.apple.Spotlight", "com.raycast.macos"]
 
