@@ -79,6 +79,8 @@ fi
 trap '' HUP
 mode="$(awk -F'"' '/^mode/ {print $2}' "$src/colors.toml")"
 osascript -e "tell application \"System Events\" to tell appearance preferences to set dark mode to $([[ "$mode" == light ]] && echo false || echo true)" >/dev/null 2>&1 || true
+# Accent and highlight colours (dialogs, buttons, selection). UNMACOS_KEEP_ACCENT=1 skips it.
+[[ "${UNMACOS_KEEP_ACCENT:-}" != 1 && -x "$HOME/.local/bin/unmacos-accent" ]] && "$HOME/.local/bin/unmacos-accent" "$theme" >/dev/null 2>&1 || true
 pgrep -xq sketchybar && sketchybar --reload >/dev/null 2>&1 || true
 pgrep -xq borders && [[ -x "$HOME/.config/borders/bordersrc" ]] && "$HOME/.config/borders/bordersrc" >/dev/null 2>&1 &
 pgrep -xq tmux && tmux source-file "$OUT/tmux.conf" >/dev/null 2>&1 || true
