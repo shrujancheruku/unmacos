@@ -103,11 +103,8 @@ if [[ -x "$HOME/.local/bin/pywalfox" ]]; then
   "$HOME/.local/bin/pywalfox" "$([[ "$mode" == light ]] && echo light || echo dark)" >/dev/null 2>&1 || true
   "$HOME/.local/bin/pywalfox" update >/dev/null 2>&1 || true
 fi
-# Firefox pages: Dark Reader can't be driven from outside, so remind to import
-# the rendered settings (only when Dark Reader is installed).
-if [[ "${UNMACOS_KEEP_FIREFOX:-}" != 1 ]] && ls "$HOME/Library/Application Support/Firefox/Profiles"/*/extensions/addon@darkreader.org.xpi >/dev/null 2>&1; then
-  osascript -e "display notification \"Dark Reader > Settings > Advanced > Import Settings: $OUT/darkreader.json\" with title \"Firefox pages: $theme\"" >/dev/null 2>&1 || true
-fi
+# Firefox pages: Dark Reader can't be driven from outside; import
+# $OUT/darkreader.json in its settings to recolour pages for the new theme.
 # Neovim reloads itself: lua/plugins/unmacos-theme.lua watches $OUT
 # Orca: push the palette into its settings over its runtime socket (live).
 # UNMACOS_KEEP_ORCA=1 leaves Orca's theme alone.
