@@ -1,6 +1,6 @@
 return {
-	text = "GeistMono NF", -- Used for text (installed family name of font-geist-mono-nerd-font)
-	numbers = "SF Mono", -- Used for numbers
+	text = "GeistMono Nerd Font", -- font-geist-mono-nerd-font; the "GeistMono NF" alias only has Regular and Bold
+	numbers = "GeistMono Nerd Font", -- monospaced, so numbers keep their width
 
 	-- Unified font style map
 	style_map = {
