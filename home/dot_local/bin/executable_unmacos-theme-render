@@ -68,6 +68,10 @@ echo "unmacos: theme '$theme' rendered to $OUT"
 # pywal owns it. Pywalfox's built-in templates read fixed slots and expect
 # color0 to be dark (dark mode: color10 = icons and highlights; light mode:
 # color0 = text, color7 = background), so light themes get their own layout.
+# Its defaults brighten color0 for the toolbar and URL bar (x2.25 and x2.85),
+# far too light, so unmacos.cfg points Pywalfox's palette template at slots
+# holding the theme's own surfaces: frame color8 = dark_background, toolbar
+# color0 (light: color15) = background, URL bar color7 = lighter_background.
 wal="${XDG_CACHE_HOME:-$HOME/.cache}/wal/colors.json"
 if [[ ! -e "$wal" || -L "$wal" ]]; then
   mkdir -p "$(dirname "$wal")"
