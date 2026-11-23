@@ -6,6 +6,8 @@
 # The port (127.0.0.1 only) is added only while Spicetify uses the UnMacOS theme
 # and UNMACOS_KEEP_SPOTIFY isn't 1. UNMACOS_SPOTIFY_PORT overrides 9222.
 set -euo pipefail
+# What unmacos-setup told UnMacOS to leave alone (UNMACOS_KEEP_*)
+[[ -r "$HOME/.config/unmacos/prefs.sh" ]] && . "$HOME/.config/unmacos/prefs.sh"
 export PATH="/opt/homebrew/bin:$PATH"
 
 bg=()

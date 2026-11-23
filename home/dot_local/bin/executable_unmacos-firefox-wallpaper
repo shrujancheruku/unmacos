@@ -1,29 +1,59 @@
 #!/bin/bash
-# UnMacOS: Firefox's new tab wallpaper follows the desktop wallpaper.
+# UnMacOS: Firefox's new tab wallpaper follows the desktop wallpaper, live.
 #   unmacos-firefox-wallpaper [image]   default: the current desktop wallpaper
 # unmacos-wallpaper runs this after every change (theme switch, Alt + Cmd + Space).
 #
 # Firefox shows a "custom" wallpaper from <profile>/wallpaper/library/<name>,
-# picked by prefs it only reads at startup. So the prefs point (via user.js) at
-# a fixed name, and this overwrites that file: new tabs then show the new image
-# without a restart. The name also says whether the image is light or dark,
-# which sets the new tab's text colour; both names get the image, and user.js
-# points at the theme's mode, so a light <-> dark switch fixes the text colour
-# on the next Firefox start.
+# picked by prefs it only reads at startup, and caches the image by that name.
+# So every change saves the image under a new name (the number in it counts
+# up) and then:
+#   - user.js points at it, for Firefox's next start
+#   - <profile>/unmacos-wallpaper.json names it, and unmacos.cfg (a Firefox
+#     autoconfig script this installs into Firefox.app) sets the prefs in the
+#     running Firefox, so the new tab page switches image and text colour live.
+#     That takes one Firefox restart after it's first installed (or after a
+#     Firefox update removes it; the next run puts it back).
+# The name also says whether the image is light or dark, which sets the new
+# tab's text colour.
 # Opt out: UNMACOS_KEEP_FIREFOX=1 or UNMACOS_KEEP_FIREFOX_WALLPAPER=1.
-# Undo: delete the "unmacos" block from <profile>/user.js and the
-#       v1-custom-*-<UUID below> images in <profile>/wallpaper/library/.
+# Undo: delete the "unmacos" block from <profile>/user.js, <profile>/unmacos-wallpaper.json,
+#       the v1-custom-*-<UUID below> images in <profile>/wallpaper/library/, and
+#       Firefox.app/Contents/Resources/{unmacos.cfg,defaults/pref/unmacos-autoconfig.js}.
 set -euo pipefail
+# What unmacos-setup told UnMacOS to leave alone (UNMACOS_KEEP_*)
+[[ -r "$HOME/.config/unmacos/prefs.sh" ]] && . "$HOME/.config/unmacos/prefs.sh"
 [[ "${UNMACOS_KEEP_FIREFOX:-}" == 1 || "${UNMACOS_KEEP_FIREFOX_WALLPAPER:-}" == 1 ]] && exit 0
 
+SHARE="${UNMACOS_SHARE:-$HOME/.local/share/unmacos}"
 STATE="${UNMACOS_STATE:-$HOME/.local/state/unmacos}"
 FF="$HOME/Library/Application Support/Firefox"
-# Fixed, so every run overwrites the same two files. Any lowercase UUID works.
+# Marks our images in the library. Any lowercase UUID works.
 UUID="5f1c2b6e-3d4a-4e8f-9a1b-7c0d2e3f4a5b"
 PREF="browser.newtabpage.activity-stream.newtabWallpapers"
 
 image="${1:-$(cat "$STATE/wallpaper" 2>/dev/null || true)}"
 [[ -f "$image" ]] || { echo "unmacos-firefox-wallpaper: no image: ${image:-none set}" >&2; exit 1; }
+
+# The live part: install the autoconfig script into Firefox.app (only if it changed)
+install_autoconfig() {
+  local app res
+  for app in /Applications/Firefox.app "$HOME/Applications/Firefox.app"; do
+    res="$app/Contents/Resources"
+    [[ -d "$res" ]] || continue
+    cmp -s "$SHARE/firefox/unmacos.cfg" "$res/unmacos.cfg" \
+      && cmp -s "$SHARE/firefox/unmacos-autoconfig.js" "$res/defaults/pref/unmacos-autoconfig.js" \
+      && return 0
+    if mkdir -p "$res/defaults/pref" 2>/dev/null \
+       && cp "$SHARE/firefox/unmacos.cfg" "$res/unmacos.cfg" 2>/dev/null \
+       && cp "$SHARE/firefox/unmacos-autoconfig.js" "$res/defaults/pref/unmacos-autoconfig.js" 2>/dev/null; then
+      echo "unmacos-firefox-wallpaper: restart Firefox once; the new tab wallpaper then changes live"
+    else
+      echo "unmacos-firefox-wallpaper: couldn't write to $app (allow your terminal in System Settings > Privacy & Security > App Management); the wallpaper changes on Firefox's next start" >&2
+    fi
+    return 0
+  done
+}
+[[ -f "$SHARE/firefox/unmacos.cfg" ]] && install_autoconfig
 
 # The profile Firefox starts with (the [Install...] section's Default)
 rel="$(awk -F= '/^\[Install/ {i=1} i && $1 == "Default" {print $2; exit}' "$FF/profiles.ini" 2>/dev/null || true)"
@@ -33,10 +63,20 @@ rel="$(awk -F= '/^\[Install/ {i=1} i && $1 == "Default" {print $2; exit}' "$FF/p
 
 mode="$(awk -F'"' '/^mode/ {print $2; exit}' "$STATE/theme/colors.toml" 2>/dev/null || true)"
 [[ "$mode" == light ]] || mode=dark
-name() { echo "v1-custom-$1-center-1-$UUID"; }
 
 lib="$profile/wallpaper/library"
+json="$profile/unmacos-wallpaper.json"
+userjs="$profile/user.js"
 mkdir -p "$lib"
+
+# What Firefox shows now (kept, so a tab opening mid-switch still finds it)
+shown="$(sed -nE 's/.*"uuid": *"([^"]+)".*/\1/p' "$json" 2>/dev/null || true)"
+[[ -n "$shown" ]] || shown="$(sed -nE "s/.*\"$PREF\\.customWallpaper\\.uuid\", *\"([^\"]+)\".*/\\1/p" "$userjs" 2>/dev/null || true)"
+
+# A new name every time: the next number after our highest
+n="$(ls "$lib" | sed -nE "s/^v1-custom-(dark|light)-center-([0-9]+)-$UUID\$/\\2/p" | sort -n | tail -1)"
+new="v1-custom-$mode-center-$(( ${n:-0} + 1 ))-$UUID"
+
 tmp="$(mktemp "$lib/.unmacos.XXXXXX")"
 trap 'rm -f "$tmp"' EXIT
 # Firefox reads JPEG, PNG and WebP but not HEIC
@@ -44,18 +84,24 @@ case "$(printf '%s' "${image##*.}" | tr '[:upper:]' '[:lower:]')" in
   heic|heif) sips -s format jpeg "$image" --out "$tmp" >/dev/null ;;
   *) cp "$image" "$tmp" ;;
 esac
-for m in dark light; do
-  cp "$tmp" "$lib/.$(name $m).tmp" && mv -f "$lib/.$(name $m).tmp" "$lib/$(name $m)"
-  # The name shown in Firefox's wallpaper picker
-  printf '{"fallbackName":"UnMacOS (%s text)"}\n' "$([[ $m == dark ]] && echo light || echo dark)" \
-    > "$lib/$(name $m).txt"
+chmod 644 "$tmp"
+mv -f "$tmp" "$lib/$new"
+# The name shown in Firefox's wallpaper picker
+printf '{"fallbackName":"UnMacOS (%s text)"}\n' "$([[ $mode == dark ]] && echo light || echo dark)" > "$lib/$new.txt"
+
+# Older images of ours go (all but the new one and the one shown now)
+for f in "$lib"/v1-custom-*-"$UUID"; do
+  b="$(basename "$f")"
+  [[ -f "$f" && "$b" != "$new" && "$b" != "$shown" ]] && rm -f "$f" "$f.txt"
 done
 
+# Live: the autoconfig script picks this up within 2 seconds
+printf '{"uuid": "%s", "theme": "%s"}\n' "$new" "$mode" > "$json.tmp" && mv -f "$json.tmp" "$json"
+
 # user.js: Firefox applies it at every start. Keep anything else in it.
-userjs="$profile/user.js"
 block="// >>> unmacos: new tab wallpaper (unmacos-firefox-wallpaper)
 user_pref(\"$PREF.wallpaper\", \"custom\");
-user_pref(\"$PREF.customWallpaper.uuid\", \"$(name "$mode")\");
+user_pref(\"$PREF.customWallpaper.uuid\", \"$new\");
 user_pref(\"$PREF.customWallpaper.theme\", \"$mode\");
 // <<< unmacos"
 rest="$(awk '/^\/\/ >>> unmacos/ {skip=1} !skip {print} /^\/\/ <<< unmacos/ {skip=0}' "$userjs" 2>/dev/null || true)"

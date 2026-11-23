@@ -7,6 +7,8 @@
 # template, then live-reloads what can be reloaded. Apps read only from that
 # state directory, so switching themes is just re-running this.
 set -euo pipefail
+# What unmacos-setup told UnMacOS to leave alone (UNMACOS_KEEP_*)
+[[ -r "$HOME/.config/unmacos/prefs.sh" ]] && . "$HOME/.config/unmacos/prefs.sh"
 
 SHARE="${UNMACOS_SHARE:-$HOME/.local/share/unmacos}"
 STATE="${UNMACOS_STATE:-$HOME/.local/state/unmacos}"

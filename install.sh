@@ -2,7 +2,8 @@
 # UnMacOS installer: run on a fresh Mac.
 #   bash -c "$(curl -fsSL https://raw.githubusercontent.com/shrujancheruku/unmacos/main/install.sh)"
 #
-# 1. Homebrew (+ Xcode Command Line Tools)  2. chezmoi init --apply
+# 1. Homebrew (+ Xcode Command Line Tools)  2. unmacos-setup asks what you want
+# 3. chezmoi init --apply. Reuse answers from another Mac: UNMACOS_SETUP=setup.toml
 # chezmoi then runs the home/run_* scripts: brew bundle, SbarLua, macOS settings,
 # theme, services. Re-runnable.
 set -euo pipefail
@@ -26,26 +27,26 @@ if [[ ! -x /opt/homebrew/bin/brew ]]; then
 fi
 eval "$(/opt/homebrew/bin/brew shellenv)"
 
-say "chezmoi"
-command -v chezmoi >/dev/null || brew install chezmoi
+say "chezmoi and gum"
+for f in chezmoi gum; do command -v "$f" >/dev/null || brew install "$f"; done
 
-say "Apply UnMacOS ($REPO@$BRANCH)"
-chezmoi init --apply --branch "$BRANCH" "https://github.com/$REPO.git"
+say "Get UnMacOS ($REPO@$BRANCH)"
+SRC="$HOME/.local/share/chezmoi"
+[[ -d "$SRC/.git" ]] || git clone --branch "$BRANCH" "https://github.com/$REPO.git" "$SRC"
+
+# Your choices: optional apps, what to leave alone, theme... Saved to
+# ~/.config/unmacos/setup.toml. UNMACOS_SETUP=<file> reuses one from another Mac.
+say "Setup"
+if [[ -n "${UNMACOS_SETUP:-}" ]]; then
+  bash "$SRC/home/dot_local/bin/executable_unmacos-setup" --import "$UNMACOS_SETUP" --no-apply
+else
+  bash "$SRC/home/dot_local/bin/executable_unmacos-setup" --no-apply
+fi
+
+say "Apply UnMacOS"
+chezmoi init --apply
 
 say "Done"
 "$HOME/.local/bin/unmacos-doctor" || true
-cat <<'EOF'
-
-Manual steps macOS doesn't allow scripts to do:
-  1. System Settings > Privacy & Security > Accessibility: turn on rift and clipse
-     (it asks when it starts). Then: rift service restart
-     The first menu you open makes Ghostty ask to run a command: allow it.
-  2. Log out and back in (Spaces and menu bar settings take effect)
-  3. spotify_player: run it once to log in to Spotify
-  4. 1Password: sign in, then Settings > Developer > "Integrate with 1Password CLI"
-  5. On macOS 26+: approve the "UnMacOS: no Apple Intelligence" profile in
-     System Settings > General > Device Management (opened for you)
-  6. Firefox: click the Pywalfox toolbar icon > Fetch Pywal colors (once). For pages:
-     Dark Reader > Settings > Advanced > Import ~/.local/state/unmacos/theme/darkreader.json
-  7. Run unmacos-doctor
-EOF
+echo
+"$HOME/.local/bin/unmacos-setup" --checklist || true

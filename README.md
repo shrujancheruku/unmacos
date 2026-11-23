@@ -75,13 +75,28 @@ On a Mac with Apple silicon, run:
 bash -c "$(curl -fsSL https://raw.githubusercontent.com/shrujancheruku/unmacos/main/install.sh)"
 ```
 
-It asks for your password once, installs Homebrew and everything else, then asks three questions:
+It asks for your password once and installs Homebrew, then `unmacos-setup` asks what you want:
 
 | Question | What it's for |
 |---|---|
 | Git name and email | Your `~/.gitconfig`. Stays on your Mac |
-| Use 1Password? | Reads secrets (the Spotify player's `client_id`) from 1Password |
-| Personal apps? | My own extra apps from `Brewfile.personal`. Say no unless you're me |
+| 1Password? | Reads secrets (the Spotify player's `client_id`) from 1Password |
+| Theme | Any of the 23. Switch later with `Alt + Ctrl + Shift + Space` |
+| Extra apps | Optional groups: developer tools, everyday apps, music and video, games, App Store. Untick single apps inside a group |
+| What UnMacOS changes | Apple Intelligence and Liquid Glass off, wallpaper, macOS accent colours, Firefox, Spotify and Orca theming. Untick anything you want left alone |
+| Windows and pointer | Animations, focus follows mouse, pointer jumps to the focused window and hides |
+| Weather | The bar's weather place, or from your IP |
+
+Your answers are saved to `~/.config/unmacos/setup.toml`. Run `unmacos-setup` again (or **Setup** in
+the UnMacOS menu) to change them. To set up another Mac the same way:
+
+```sh
+unmacos-setup --export ~/setup.toml   # on this Mac: answers plus today's theme and weather place
+# on the new Mac, with that file copied over:
+UNMACOS_SETUP=~/setup.toml bash -c "$(curl -fsSL https://raw.githubusercontent.com/shrujancheruku/unmacos/main/install.sh)"
+```
+
+The file has your git name and email in it, so keep it somewhere private.
 
 Then a few clicks macOS won't let a script make for you:
 
@@ -97,6 +112,9 @@ Then a few clicks macOS won't let a script make for you:
    Settings** (`Cmd + Shift + G` in the file picker takes a path). Pages don't switch live: import
    it again after a theme switch if you want pages to match.
 6. Run `unmacos-doctor`. When it says *All good*, you're done.
+
+`unmacos-setup --checklist` shows these steps again, ticks off the ones it can see are done, and
+opens the right System Settings page for you.
 
 ## Learn the keys
 
@@ -168,47 +186,50 @@ from the menu or run `unmacos-theme-render <name>`. A theme can also ship its ow
 
 **Wallpapers.** Switching theme sets its first wallpaper; `Alt + Cmd + Space` cycles through the
 rest. They're Omarchy's, downloaded the first time you use a theme (`unmacos-wallpaper fetch --all`
-gets them all). Add your own to `~/.config/unmacos/backgrounds/<theme>/`, or set
-`UNMACOS_KEEP_WALLPAPER=1` to leave your wallpaper alone.
+gets them all). Add your own to `~/.config/unmacos/backgrounds/<theme>/`, or untick the wallpaper in
+`unmacos-setup` to leave yours alone.
 
-**Animations.** Windows glide into place. Prefer them to snap? Run
-`rift-cli execute config set-animate false`.
+**Animations.** Windows glide into place. Prefer them to snap? Untick animations in `unmacos-setup`,
+or try it first with `rift-cli execute config set-animate false`.
 
 **Gaps.** 4px everywhere you can see, adjusted for the window borders and for the notch on
 MacBooks. Change `UNMACOS_GAP` in `unmacos-toggle-bar` and the gaps in `dot_config/rift/config.toml`.
 
 **Your own bits.** Put machine-only shell config in `~/.zshrc.local`. Swap the browser in
 `dot_config/rift/config.toml`, the Wi-Fi interface in `dot_config/sketchybar/items/widgets/wifi.lua`,
-and your extra apps in `Brewfile.personal`.
+and the optional app groups in `brew/*.Brewfile`.
 
 **Keep Spotify's own look.** Spotify is themed with [Spicetify](https://spicetify.app) when both
-are installed (`Brewfile.personal`). Switching themes recolors an open Spotify live, without
+are installed (the music and video apps in `unmacos-setup`). Switching themes recolors an open Spotify live, without
 interrupting playback. For that, UnMacOS opens Spotify with a DevTools port on `127.0.0.1:9222`,
 which lets local programs running as you control Spotify's window. The app picker, the bar's music
 widget and `unmacos-spotify` open Spotify with the port. The Dock and Spotlight can't, so after
-opening it there the first switch reopens it once and resumes what was playing. Run `UNMACOS_KEEP_SPOTIFY=1 chezmoi apply` to skip it, or
+opening it there the first switch reopens it once and resumes what was playing. Untick it in `unmacos-setup` to skip it, or
 `spicetify restore` to undo. Spotify updates undo the patch; `chezmoi apply` (or
 `spicetify backup apply`) puts it back.
 
 **System colours.** Each theme also sets macOS's highlight colour (text selection) to its
 selection colour, and the accent colour (buttons, checkboxes, focus rings, folder icons) to the
 nearest of macOS's presets. Dialogs and menus themselves can't be recoloured; they follow light or
-dark mode. Set `UNMACOS_KEEP_ACCENT=1` to leave them alone, or run `unmacos-accent --reset` to go back
+dark mode. Untick them in `unmacos-setup` to leave them alone, or run `unmacos-accent --reset` to go back
 to Multicolor.
 
 **Orca.** Switching themes recolors [Orca](https://onorca.dev) live through a local, content-only
 plugin (`~/.local/share/unmacos/orca-plugin`, loaded as a development folder). Once, in Orca's
-Settings, pick **UnMacOS** as the app theme (dark and light) and the terminal theme. Set
-`UNMACOS_KEEP_ORCA=1` to leave Orca alone, or `orca plugin dev unload ~/.local/share/unmacos/orca-plugin`
+Settings, pick **UnMacOS** as the app theme (dark and light) and the terminal theme. Untick Orca
+in `unmacos-setup` to leave it alone, or `orca plugin dev unload ~/.local/share/unmacos/orca-plugin`
 to remove it.
 
-**Keep Firefox's own theme.** Run `UNMACOS_KEEP_FIREFOX=1 chezmoi apply` before the first apply, or
-remove Pywalfox in Firefox's Add-ons. `home/.chezmoiscripts/run_onchange_after_80-firefox.sh` lists
-the rest of the undo. To keep only your own new tab wallpaper, set `UNMACOS_KEEP_FIREFOX_WALLPAPER=1`
-and delete the `unmacos` block from your profile's `user.js`.
+**Keep Firefox's own theme.** Untick Firefox in `unmacos-setup` before the first apply, or
+remove Pywalfox in Firefox's Add-ons. `home/.chezmoiscripts/run_onchange_after_80-firefox.sh.tmpl` lists
+the rest of the undo. To keep only your own new tab wallpaper, untick the Firefox wallpaper in `unmacos-setup`
+and delete the `unmacos` block from your profile's `user.js`. The new tab wallpaper changes live through a small
+Firefox autoconfig script (`unmacos.cfg`, installed into Firefox.app; restart Firefox once after
+the first install). The header of `unmacos-firefox-wallpaper` lists what to delete to undo it.
 
-**Keep Apple Intelligence or Liquid Glass.** Run `UNMACOS_KEEP_AI=1 chezmoi apply` or
-`UNMACOS_KEEP_GLASS=1 chezmoi apply`. The header of
+**Keep Apple Intelligence or Liquid Glass.** Untick them in `unmacos-setup`. For a single run,
+`UNMACOS_KEEP_AI=1 chezmoi apply` (or `UNMACOS_KEEP_GLASS=1`, and the same for every option above)
+still works. The header of
 `home/.chezmoiscripts/run_onchange_after_40-no-ai-no-glass.sh.tmpl` lists exactly what changes and
 how to undo it.
 
@@ -220,13 +241,13 @@ chezmoi writes the configs and runs the setup scripts.
 ```
 install.sh                 bootstrap: Homebrew, chezmoi
 Brewfile                   the desktop and terminal tools
-Brewfile.personal          optional extra apps
+brew/*.Brewfile            optional app groups (picked in unmacos-setup)
 home/                      everything chezmoi puts in your home folder
   .chezmoiscripts/         packages, SbarLua, macOS settings, no-AI/no-glass, theme, services, clipse
   dot_config/rift/         tiling and keybindings
   dot_config/sketchybar/   the bar (Lua)
   dot_config/television/   the menus
-  dot_local/bin/           unmacos-* commands: menu, keys, wallpaper, weather, popup, paste, tui, theme-render, theme-preview, doctor
+  dot_local/bin/           unmacos-* commands: setup, menu, keys, wallpaper, weather, popup, paste, tui, theme-render, theme-preview, doctor
   dot_local/share/unmacos/ themes, theme templates, wallpaper list, emoji list, configuration profile
 ```
 

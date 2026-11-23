@@ -3,4 +3,6 @@
 # {{ range (glob (joinPath .chezmoi.sourceDir "dot_local/share/unmacos/templates/*")) }}{{ include . | sha256sum | trunc 12 }} {{ end }}
 # {{ range (glob (joinPath .chezmoi.sourceDir "dot_local/share/unmacos/themes/*/*")) }}{{ include . | sha256sum | trunc 12 }} {{ end }}
 set -euo pipefail
+# Your unmacos-setup choices: {{ .keep | toJson }}
+[[ -r "$HOME/.config/unmacos/prefs.sh" ]] && . "$HOME/.config/unmacos/prefs.sh"
 "$HOME/.local/bin/unmacos-theme-render" "$(cat "$HOME/.local/state/unmacos/theme.name" 2>/dev/null || echo {{ .theme }})"

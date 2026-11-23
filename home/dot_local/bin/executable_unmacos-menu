@@ -67,6 +67,8 @@ run() {
       screencapture -i -c ;;
     keybinds)
       pick keybinds >/dev/null ;;
+    setup)
+      unmacos-setup; read -rsp "Press Enter to close" _ ;;
     update)
       chezmoi update && echo "UnMacOS updated" && sleep 1 ;;
     system)

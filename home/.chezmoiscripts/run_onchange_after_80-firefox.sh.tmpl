@@ -10,6 +10,8 @@
 #          defaults delete org.mozilla.firefox ExtensionSettings,
 #          then remove Pywalfox and Dark Reader in Firefox > Add-ons
 set -euo pipefail
+# Your unmacos-setup choices: {{ .keep | toJson }}
+[[ -r "$HOME/.config/unmacos/prefs.sh" ]] && . "$HOME/.config/unmacos/prefs.sh"
 [[ "${UNMACOS_KEEP_FIREFOX:-}" == 1 ]] && exit 0
 eval "$(/opt/homebrew/bin/brew shellenv)"
 
@@ -41,5 +43,6 @@ defaults write org.mozilla.firefox ExtensionSettings -dict-add addon@darkreader.
 # Colors for the current theme (the renderer links them on every theme switch)
 "$HOME/.local/bin/unmacos-theme-render" >/dev/null
 # New tab wallpaper = desktop wallpaper (unmacos-wallpaper keeps it in step)
-"$HOME/.local/bin/unmacos-firefox-wallpaper" >/dev/null 2>&1 || true
+# (it also installs the live-update autoconfig into Firefox.app, and says if Firefox needs a restart)
+"$HOME/.local/bin/unmacos-firefox-wallpaper" 2>/dev/null | sed "s/^unmacos-firefox-wallpaper: /    /" || true
 echo "    Restart Firefox, then Pywalfox icon > Fetch Pywal colors (once); theme switches then apply live."
