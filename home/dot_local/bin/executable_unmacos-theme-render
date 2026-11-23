@@ -93,8 +93,13 @@ ghostty_pids="$(ps -axo pid=,ucomm= | awk '$2 == "ghostty" {print $1}')"
 btop_conf="$HOME/.config/btop/btop.conf"
 [[ -f "$btop_conf" ]] && sed -i '' 's/^color_theme = .*/color_theme = "unmacos"/' "$btop_conf"
 pkill -USR2 -x btop >/dev/null 2>&1 || true
-# Firefox: Pywalfox's extension rereads the colors on `pywalfox update`
-[[ -x "$HOME/.local/bin/pywalfox" ]] && "$HOME/.local/bin/pywalfox" update >/dev/null 2>&1 || true
+# Firefox: Pywalfox's extension rereads the colors on `pywalfox update`. Pin
+# its mode to the theme's first: in "auto" it picks light or dark by time of
+# day, so a dark theme turned light during the day.
+if [[ -x "$HOME/.local/bin/pywalfox" ]]; then
+  "$HOME/.local/bin/pywalfox" "$([[ "$mode" == light ]] && echo light || echo dark)" >/dev/null 2>&1 || true
+  "$HOME/.local/bin/pywalfox" update >/dev/null 2>&1 || true
+fi
 # Firefox pages: Dark Reader can't be driven from outside, so remind to import
 # the rendered settings (only when Dark Reader is installed).
 if [[ "${UNMACOS_KEEP_FIREFOX:-}" != 1 ]] && ls "$HOME/Library/Application Support/Firefox/Profiles"/*/extensions/addon@darkreader.org.xpi >/dev/null 2>&1; then
