@@ -30,7 +30,27 @@ for k, v in pairs(fallback) do
 	end
 end
 
+-- Blend two opaque colours: amount 0 gives b, 1 gives a.
+local function mix(a, b, amount)
+	local out = 0xff000000
+	for shift = 0, 16, 8 do
+		local ca, cb = (a >> shift) & 0xff, (b >> shift) & 0xff
+		out = out | (math.floor(cb + (ca - cb) * amount + 0.5) << shift)
+	end
+	return out
+end
+
+-- Text and ring tones derived from each theme's text and chip colours, so the
+-- contrast is the same in every theme (bg2 and muted vary too much to rely on).
+local ring = mix(t.white, t.bg1, 0.16) -- chip outline
+local dim = mix(t.white, t.bg1, 0.62) -- secondary text: date, artist, inactive apps
+local faint = mix(t.white, t.bg1, 0.38) -- idle or unselected values
+
 return {
+	ring = ring,
+	dim = dim,
+	faint = faint,
+	mix = mix,
 	black = t.black,
 	white = t.white,
 	red = t.red,

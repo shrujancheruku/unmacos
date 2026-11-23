@@ -24,15 +24,15 @@ local volume_icon = sbar.add("item", "widgets.volume2", {
 		color = colors.grey,
 		font = {
 			style = settings.font.style_map["Regular"],
-			size = 14.0,
+			size = 15.0,
 		},
 	},
 	label = {
-		width = 25,
+		width = 28,
 		align = "left",
 		font = {
 			style = settings.font.style_map["Regular"],
-			size = 14.0,
+			size = 15.0,
 		},
 	},
 })
@@ -114,11 +114,11 @@ local function volume_toggle_details(env)
 			current_audio_device = result:sub(1, -2)
 			sbar.exec("SwitchAudioSource -a -t output", function(available)
 				current = current_audio_device
-				local color = colors.grey
+				local color = colors.faint
 				local counter = 0
 
 				for device in string.gmatch(available, "[^\r\n]+") do
-					local color = colors.grey
+					local color = colors.faint
 					if current == device then
 						color = colors.white
 					end
@@ -130,7 +130,7 @@ local function volume_toggle_details(env)
 						click_script = 'SwitchAudioSource -s "'
 							.. device
 							.. '" && sketchybar --set /volume.device\\.*/ label.color='
-							.. colors.grey
+							.. colors.faint
 							.. " --set $NAME label.color="
 							.. colors.white,
 					})
