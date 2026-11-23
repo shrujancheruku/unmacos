@@ -30,7 +30,8 @@ rebuilt for the Mac.
 **Windows that tile themselves.** Open a window and it takes its place next to the others, with even
 4px gaps and a highlighted border on the one you're using. No dragging, no resizing, no overlapping.
 Five workspaces per display, and four layouts to pick from: split, stacked, main-and-side, or
-scrolling. Powered by [Rift](https://github.com/acsandmann/rift).
+scrolling. Focus follows the mouse, and when you switch windows from the keyboard the pointer jumps
+to the middle of the new window and hides, so a stray click never lands on the wrong one. Powered by [Rift](https://github.com/acsandmann/rift).
 
 <p align="center"><img src="docs/tiling.gif" alt="Rift moving tiled windows around: resizing, swapping, and switching between the split and main-and-side layouts" width="100%"></p>
 
