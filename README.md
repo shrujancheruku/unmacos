@@ -50,7 +50,7 @@ belong together.
 Neovim, Firefox, Spotify and Orca all change at once, even editors that are already open. Comes with 23 themes, including
 hand-tuned Tokyo Night and every Omarchy palette from Catppuccin to Gruvbox, Nord, Rosé Pine and
 Kanagawa. The picker shows each palette in colour before you commit, and every theme brings its
-own set of Omarchy wallpapers.
+own set of Omarchy wallpapers, which Firefox's new tab page shows too.
 
 <p align="center"><img src="docs/menu-theme.png" alt="The theme picker, previewing a palette before applying it" width="100%"></p>
 
@@ -203,7 +203,8 @@ to remove it.
 
 **Keep Firefox's own theme.** Run `UNMACOS_KEEP_FIREFOX=1 chezmoi apply` before the first apply, or
 remove Pywalfox in Firefox's Add-ons. `home/.chezmoiscripts/run_onchange_after_80-firefox.sh` lists
-the rest of the undo.
+the rest of the undo. To keep only your own new tab wallpaper, set `UNMACOS_KEEP_FIREFOX_WALLPAPER=1`
+and delete the `unmacos` block from your profile's `user.js`.
 
 **Keep Apple Intelligence or Liquid Glass.** Run `UNMACOS_KEEP_AI=1 chezmoi apply` or
 `UNMACOS_KEEP_GLASS=1 chezmoi apply`. The header of

@@ -40,4 +40,6 @@ defaults write org.mozilla.firefox ExtensionSettings -dict-add addon@darkreader.
 
 # Colors for the current theme (the renderer links them on every theme switch)
 "$HOME/.local/bin/unmacos-theme-render" >/dev/null
+# New tab wallpaper = desktop wallpaper (unmacos-wallpaper keeps it in step)
+"$HOME/.local/bin/unmacos-firefox-wallpaper" >/dev/null 2>&1 || true
 echo "    Restart Firefox, then Pywalfox icon > Fetch Pywal colors (once); theme switches then apply live."

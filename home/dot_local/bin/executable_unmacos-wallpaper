@@ -74,6 +74,9 @@ function run(argv) {
 }
 JS
   mkdir -p "$STATE"; printf '%s\n' "$file" > "$STATE/wallpaper"
+  # Firefox's new tab page shows the same image (best effort)
+  [[ -x "$HOME/.local/bin/unmacos-firefox-wallpaper" ]] \
+    && "$HOME/.local/bin/unmacos-firefox-wallpaper" "$file" >/dev/null 2>&1 || true
 }
 
 cmd="${1:-theme}"; shift || true
