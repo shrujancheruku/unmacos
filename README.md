@@ -189,6 +189,12 @@ opening it there the first switch reopens it once and resumes what was playing. 
 `spicetify restore` to undo. Spotify updates undo the patch; `chezmoi apply` (or
 `spicetify backup apply`) puts it back.
 
+**System colours.** Each theme also sets macOS's highlight colour (text selection) to its
+selection colour, and the accent colour (buttons, checkboxes, focus rings, folder icons) to the
+nearest of macOS's presets. Dialogs and menus themselves can't be recoloured; they follow light or
+dark mode. Set `UNMACOS_KEEP_ACCENT=1` to leave them alone, or run `unmacos-accent --reset` to go back
+to Multicolor.
+
 **Orca.** Switching themes recolors [Orca](https://onorca.dev) live through a local, content-only
 plugin (`~/.local/share/unmacos/orca-plugin`, loaded as a development folder). Once, in Orca's
 Settings, pick **UnMacOS** as the app theme (dark and light) and the terminal theme. Set
