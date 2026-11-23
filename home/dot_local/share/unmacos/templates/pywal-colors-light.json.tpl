@@ -13,14 +13,14 @@
     "color4": "{{ blue }}",
     "color5": "{{ bright_magenta }}",
     "color6": "{{ cyan }}",
-    "color7": "{{ selection }}",
-    "color8": "{{ selection }}",
+    "color7": "{{ lighter_background }}",
+    "color8": "{{ dark_background }}",
     "color9": "{{ bright_red }}",
     "color10": "{{ bright_green }}",
     "color11": "{{ bright_yellow }}",
     "color12": "{{ bright_blue }}",
     "color13": "{{ bright_magenta }}",
     "color14": "{{ bright_cyan }}",
-    "color15": "{{ foreground }}"
+    "color15": "{{ background }}"
   }
 }
