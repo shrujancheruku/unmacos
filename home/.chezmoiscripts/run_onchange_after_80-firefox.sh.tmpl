@@ -32,7 +32,7 @@ if [[ -n "$profile" ]]; then
 else
   echo "    No Firefox profile yet: open Firefox once, then run chezmoi apply again"
 fi
-"$HOME/.local/bin/pywalfox" install --executable "$HOME/.local/share/unmacos/pywalfox-host" "${args[@]}" >/dev/null
+"$HOME/.local/bin/pywalfox" install --executable "$HOME/.local/share/unmacos/pywalfox-host" ${args[@]+"${args[@]}"} >/dev/null
 
 defaults write org.mozilla.firefox EnterprisePoliciesEnabled -bool true
 defaults write org.mozilla.firefox ExtensionSettings -dict-add pywalfox@frewacom.org \
