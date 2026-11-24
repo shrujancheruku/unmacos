@@ -131,3 +131,71 @@ golden() {
   [ "$status" -ne 0 ]
   [ "$(cat "$UNMACOS_STATE/theme.name")" = nord ]
 }
+
+# --- Draft Look: draft set, save, discard ---
+
+snapshot() { (cd "$1" && find . -type f | sort | xargs shasum) ; }
+
+@test "draft set renders the Draft Look live; discard restores the previous render byte for byte" {
+  run look render "$UNMACOS_STATE/theme"
+  [ "$status" -eq 0 ]
+  snapshot "$UNMACOS_STATE/theme" > "$BATS_TEST_TMPDIR/before"
+  run look draft set look.theme=nord
+  [ "$status" -eq 0 ]
+  [ "$(cat "$UNMACOS_STATE/theme/theme.name")" = nord ]
+  [ -f "$UNMACOS_STATE/draft.toml" ]
+  run look draft discard
+  [ "$status" -eq 0 ]
+  [ ! -e "$UNMACOS_STATE/draft.toml" ]
+  snapshot "$UNMACOS_STATE/theme" > "$BATS_TEST_TMPDIR/after"
+  diff "$BATS_TEST_TMPDIR/before" "$BATS_TEST_TMPDIR/after"
+}
+
+@test "draft set rejects an invalid value with the Setting's validation message" {
+  run look draft set look.theme=no-such-theme
+  [ "$status" -ne 0 ]
+  [[ "$output" == *'look.theme: "no-such-theme" is not one of'* ]]
+  [ ! -e "$UNMACOS_STATE/draft.toml" ]
+}
+
+@test "draft set rejects a Setting outside the Look" {
+  run look draft set use_1password=true
+  [ "$status" -ne 0 ]
+  [ ! -e "$UNMACOS_STATE/draft.toml" ]
+}
+
+@test "draft set accumulates drafted keys across calls" {
+  run look draft set look.theme=nord
+  [ "$status" -eq 0 ]
+  run look draft set look.corner_radius=7
+  [ "$status" -eq 0 ]
+  run grep -c . "$UNMACOS_STATE/draft.toml"
+  [ "$output" = 2 ]
+  [ "$(cat "$UNMACOS_STATE/theme/theme.name")" = nord ]
+}
+
+@test "draft save writes only the drafted keys into the Answers and clears the draft" {
+  bash "$UNMACOS_SETTINGS" write "$HOME/.config/unmacos/setup.toml" look.corner_radius=3
+  run look draft set look.theme=nord
+  [ "$status" -eq 0 ]
+  run look draft save
+  [ "$status" -eq 0 ]
+  [ ! -e "$UNMACOS_STATE/draft.toml" ]
+  [ "$(bash "$UNMACOS_SETTINGS" get look.theme)" = nord ]
+  [ "$(bash "$UNMACOS_SETTINGS" get look.corner_radius)" = 3 ]
+  # the saved Look is what is rendered live now
+  [ "$(cat "$UNMACOS_STATE/theme/theme.name")" = nord ]
+  # only the drafted key joined the Answers
+  grep -q 'nord' "$HOME/.config/unmacos/setup.toml"
+  run look render "$BATS_TEST_TMPDIR/after-save"
+  [ "$(cat "$BATS_TEST_TMPDIR/after-save/theme.name")" = nord ]
+}
+
+@test "a stale Draft Look is discarded by the next normal render" {
+  mkdir -p "$UNMACOS_STATE"
+  printf 'look.theme = "nord"\n' > "$UNMACOS_STATE/draft.toml"
+  run look render "$BATS_TEST_TMPDIR/out"
+  [ "$status" -eq 0 ]
+  [ "$(cat "$BATS_TEST_TMPDIR/out/theme.name")" = tokyo-night ]
+  [ ! -e "$UNMACOS_STATE/draft.toml" ]
+}
