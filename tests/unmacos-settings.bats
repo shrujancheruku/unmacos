@@ -180,7 +180,7 @@ TOML
   echo "$output"
   [ "$status" -eq 0 ]
   [[ "$output" == *$'\n[look]\n'* ]]
-  [[ "$output" == *"# corner_radius = 8   # Roundness of windows"* ]]
+  [[ "$output" == *"# corner_radius = 8   # Roundness of bar chips"* ]]
   [[ "$output" == *"# theme = \"tokyo-night\"   # The colours of the whole desktop"* ]]
   # no Setting has a value line
   [ -z "$(printf '%s\n' "$output" | grep -E '^[a-z_]+ = ' || true)" ]

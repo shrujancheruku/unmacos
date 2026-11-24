@@ -27,8 +27,8 @@ setup() {
 }
 
 # fixture_source: a copy of the source whose schema has more Settings: two live tune-phase ones in
-# the look group, one live look Setting asked at install, one install-phase Setting outside the
-# Look and one live tune-phase Setting outside it. Tune lists all but the install-phase one outside
+# the look group, one live look Setting asked at install, one look Setting that needs its apps
+# restarted, one install-phase Setting outside the Look and one live tune-phase Setting outside it. Tune lists all but the install-phase one outside
 # the Look (it edits the whole Look, and every tune-phase Setting).
 fixture_source() {
   local src="$BATS_TEST_TMPDIR/source"
@@ -69,6 +69,18 @@ label = "Fixture tint"
 help = "A look Setting asked at install, still part of the Look."
 phase = "install"
 takes_effect = "live"
+
+[[settings]]
+group = "look"
+key = "fixture_shadow"
+type = "int"
+default = 2
+min = 0
+max = 8
+label = "Fixture shadow"
+help = "A look Setting its apps pick up when they restart."
+phase = "tune"
+takes_effect = "restart:apps"
 
 [[settings]]
 group = "fixture"
@@ -143,7 +155,8 @@ snapshot() { (cd "$UNMACOS_STATE/theme" && find . -type f | sort | xargs shasum)
   run tune
   [ "$status" -eq 0 ]
   # the real ones and the fixtures, from the schema alone
-  grep -q 'look · Corner radius: 8  \[after restart\]' "$GUM_LOG"
+  grep -q 'look · Corner radius: 8$' "$GUM_LOG"
+  grep -q 'look · Fixture shadow: 2  \[after restart\]' "$GUM_LOG"
   grep -q 'look · Fixture glow: 4$' "$GUM_LOG"
   grep -q 'look · Fixture frame: thin$' "$GUM_LOG"
   grep -q 'desktop · Dock size: 64  \[after logout\]' "$GUM_LOG"
@@ -249,22 +262,49 @@ snapshot() { (cd "$UNMACOS_STATE/theme" && find . -type f | sort | xargs shasum)
   [ "$(saved look.fixture_frame)" = none ]
 }
 
+# stub_chezmoi: UNMACOS_CHEZMOI logs how it was run to $UNMACOS_CHEZMOI.out
+stub_chezmoi() {
+  printf '#!/bin/sh\necho "chezmoi $*" >> "%s.out"\n' "$UNMACOS_CHEZMOI" > "$UNMACOS_CHEZMOI"
+  chmod +x "$UNMACOS_CHEZMOI"
+}
+
 @test "a Setting that isn't live shows its badge, is not previewed, and applies on Save" {
-  before="$(snapshot)"
-  # corner radius is restart:apps: no Keep prompt, no draft until Save
-  replies '0|look · Corner radius: 8  [after restart]' '0|16' '0|Save'
+  stub_chezmoi
+  # fixture shadow is restart:apps: no Keep prompt, no draft until Save
+  replies '0|look · Fixture shadow: 2  [after restart]' '0|6' '0|Save'
   run tune
   echo "$output"
   [ "$status" -eq 0 ]
   ! grep -q 'is on your desktop' "$GUM_LOG"
   [[ "$output" == *"applies when you save (after restart)"* ]]
-  [ "$(saved look.corner_radius)" = 16 ]
-  [ "$(snapshot)" != "$before" ]
+  [ "$(saved look.fixture_shadow)" = 6 ]
+  # whatever isn't live also needs what chezmoi apply writes
+  grep -q 'init --apply' "$UNMACOS_CHEZMOI.out"
+}
+
+@test "corner radius is previewed as a Draft Look, and Save also runs chezmoi apply for the window corners" {
+  stub_chezmoi
+  replies '0|look · Corner radius: 8' '0|12' '0|Keep' '0|Save'
+  run tune
+  echo "$output"
+  [ "$status" -eq 0 ]
+  grep -q 'corner_radius = 12' "$GUM_LOG.draft"
+  [ "$(saved look.corner_radius)" = 12 ]
+  # macOS's own window corners are written by chezmoi apply (NSConvolutionOverride)
+  grep -q 'init --apply' "$UNMACOS_CHEZMOI.out"
+}
+
+@test "a live Look Setting with nothing to apply saves without chezmoi apply" {
+  stub_chezmoi
+  replies '0|look · Fixture glow: 4' '0|10' '0|Keep' '0|Save'
+  run tune
+  [ "$status" -eq 0 ]
+  [ ! -e "$UNMACOS_CHEZMOI.out" ]
 }
 
 @test "a non-live Setting picked and then Esc is not saved" {
   answers="$(cat "$HOME/.config/unmacos/setup.toml")"
-  replies '0|look · Corner radius: 8  [after restart]' '0|16' '130|'
+  replies '0|look · Fixture shadow: 2  [after restart]' '0|6' '130|'
   run tune
   [ "$status" -eq 0 ]
   [ "$(cat "$HOME/.config/unmacos/setup.toml")" = "$answers" ]
@@ -272,8 +312,7 @@ snapshot() { (cd "$UNMACOS_STATE/theme" && find . -type f | sort | xargs shasum)
 }
 
 @test "a Setting outside the Look is written to the Answers on Save and applied by chezmoi" {
-  printf '#!/bin/sh\necho "chezmoi $*" >> "%s.out"\n' "$UNMACOS_CHEZMOI" > "$UNMACOS_CHEZMOI"
-  chmod +x "$UNMACOS_CHEZMOI"
+  stub_chezmoi
   replies '0|desktop · Dock size: 64  [after logout]' '0|32' '0|Save'
   run tune
   echo "$output"
@@ -283,8 +322,7 @@ snapshot() { (cd "$UNMACOS_STATE/theme" && find . -type f | sort | xargs shasum)
 }
 
 @test "a live Setting outside the Look shows its badge, is not drafted, and is saved on Save" {
-  printf '#!/bin/sh\necho "chezmoi $*" >> "%s.out"\n' "$UNMACOS_CHEZMOI" > "$UNMACOS_CHEZMOI"
-  chmod +x "$UNMACOS_CHEZMOI"
+  stub_chezmoi
   before="$(snapshot)"
   replies '0|fixture · Fixture lights: 3  [on save]' '0|7' '0|Save'
   run tune
@@ -315,12 +353,13 @@ snapshot() { (cd "$UNMACOS_STATE/theme" && find . -type f | sort | xargs shasum)
 }
 
 @test "a Draft Look left behind by an earlier session is not saved by this one" {
+  stub_chezmoi
   look draft set look.fixture_glow=15 >/dev/null
-  replies '0|look · Corner radius: 8  [after restart]' '0|16' '0|Save'
+  replies '0|look · Fixture shadow: 2  [after restart]' '0|6' '0|Save'
   run tune
   [ "$status" -eq 0 ]
   [ "$(saved look.fixture_glow)" = 4 ]
-  [ "$(saved look.corner_radius)" = 16 ]
+  [ "$(saved look.fixture_shadow)" = 6 ]
 }
 
 @test "runs under /bin/bash 3.2 with no bashisms past it" {

@@ -68,7 +68,7 @@ cancel() { echo "Nothing changed."; exit 0; }
 # --- The Settings ----------------------------------------------------------------------------------
 # The Look Settings and the other tune-phase Settings, in schema order, in parallel arrays (bash 3.2: no maps):
 #   Q_K key  Q_T type  Q_DEF default  Q_MIN Q_MAX  Q_CH choices (|)  Q_LB label  Q_HP help
-#   Q_TE takes_effect  Q_SAVED the saved value  Q_NEW the value picked here  Q_SET 1 once picked
+#   Q_TE takes_effect  Q_AP 1 when it also needs chezmoi apply (the schema's also_on_apply)  Q_SAVED the saved value  Q_NEW the value picked here  Q_SET 1 once picked
 #   Q_DRAFT 1 once it is on the desktop as a Draft Look
 read -r -d '' TUNE_TEMPLATE <<'TPL' || true
 {{- $us := "\u001f" -}}{{- $rs := "\u001e" -}}
@@ -79,22 +79,22 @@ read -r -d '' TUNE_TEMPLATE <<'TPL' || true
     {{- if kindIs "slice" $d }}{{ $d = join $rs $d }}{{ end -}}
     {{- $ch := get . "choices" -}}
     {{- if kindIs "slice" $ch }}{{ $ch = join $rs $ch }}{{ end -}}
-    {{- printf "%s\n" (join $us (list "Q" (printf "%s.%s" .group .key) .type $d (get . "min") (get . "max") $ch .label .help .takes_effect "E")) -}}
+    {{- printf "%s\n" (join $us (list "Q" (printf "%s.%s" .group .key) .type $d (get . "min") (get . "max") $ch .label .help .takes_effect (ternary "1" "0" (get . "also_on_apply" | default false)) "E")) -}}
   {{- end -}}
 {{- end -}}
 TPL
 
 Q_N=0; Q_ORDER=""
 load_settings() {
-  local schema tag a b c d e f g h t _end out i
+  local schema tag a b c d e f g h t ap _end out i
   schema="$(chezmoi source-path 2>/dev/null)/.chezmoidata/settings.toml"
   [[ -r "$schema" ]] || die "can't find the Settings schema (is the UnMacOS source set up for chezmoi?)"
   out="$(SCHEMA="$schema" chezmoi execute-template "$TUNE_TEMPLATE" 2>&1)" || die "can't read the Settings schema: ${out##*: }"
   Q_N=0
-  while IFS=$'\x1f' read -r tag a b c d e f g h t _end; do
+  while IFS=$'\x1f' read -r tag a b c d e f g h t ap _end; do
     [[ "$tag" == Q ]] || continue
     Q_K[Q_N]="$a"; Q_T[Q_N]="$b"; Q_DEF[Q_N]="$c"; Q_MIN[Q_N]="$d"; Q_MAX[Q_N]="$e"
-    Q_CH[Q_N]="${f//$'\x1e'/|}"; Q_LB[Q_N]="$g"; Q_HP[Q_N]="$h"; Q_TE[Q_N]="$t"
+    Q_CH[Q_N]="${f//$'\x1e'/|}"; Q_LB[Q_N]="$g"; Q_HP[Q_N]="$h"; Q_TE[Q_N]="$t"; Q_AP[Q_N]="$ap"
     Q_NEW[Q_N]=""; Q_SET[Q_N]=0; Q_DRAFT[Q_N]=0
     Q_SAVED[Q_N]="$(settings get "$a" | paste -s -d',' -)"
     Q_N=$((Q_N + 1))
@@ -246,12 +246,15 @@ tune() {
 # --- Saving ------------------------------------------------------------------------------------------
 
 # save: Look Settings go through the Draft Look (it renders and reloads the apps); the rest are
-# written to the Answers and applied by chezmoi.
+# written to the Answers. chezmoi applies them, and also runs for a saved Look Setting that isn't
+# live or that the schema marks also_on_apply (what apply writes outside the Look, such as macOS's
+# own window corners).
 save() {
-  local i other=() looks=() pending=0 new="$SETUP.new"
+  local i other=() looks=() pending=0 need_apply=0 new="$SETUP.new"
   for ((i = 0; i < Q_N; i++)); do
     [[ "${Q_SET[i]}" == 1 ]] || continue
     pending=1
+    [[ "${Q_TE[i]}" == live && "${Q_AP[i]}" != 1 && "${Q_K[i]}" == look.* ]] || need_apply=1
     if [[ "${Q_K[i]}" == look.* ]]; then
       (( Q_DRAFT[i] )) || looks[${#looks[@]}]="${Q_K[i]}=${Q_NEW[i]}"
     else
@@ -270,7 +273,7 @@ save() {
     look draft save >/dev/null || die "can't save the Look"
     DRAFTED=0
   fi
-  if (( ${#other[@]} )); then
+  if (( need_apply )); then
     echo "==> chezmoi init --apply"
     "${UNMACOS_CHEZMOI:-chezmoi}" init --apply --no-tty --promptDefaults
   fi

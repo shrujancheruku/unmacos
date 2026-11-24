@@ -9,7 +9,7 @@ email = "test@example.invalid"   # Goes into ~/.gitconfig. Stays on this Mac.
 
 [look]
 theme = "nord"   # The colours of the whole desktop. Switch any time with Alt + Ctrl + Shift + Space.
-corner_radius = 4   # Roundness of windows, bar chips, popups and Spotify, in pixels. Apps pick it up when they restart.
+corner_radius = 4   # Roundness of bar chips, popups and Spotify (shown at once) and of windows (as each app relaunches), in pixels.
 # terminal_font = "Geist Mono Nerd Font Mono"   # The font Ghostty draws text in. These are the Nerd Fonts UnMacOS installs, so icons keep working.
 # terminal_font_size = 16   # Ghostty's text size, in points.
 # bar_font = "GeistMono Nerd Font"   # The font of the top bar's text. These are the Nerd Fonts UnMacOS installs. Hack has no semibold or heavy weight, so its bar text uses bold.

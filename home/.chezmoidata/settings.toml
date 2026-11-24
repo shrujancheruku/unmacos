@@ -16,6 +16,8 @@
 #                 X" where the label reads "Keep X on")
 #   phase         install (asked before anything installs) | tune (changed on the installed desktop)
 #   takes_effect  live | apply | restart:<app> | logout
+#   also_on_apply optional, true: a live Setting that chezmoi apply also writes somewhere outside the
+#                 Look (corner_radius: macOS's own window corners), so saving it from Tune runs apply
 #   env           optional: prefs.sh exports it as this environment variable; a value already in
 #                 the environment wins for one run (bool: only exported when true, as 1;
 #                 int and enum: always). Not for string or list Settings.
@@ -80,9 +82,10 @@ default = 8
 min = 0
 max = 24
 label = "Corner radius"
-help = "Roundness of windows, bar chips, popups and Spotify, in pixels. Apps pick it up when they restart."
+help = "Roundness of bar chips, popups and Spotify (shown at once) and of windows (as each app relaunches), in pixels."
 phase = "tune"
-takes_effect = "restart:apps"
+takes_effect = "live"
+also_on_apply = true
 env = "UNMACOS_CORNER_RADIUS"
 legacy = "corner_radius"
 
