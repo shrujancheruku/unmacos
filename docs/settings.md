@@ -26,7 +26,7 @@ Your answers live in `~/.config/unmacos/setup.toml`; any Setting you leave out k
 | apps | `skip` | Apps to leave out | list | `(none)` | any names | Apps in the chosen groups that should not be installed, by name. | apply | install |
 | onepassword | `enabled` | Read secrets from 1Password | bool | `false` | on or off | For spotify_player's client ID. Needs the 1Password app and its CLI integration. | apply | install |
 | onepassword | `spotify_client_id_ref` | Spotify client ID in 1Password | string | `op://Private/spotify-player/client_id` | any text | The 1Password reference spotify_player reads its client ID from. Only used when 1Password is on. | apply | tune |
-| desktop | `animate` | Animate windows into place | bool | `true` | on or off | Windows glide to their new spot instead of jumping. | restart:rift | install |
+| desktop | `animate` | Animate windows into place | bool | `true` | on or off | Windows glide to their new spot instead of jumping. | live | tune |
 | desktop | `focus_follows_mouse` | Focus follows the mouse | bool | `true` | on or off | The window under the pointer takes focus without a click. | restart:rift | install |
 | desktop | `mouse_follows_focus` | Pointer follows keyboard focus | bool | `true` | on or off | Move the pointer to the window you focus with the keyboard. | restart:rift | install |
 | desktop | `mouse_hides_on_focus` | Hide the pointer after a keyboard focus | bool | `true` | on or off | Hide the pointer after that until you move the mouse. | restart:rift | install |

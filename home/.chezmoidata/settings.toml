@@ -250,8 +250,8 @@ type = "bool"
 default = true
 label = "Animate windows into place"
 help = "Windows glide to their new spot instead of jumping."
-phase = "install"   # asked by the wizard until M2's Tune phase, which moves it back to tune
-takes_effect = "restart:rift"
+phase = "tune"
+takes_effect = "live"
 
 [[settings]]
 group = "desktop"
