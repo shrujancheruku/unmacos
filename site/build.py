@@ -89,7 +89,7 @@ def mock_svg(t: dict, name: str) -> str:
     return (
         f'<svg class="theme-mock" viewBox="0 0 320 118" role="img" aria-label="{name} preview: bar, terminal and colours">'
         f'<rect width="320" height="118" fill="{bg}"/>'
-        f'<g font-family="ui-monospace,SF Mono,Menlo,monospace" font-size="12">'
+        f'<g font-family="Geist Mono,ui-monospace,SF Mono,Menlo,monospace" font-size="12">'
         + chip(8, "1", True) + chip(30, "2") + chip(52, "3") + chip(264, "22:50")
         + f'<rect x="8.5" y="32.5" width="303" height="78" rx="4" fill="none" stroke="{acc}"/>'
         f'<text x="18" y="54"><tspan fill="{g("green")}">❯</tspan><tspan fill="{fg}"> git status </tspan><tspan fill="{g("muted", "foreground")}"># clean</tspan></text>'
