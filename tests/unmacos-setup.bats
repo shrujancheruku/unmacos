@@ -424,3 +424,92 @@ replies() { printf '%s\n' "$@" > "$GUM_REPLIES"; }
   run cat "$GUM_LOG"
   [[ "$output" == *"gum input --header Fixture volume (1 to 11)"* ]]
 }
+
+# --- Git name and email are optional -------------------------------------------------
+
+# gitconfig_text: the gitconfig chezmoi would write, after init
+# init_like_apply: chezmoi init as the wizard's apply runs it (stubbed chezmoi logs the command;
+# the real one runs the same arguments without applying)
+init_like_apply() {
+  printf '#!/bin/sh\nprintf "%%s\\n" "$@" > "%s"\n' "$BATS_TEST_TMPDIR/chezmoi.args" > "$BATS_TEST_TMPDIR/chezmoi-stub"
+  chmod +x "$BATS_TEST_TMPDIR/chezmoi-stub"
+  UNMACOS_CHEZMOI="$BATS_TEST_TMPDIR/chezmoi-stub" wizard --yes
+  local a=()
+  while IFS= read -r l; do case "$l" in init|--apply) ;; *) a[${#a[@]}]="$l" ;; esac; done < "$BATS_TEST_TMPDIR/chezmoi.args"
+  unmacos_chezmoi init "${a[@]}" < /dev/null
+}
+
+gitconfig_text() { unmacos_chezmoi cat "$HOME/.gitconfig"; }
+
+@test "--yes with no name and email anywhere saves, and the gitconfig has no [user] section" {
+  use_source "$REPO_ROOT"
+  run wizard --yes --no-apply < /dev/null
+  echo "$output"
+  [ "$status" -eq 0 ]
+  run init_like_apply
+  echo "$output"
+  [ "$status" -eq 0 ]
+  run gitconfig_text
+  echo "$output"
+  [ "$status" -eq 0 ]
+  [[ "$output" != *'[user]'* ]]
+  [[ "$output" == *'[core]'* ]]
+}
+
+@test "--yes picks up git config --global name and email" {
+  use_source "$REPO_ROOT"
+  printf '[user]\n\tname = Existing Name\n\temail = existing@example.invalid\n' > "$GIT_CONFIG_GLOBAL"
+  run wizard --yes --no-apply < /dev/null
+  echo "$output"
+  [ "$status" -eq 0 ]
+  init_like_apply
+  run gitconfig_text
+  echo "$output"
+  [[ "$output" == *$'[user]\n\tname = Existing Name\n\temail = existing@example.invalid'* ]]
+}
+
+@test "a name without an email renders only the name" {
+  use_source "$REPO_ROOT"
+  printf '[user]\n\tname = Only Name\n' > "$GIT_CONFIG_GLOBAL"
+  wizard --yes --no-apply < /dev/null
+  init_like_apply
+  run gitconfig_text
+  [[ "$output" == *$'[user]\n\tname = Only Name\n[core]'* ]]
+}
+
+@test "the checklist lists setting git name and email when they are empty, and not when set" {
+  use_source "$REPO_ROOT"
+  wizard --yes --no-apply < /dev/null
+  run wizard --checklist
+  echo "$output"
+  [[ "$output" == *'git name and email'* ]]
+  printf '[user]\n\tname = A\n\temail = a@example.invalid\n' > "$GIT_CONFIG_GLOBAL"
+  rm "$HOME/.config/unmacos/setup.toml"
+  wizard --yes --no-apply < /dev/null
+  run wizard --checklist
+  [[ "$output" != *'git name and email'* ]]
+}
+
+@test "with no terminal the wizard never asks, even with a gum on PATH" {
+  use_source "$REPO_ROOT"
+  stub_gum
+  unset UNMACOS_SETUP_UI
+  : > "$GUM_REPLIES"
+  run wizard --no-apply < /dev/null
+  echo "$output"
+  [ "$status" -eq 0 ]
+  [ ! -s "$GUM_LOG" ]
+  [ -f "$HOME/.config/unmacos/setup.toml" ]
+}
+
+@test "--import FILE never asks, even with a UI available" {
+  use_source "$REPO_ROOT"
+  stub_gum
+  : > "$GUM_REPLIES"
+  printf '[look]\ntheme = "nord"\n' > "$BATS_TEST_TMPDIR/in.toml"
+  run wizard --import "$BATS_TEST_TMPDIR/in.toml" --no-apply < /dev/null
+  echo "$output"
+  [ "$status" -eq 0 ]
+  [ ! -s "$GUM_LOG" ]
+  [[ "$(cat "$HOME/.config/unmacos/setup.toml")" == *'theme = "nord"'* ]]
+}

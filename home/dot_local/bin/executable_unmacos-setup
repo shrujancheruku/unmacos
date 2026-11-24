@@ -8,6 +8,9 @@
 #   unmacos-setup --import FILE    use FILE's answers (no questions), save and apply
 #   unmacos-setup --checklist      the steps macOS won't let a script do, and which are done
 #   unmacos-setup --questions      the questions it would ask (from the Settings schema), not asking
+# Git name and email are optional: from git config --global when it has them, else left empty
+# (no [user] section in ~/.gitconfig, and the checklist lists setting them).
+# With no terminal the wizard never asks: it keeps the saved answers or the defaults.
 # Answers live in ~/.config/unmacos/setup.toml (git name and email included: keep exports
 # somewhere private). unmacos-settings reads, checks and writes them; chezmoi reads them through
 # .chezmoi.toml.tmpl.
@@ -22,7 +25,7 @@ REPO="$(chezmoi execute-template '{{ .chezmoi.workingTree }}' 2>/dev/null || tru
 
 SEP=" — "   # between an option's name and its description
 
-usage() { sed -n '2,13s/^# \{0,1\}//p' "$0"; }
+usage() { sed -n '2,10s/^# \{0,1\}//p' "$0"; }
 die() { printf 'unmacos-setup: %s\n' "$*" >&2; exit 1; }
 
 # --- Answers -----------------------------------------------------------------
@@ -75,14 +78,12 @@ save() {
   swrite "$new" || { rm -f "$new"; exit 1; }
   # check what is about to be saved
   FROM="$new"; DATA="--no-data"; SET=()
-  local g theme name email
+  local g theme
   for g in $(sgetl apps.groups | tr '|' ' '); do
     [[ -f "$REPO/brew/$g.Brewfile" ]] || { rm -f "$new"; die "unknown app group '$g' (have: $(groups | tr '\n' ' '))"; }
   done
   theme="$(sget look.theme)"
   [[ -d "$REPO/home/dot_local/share/unmacos/themes/$theme" ]] || { rm -f "$new"; die "unknown theme '$theme'"; }
-  name="$(sget git.name)"; email="$(sget git.email)"
-  [[ -n "$name" && -n "$email" ]] || { rm -f "$new"; die "git name and email are needed (run unmacos-setup in a terminal)"; }
   mv "$new" "$SETUP"
   chmod 600 "$SETUP"
   FROM="$SETUP"
@@ -375,8 +376,18 @@ apply() {
   old_weather="$(cat "$STATE/weather.location" 2>/dev/null || true)"
   old_hides="$(chezmoi execute-template '{{ (get (get . "desktop" | default dict) "mouse_hides_on_focus") }}' 2>/dev/null || true)"
 
+  # chezmoi must never stop to ask: whatever the Answers lack takes its schema default
+  # (git name and email default to empty). chezmoi asks by the Setting's label.
+  local i prompts=()
+  load_questions
+  for ((i = 0; i < Q_N; i++)); do
+    case "${Q_T[i]}" in
+      bool)   prompts[${#prompts[@]}]="--promptBool=${Q_LB[i]}=${Q_DEF[i]}" ;;
+      string) prompts[${#prompts[@]}]="--promptString=${Q_LB[i]}=${Q_DEF[i]}" ;;
+    esac
+  done
   echo "==> chezmoi init --apply"
-  chezmoi init --apply
+  "${UNMACOS_CHEZMOI:-chezmoi}" init --apply --no-tty ${prompts[@]+"${prompts[@]}"}
 
   # Theme and weather are state the menus change, so set them only when they differ
   local theme weather want
@@ -403,12 +414,18 @@ checklist() {
     case "$1" in
       0) printf '  \033[32m✓\033[0m %s\n' "$2" ;;
       -) printf '  \033[33m•\033[0m %s\n' "$2" ;;
-      *) printf '  \033[31m○\033[0m %s\n' "$2"; todo=$((todo + 1)); [[ -n "${3:-}" ]] && opens+=("$2${SEP}$3") ;;
+      *) printf '  \033[31m○\033[0m %s\n' "$2"; todo=$((todo + 1)); if [[ -n "${3:-}" ]]; then opens+=("$2${SEP}$3"); fi ;;
     esac
   }
   ok() { "$@" >/dev/null 2>&1 && echo 0 || echo 1; }
 
   echo "Steps macOS won't let a script do (✓ done, ○ to do, • can't tell: check yourself)"
+  if [[ -z "$(sget git.name)" || -z "$(sget git.email)" ]]; then
+    # git name and email are optional: with none, ~/.gitconfig has no [user] section
+    # shellcheck disable=SC2016 # expanded by sh -c
+    step "$(ok sh -c '[ -n "$(git config --global user.name)" ] && [ -n "$(git config --global user.email)" ]')" \
+      "Set your git name and email (unmacos-setup asks, or git config --global user.name and user.email)"
+  fi
   step "$(ok pgrep -xq rift)" "Accessibility: turn on rift and clipse, then rift service restart" \
     "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility"
   step - "Log out and back in once (Spaces and menu bar settings)"

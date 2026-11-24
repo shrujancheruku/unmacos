@@ -629,7 +629,7 @@ export UNMACOS_KEEP_WALLPAPER="${UNMACOS_KEEP_WALLPAPER:-1}"
 :
 
 === .gitconfig
-# UnMacOS: git (name/email asked on `chezmoi init`)
+# UnMacOS: git (name and email are optional; left empty, the user section is left out)
 [user]
 	name = Test User
 	email = test@example.invalid

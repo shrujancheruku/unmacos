@@ -22,10 +22,11 @@ nav: Install
     <ol class="steps">
       <li>
         <h3>The installer</h3>
-        <p>It asks for your password once, then installs <a href="https://brew.sh">Homebrew</a> (with Apple's command line tools), <a href="https://www.chezmoi.io/">chezmoi</a> and the UnMacOS files, and starts the setup wizard. It's safe to run again if anything is interrupted.</p>
+        <p>It asks for your password once, then installs <a href="https://brew.sh">Homebrew</a> (with Apple's command line tools), <a href="https://www.chezmoi.io/">chezmoi</a> and the UnMacOS files, then asks one thing: <strong>Install with defaults</strong> or <strong>Customise</strong>. It's safe to run again if anything is interrupted.</p>
+        <p><strong>Install with defaults</strong> asks nothing else. After your password, all that is left is the checklist below. <strong>Customise</strong> starts the setup wizard. With no terminal (a script, say) or with <code>UNMACOS_SETUP=&lt;file&gt;</code> (see "The same setup on another Mac" below) the installer never asks: it takes the defaults, or that file's answers.</p>
       </li>
       <li>
-        <h3>The setup wizard</h3>
+        <h3>The setup wizard (Customise)</h3>
         <p><code>unmacos-setup</code> asks what you want before anything changes. Arrow keys move, <kbd>x</kbd> or <kbd>Tab</kbd> ticks and unticks, <kbd>Enter</kbd> goes on. Every question has a sensible default.</p>
         <div class="media narrow" style="margin:16px 0">
           <video class="lazy" muted loop playsinline width="920" height="720" poster="../media/setup-poster.webp" aria-label="The unmacos-setup wizard: entering a git name and email, choosing a theme, ticking app groups, reviewing what UnMacOS changes, setting the weather place, then the summary">
@@ -34,7 +35,7 @@ nav: Install
           </video>
         </div>
         <div class="table-wrap"><table><thead><tr><th>Question</th><th>What it's for</th></tr></thead><tbody>
-          <tr><td>Git name and email</td><td>Your <code>~/.gitconfig</code>. Stays on your Mac</td></tr>
+          <tr><td>Git name and email</td><td>Your <code>~/.gitconfig</code>. Stays on your Mac. Optional: UnMacOS uses the ones <code>git config --global</code> already has, and if there are none, leaves them out and lists setting them in the checklist</td></tr>
           <tr><td>1Password?</td><td>Reads secrets (the Spotify player's client ID) from 1Password. No is fine</td></tr>
           <tr><td>Theme</td><td>Any of the {{THEME_COUNT}}. Switch later with <kbd>Alt</kbd> + <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>Space</kbd></td></tr>
           <tr><td>Extra apps</td><td>Optional groups: developer tools, everyday apps, music and video, games, App Store. Untick single apps inside a group</td></tr>
