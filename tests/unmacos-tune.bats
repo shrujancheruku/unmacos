@@ -248,6 +248,20 @@ snapshot() { (cd "$UNMACOS_STATE/theme" && find . -type f | sort | xargs shasum)
   [ "$(saved look.theme)" = "$current" ]
 }
 
+@test "the Theme row shows the live Theme, and Back returns the desktop to it" {
+  # the theme menu switched to gruvbox; the Answers still name another Theme
+  echo gruvbox > "$UNMACOS_STATE/theme.name"
+  look render "$UNMACOS_STATE/theme" >/dev/null
+  before="$(snapshot)"
+  replies '0|look · Theme: gruvbox' '0|nord' '0|Back' '0|Discard'
+  run tune
+  echo "$output"
+  [ "$status" -eq 0 ]
+  grep -q '  | look · Theme: gruvbox' "$GUM_LOG"
+  [ "$(cat "$UNMACOS_STATE/theme/theme.name")" = gruvbox ]
+  [ "$(snapshot)" = "$before" ]
+}
+
 @test "an install-phase look Setting is tuned like any other" {
   replies '0|look · Fixture tint: cool' '0|warm' '0|Keep' '0|Save'
   run tune

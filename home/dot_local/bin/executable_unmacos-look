@@ -6,6 +6,8 @@
 #   unmacos-look draft discard              clear it, re-render the saved Look
 #   unmacos-look reload [DIR]               live-reload apps from a rendered DIR
 #                                           (default ~/.local/state/unmacos/theme)
+#   unmacos-look current KEY                a saved Look Setting as a render shows it (for
+#                                           look.theme, the live Theme outranks the Answers')
 # render runs ~/.local/share/unmacos/templates/*.tpl through `chezmoi execute-template`
 # in one pass. Templates read:
 #   .theme.KEY   a Theme colour as #rrggbb (and .theme.mode, "dark" or "light")
@@ -35,7 +37,7 @@ SETTINGS="${UNMACOS_SETTINGS:-$HOME/.local/bin/unmacos-settings}"
 DRAFT="$STATE/draft.toml"
 ANSWERS="${UNMACOS_SETUP_FILE:-$HOME/.config/unmacos/setup.toml}"
 
-usage() { sed -n '2,25s/^# \{0,1\}//p' "$0"; }
+usage() { sed -n '2,27s/^# \{0,1\}//p' "$0"; }
 die() { printf 'unmacos-look: %s\n' "$*" >&2; exit 1; }
 
 # The first part of the template: work out the Theme and Look, put them in the data, and
@@ -306,6 +308,18 @@ draft_discard() {
   show
 }
 
+# current KEY: what a render without --draft uses for that Look Setting
+current() {
+  (($# == 1)) || die "current takes one look.KEY"
+  [[ "$1" == look.* ]] || die "'$1' is not a Look Setting (look.KEY)"
+  local live="${UNMACOS_THEME:-$(cat "$STATE/theme.name" 2>/dev/null || true)}"
+  if [[ "$1" == look.theme && -n "$live" ]]; then
+    printf '%s\n' "$live"
+  else
+    settings get "$1"
+  fi
+}
+
 draft() {
   local sub="${1:-}"; (($#)) && shift
   case "$sub" in
@@ -320,6 +334,7 @@ case "${1:-}" in
   draft) shift; draft "$@" ;;
   render) shift; render "$@" ;;
   reload) shift; reload "$@" ;;
+  current) shift; current "$@" ;;
   -h | --help | help) usage ;;
   *) usage >&2; exit 1 ;;
 esac

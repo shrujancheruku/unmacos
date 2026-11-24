@@ -96,7 +96,9 @@ load_settings() {
     Q_K[Q_N]="$a"; Q_T[Q_N]="$b"; Q_DEF[Q_N]="$c"; Q_MIN[Q_N]="$d"; Q_MAX[Q_N]="$e"
     Q_CH[Q_N]="${f//$'\x1e'/|}"; Q_LB[Q_N]="$g"; Q_HP[Q_N]="$h"; Q_TE[Q_N]="$t"; Q_AP[Q_N]="$ap"
     Q_NEW[Q_N]=""; Q_SET[Q_N]=0; Q_DRAFT[Q_N]=0
-    Q_SAVED[Q_N]="$(settings get "$a" | paste -s -d',' -)"
+    # a Look Setting as the desktop shows it now (the live Theme, not only the Answers')
+    if [[ "$a" == look.* ]]; then Q_SAVED[Q_N]="$(look current "$a" | paste -s -d',' -)"
+    else Q_SAVED[Q_N]="$(settings get "$a" | paste -s -d',' -)"; fi
     Q_N=$((Q_N + 1))
   done <<< "$out"
   # rows by group, groups in the order the schema first names them

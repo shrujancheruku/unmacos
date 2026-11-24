@@ -188,6 +188,20 @@ snapshot() { (cd "$1" && find . -type f | sort | xargs shasum) ; }
   [ ! -e "$UNMACOS_STATE/draft.toml" ]
 }
 
+@test "current: a Look Setting's value as the renderer would show it, the live Theme first" {
+  [ "$(look current look.corner_radius)" = 8 ]
+  [ "$(look current look.theme)" = "$(bash "$UNMACOS_SETTINGS" get look.theme)" ]
+  # the theme menu set the live Theme; the Answers still say otherwise
+  mkdir -p "$UNMACOS_STATE" && echo gruvbox > "$UNMACOS_STATE/theme.name"
+  [ "$(look current look.theme)" = gruvbox ]
+  [ "$(UNMACOS_THEME=nord look current look.theme)" = nord ]
+}
+
+@test "current refuses a Setting outside the Look" {
+  run look current desktop.mouse_hides_on_focus
+  [ "$status" -ne 0 ]
+}
+
 @test "draft set: window animation on/off is a Draft Look like any other" {
   run look draft set look.animate=false
   [ "$status" -eq 0 ]
