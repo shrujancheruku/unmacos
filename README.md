@@ -369,12 +369,13 @@ home/                      everything chezmoi puts in your home folder
   dot_config/rift/         tiling and keybindings
   dot_config/sketchybar/   the bar (Lua)
   dot_config/television/   the menus
-  dot_local/bin/           unmacos-* commands: setup, menu, keys, wallpaper, weather, popup, paste, tui, theme-render, theme-preview, doctor
+  dot_local/bin/           unmacos-* commands: setup, menu, keys, wallpaper, weather, popup, paste, tui, look, theme-render, theme-preview, doctor
   dot_local/share/unmacos/ themes, theme templates, wallpaper list, emoji list, configuration profile
 ```
 
-Themes render from `templates/*.tpl` into `~/.local/state/unmacos/theme/`, and every app reads its
-colours from there. That's why one switch reaches them all.
+`unmacos-look render` renders the Look (the Theme plus the visual Settings) from `templates/*.tpl`, which are
+chezmoi templates, into `~/.local/state/unmacos/theme/`, and every app reads its colours from there.
+That's why one switch reaches them all.
 
 ## Credits
 

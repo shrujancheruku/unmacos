@@ -1,0 +1,133 @@
+#!/usr/bin/env bats
+# unmacos-look: the Look renderer. Tested at its command line (render) and through
+# unmacos-theme-render, the alias menus call. Reloads are off (UNMACOS_NO_RELOAD=1).
+#
+# Goldens: tests/golden/look/<theme> is the rendered output of a fixture Theme in
+# tests/fixtures/look-themes. Regenerate with UNMACOS_UPDATE_GOLDEN=1 bats tests/look.bats
+
+load test_helper
+
+LOOK="$REPO_ROOT/home/dot_local/bin/executable_unmacos-look"
+THEME_RENDER="$REPO_ROOT/home/dot_local/bin/executable_unmacos-theme-render"
+SHIPPED_SHARE="$REPO_ROOT/home/dot_local/share/unmacos"
+
+setup() {
+  unmacos_temp_home
+  unmacos_write_answers
+  # unmacos-settings finds the Settings schema through chezmoi's source directory
+  mkdir -p "$HOME/.local/share"
+  ln -sfn "$REPO_ROOT" "$HOME/.local/share/chezmoi"
+  export GIT_CONFIG_GLOBAL="$BATS_TEST_TMPDIR/no-gitconfig"
+  export UNMACOS_SETTINGS="$REPO_ROOT/home/dot_local/bin/executable_unmacos-settings"
+  export UNMACOS_STATE="$BATS_TEST_TMPDIR/state"
+  export UNMACOS_NO_RELOAD=1
+  export UNMACOS_SHARE="$SHIPPED_SHARE"
+}
+
+look() { bash "$LOOK" "$@"; }
+
+# fixture_share: a share folder with the shipped templates and the fixture Themes
+fixture_share() {
+  export UNMACOS_SHARE="$BATS_TEST_TMPDIR/share"
+  mkdir -p "$UNMACOS_SHARE"
+  ln -sfn "$SHIPPED_SHARE/templates" "$UNMACOS_SHARE/templates"
+  ln -sfn "$REPO_ROOT/tests/fixtures/look-themes" "$UNMACOS_SHARE/themes"
+}
+
+# golden THEME DIR: DIR matches tests/golden/look/THEME byte for byte
+golden() {
+  local want="$REPO_ROOT/tests/golden/look/$1"
+  if [[ "${UNMACOS_UPDATE_GOLDEN:-}" == 1 ]]; then
+    rm -rf "$want" && cp -R "$2" "$want"
+  fi
+  diff -r "$want" "$2"
+}
+
+@test "render: a fixed dark Theme renders byte for byte to its golden" {
+  fixture_share
+  mkdir -p "$UNMACOS_STATE" && echo fixed-dark > "$UNMACOS_STATE/theme.name"
+  run look render "$BATS_TEST_TMPDIR/out"
+  [ "$status" -eq 0 ]
+  golden fixed-dark "$BATS_TEST_TMPDIR/out"
+}
+
+@test "render: a fixed light Theme renders byte for byte to its golden" {
+  fixture_share
+  UNMACOS_THEME=fixed-light run look render "$BATS_TEST_TMPDIR/out"
+  [ "$status" -eq 0 ]
+  golden fixed-light "$BATS_TEST_TMPDIR/out"
+}
+
+@test "render: every shipped Theme renders all 14 templates with no placeholder left" {
+  local theme name
+  for theme in "$SHIPPED_SHARE"/themes/*/; do
+    name="$(basename "$theme")"
+    UNMACOS_THEME="$name" run look render "$BATS_TEST_TMPDIR/$name"
+    [ "$status" -eq 0 ] || { echo "$name: $output"; false; }
+    [ "$(ls "$BATS_TEST_TMPDIR/$name"/*.* | grep -vc -e '/colors.toml$' -e '/theme.name$')" -eq 14 ]
+    # colors.toml is the Theme's own file, copied, not rendered
+    run grep -rl --exclude=colors.toml '{{' "$BATS_TEST_TMPDIR/$name"
+    [ "$status" -eq 1 ] || { echo "$name: placeholders in $output"; false; }
+  done
+}
+
+@test "render: a file the Theme ships replaces the rendered template" {
+  UNMACOS_THEME=tokyo-night run look render "$BATS_TEST_TMPDIR/out"
+  [ "$status" -eq 0 ]
+  cmp "$SHIPPED_SHARE/themes/tokyo-night/ghostty.conf" "$BATS_TEST_TMPDIR/out/ghostty.conf"
+  # and a template the Theme doesn't ship is still rendered
+  grep -q '7aa2f7' "$BATS_TEST_TMPDIR/out/borders.sh"
+}
+
+@test "render: the Theme is the live one, else the Answers' look.theme" {
+  run look render "$BATS_TEST_TMPDIR/a"
+  [ "$status" -eq 0 ]
+  [ "$(cat "$BATS_TEST_TMPDIR/a/theme.name")" = tokyo-night ]
+  mkdir -p "$UNMACOS_STATE" && echo nord > "$UNMACOS_STATE/theme.name"
+  run look render "$BATS_TEST_TMPDIR/b"
+  [ "$(cat "$BATS_TEST_TMPDIR/b/theme.name")" = nord ]
+}
+
+@test "render: an unknown Theme fails and leaves OUT_DIR alone" {
+  mkdir -p "$BATS_TEST_TMPDIR/out" && echo keep > "$BATS_TEST_TMPDIR/out/sentinel"
+  UNMACOS_THEME=no-such-theme run look render "$BATS_TEST_TMPDIR/out"
+  [ "$status" -ne 0 ]
+  [[ "$output" == *"no theme 'no-such-theme'"* ]]
+  [ -f "$BATS_TEST_TMPDIR/out/sentinel" ]
+}
+
+@test "render --draft: the Draft Look's Theme wins over the saved one" {
+  mkdir -p "$UNMACOS_STATE"
+  printf '[look]\ntheme = "nord"\n' > "$UNMACOS_STATE/draft.toml"
+  run look render --draft "$BATS_TEST_TMPDIR/draft"
+  [ "$status" -eq 0 ]
+  [ "$(cat "$BATS_TEST_TMPDIR/draft/theme.name")" = nord ]
+  # without --draft the Draft Look is ignored
+  run look render "$BATS_TEST_TMPDIR/saved"
+  [ "$(cat "$BATS_TEST_TMPDIR/saved/theme.name")" = tokyo-night ]
+}
+
+@test "unmacos-theme-render THEME still switches the Theme" {
+  export UNMACOS_LOOK="$LOOK"
+  run bash "$THEME_RENDER" nord
+  [ "$status" -eq 0 ]
+  [ "$(cat "$UNMACOS_STATE/theme.name")" = nord ]
+  [ "$(cat "$UNMACOS_STATE/theme/theme.name")" = nord ]
+  local accent
+  accent="$(awk -F'"' '/^accent/ {print $2}' "$SHIPPED_SHARE/themes/nord/colors.toml")"
+  grep -q "${accent#\#}" "$UNMACOS_STATE/theme/borders.sh"
+  # pywal's colors point at the rendered Theme
+  [ "$(readlink "$XDG_CACHE_HOME/wal/colors.json")" = "$UNMACOS_STATE/theme/pywal-colors.json" ]
+  # and with no Theme given it re-renders the live one
+  run bash "$THEME_RENDER"
+  [ "$status" -eq 0 ]
+  [ "$(cat "$UNMACOS_STATE/theme/theme.name")" = nord ]
+}
+
+@test "unmacos-theme-render: an unknown Theme fails and keeps the live one" {
+  export UNMACOS_LOOK="$LOOK"
+  mkdir -p "$UNMACOS_STATE" && echo nord > "$UNMACOS_STATE/theme.name"
+  run bash "$THEME_RENDER" no-such-theme
+  [ "$status" -ne 0 ]
+  [ "$(cat "$UNMACOS_STATE/theme.name")" = nord ]
+}

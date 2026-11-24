@@ -1,6 +1,7 @@
 # UnMacOS theme: Tokyo Night
-# Omarchy-compatible palette keys. Templates in ../../templates read these as
-# {{ key }} (#rrggbb), {{ key_strip }} (rrggbb) and {{ key_rgb }} (r,g,b).
+# Omarchy-compatible palette keys. Templates in ../../templates (rendered by
+# unmacos-look) read these as {{ .theme.key }} (#rrggbb), {{ .bare.key }} (rrggbb)
+# and {{ .rgb.key }} (r,g,b).
 # Files in this directory named like a template output (e.g. ghostty.conf)
 # replace the rendered template, so a theme can ship hand-tuned app configs.
 mode = "dark"
