@@ -202,8 +202,9 @@ def build() -> None:
 
     head_boot = (
         "<script>(function(){try{var p=JSON.parse(localStorage.getItem('unmacos-palette')||'null');"
-        "if(!p)return;var r=document.documentElement.style;for(var k in p)if(k!=='mode')r.setProperty('--'+k,p[k]);"
-        "document.documentElement.dataset.mode=p.mode;}catch(e){}})();</script>"
+        "if(!p)return;var r=document.documentElement.style;for(var k in p)if(k!=='mode'&&k!=='slug')r.setProperty('--'+k,p[k]);"
+        "document.documentElement.dataset.mode=p.mode;var m=document.querySelector('meta[name=theme-color]');"
+        "if(m&&p.bg)m.content=p.bg;}catch(e){}})();</script>"
     )
     analytics = (
         f'<script data-goatcounter="https://{GOATCOUNTER_CODE}.goatcounter.com/count" async '
