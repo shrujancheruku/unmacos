@@ -6,7 +6,9 @@
 
   This template runs before chezmoi's data exists, so it reads the schema file itself.
   Order for each Setting: the Answers' [group] table, then the flat key older Answers files use
-  (the schema's "legacy"), then, for Settings marked "ask", a prompt, then the default.
+  (the schema's "legacy"; personal = true stands for every app group), then, for Settings marked
+  "ask", a prompt, then the default. unmacos-settings migrate (run by chezmoi apply, and on the
+  first read of the Answers) rewrites an old file into the [group] tables.
 */ -}}
 {{- $schema := include (joinPath .chezmoi.sourceDir ".chezmoidata/settings.toml") | fromToml -}}
 {{- $f := joinPath .chezmoi.homeDir ".config/unmacos/setup.toml" -}}
@@ -22,6 +24,9 @@
     {{- $value = index $group .key -}}
   {{- else if and $legacy (hasKey $answers $legacy) (not (kindIs "map" (index $answers $legacy))) -}}
     {{- $value = index $answers $legacy -}}
+  {{- else if and (eq .group "apps") (eq .key "groups") (kindIs "bool" (get $answers "personal")) (get $answers "personal") -}}
+    {{- /* the oldest Answers files: personal = true meant every optional app group */ -}}
+    {{- $value = .choices -}}
   {{- else if and (get . "ask") (eq .type "bool") -}}
     {{- $value = promptBoolOnce $ (list .group .key) .label .default -}}
   {{- else if get . "ask" -}}
