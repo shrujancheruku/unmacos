@@ -1,0 +1,3 @@
+# UnMacOS defaults. Your setup.toml (via chezmoi.toml) overrides these.
+# Corner radius in px for windows, bar chips, popups and Spotify.
+corner_radius = 8

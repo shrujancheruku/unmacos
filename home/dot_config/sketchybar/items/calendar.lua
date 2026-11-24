@@ -19,7 +19,8 @@ local time = sbar.add("item", "calendar.time", {
 		color = colors.ring,
 		border_width = 0,
 		height = settings.chip_height - 8,
-		corner_radius = 7,
+		-- Inset 4px inside the chip, so its corners follow the chip's (never quite square)
+		corner_radius = math.max(settings.corner_radius - 4, 2),
 	},
 	padding_left = 0,
 	padding_right = 4,

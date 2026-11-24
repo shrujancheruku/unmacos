@@ -97,7 +97,7 @@ fill the space.
 ### A calmer macOS
 
 On macOS 26 and later, UnMacOS switches off Apple Intelligence and turns Liquid Glass down as far
-as it goes, with 4px window corners to match the gaps. It reapplies these after a macOS upgrade.
+as it goes, with 8px window corners to match the bar. It reapplies these after a macOS upgrade.
 Both are optional: untick them during setup.
 
 ## Install
@@ -289,6 +289,10 @@ from the menu or run `unmacos-theme-render <name>`. A theme can also ship its ow
 **Wallpapers.** Switching theme sets its first wallpaper; `Alt + Cmd + Space` cycles through the
 rest. They're Omarchy's, downloaded the first time you use a theme (`unmacos-wallpaper fetch --all`
 gets them all). Add your own to `~/.config/unmacos/backgrounds/<theme>/`.
+
+**Corners.** Windows, the bar's chips, popups and Spotify share one corner radius, 8px by default.
+For sharper corners, set `corner_radius = 4` (in pixels) in `~/.config/unmacos/setup.toml` and run `chezmoi init --apply`.
+Apps pick up the new window corners when they next open.
 
 **Weather.** Pin a city from the menu (Weather location) or with `unmacos-weather set Tokyo`.
 

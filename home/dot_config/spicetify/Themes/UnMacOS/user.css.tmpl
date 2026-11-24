@@ -1,0 +1,11 @@
+/* UnMacOS: Spotify follows the UnMacOS theme. Colors come from color.ini
+   (rendered per theme); this only matches the desktop's corners (corner_radius in setup.toml). */
+:root {
+  --border-radius-base: {{ .corner_radius }}px;
+}
+.main-yourLibraryX-entryPoints,
+.Root__main-view,
+.Root__nav-bar,
+.Root__right-sidebar {
+  border-radius: {{ .corner_radius }}px;
+}

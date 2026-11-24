@@ -2,6 +2,7 @@
 # UnMacOS: render the active theme. Re-runs when themes or templates change.
 # {{ range (glob (joinPath .chezmoi.sourceDir "dot_local/share/unmacos/templates/*")) }}{{ include . | sha256sum | trunc 12 }} {{ end }}
 # {{ range (glob (joinPath .chezmoi.sourceDir "dot_local/share/unmacos/themes/*/*")) }}{{ include . | sha256sum | trunc 12 }} {{ end }}
+# Corner radius {{ .corner_radius }}: the bar reloads when it changes
 set -euo pipefail
 # Your unmacos-setup choices: {{ .keep | toJson }}
 [[ -r "$HOME/.config/unmacos/prefs.sh" ]] && . "$HOME/.config/unmacos/prefs.sh"
