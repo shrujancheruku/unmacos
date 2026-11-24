@@ -7,6 +7,7 @@
 #                                  to FILE (default: stdout), to rebuild another Mac the same way
 #   unmacos-setup --import FILE    use FILE's answers (no questions), save and apply
 #   unmacos-setup --checklist      the steps macOS won't let a script do, and which are done
+#   unmacos-setup --questions      the questions it would ask (from the Settings schema), not asking
 # Answers live in ~/.config/unmacos/setup.toml (git name and email included: keep exports
 # somewhere private). unmacos-settings reads, checks and writes them; chezmoi reads them through
 # .chezmoi.toml.tmpl.
@@ -21,7 +22,7 @@ REPO="$(chezmoi execute-template '{{ .chezmoi.workingTree }}' 2>/dev/null || tru
 
 SEP=" — "   # between an option's name and its description
 
-usage() { sed -n '2,12s/^# \{0,1\}//p' "$0"; }
+usage() { sed -n '2,13s/^# \{0,1\}//p' "$0"; }
 die() { printf 'unmacos-setup: %s\n' "$*" >&2; exit 1; }
 
 # --- Answers -----------------------------------------------------------------
@@ -104,8 +105,14 @@ in_list() { [[ "|$2|" == *"|$1|"* ]]; }
 nocomma() { printf '%s' "${1//, / · }"; }   # gum's --selected is comma-separated
 
 # --- Questions -------------------------------------------------------------------
+# Every Setting with phase = install is asked, grouped by the schema's groups, in schema order.
+# The input follows the Setting's type; nothing here names a Setting, except the two places
+# marked "per-Setting" that need more than the schema holds (what an app group is, which apps).
 
-have_ui() { [[ -t 0 && -t 1 ]] && command -v gum >/dev/null; }
+# UNMACOS_SETUP_UI=1 asks even without a terminal (the tests script a fake gum).
+have_ui() { [[ -n "${UNMACOS_SETUP_UI:-}" || ( -t 0 && -t 1 ) ]] && command -v gum >/dev/null; }
+
+cancel() { echo "Nothing changed."; exit 0; }
 
 # pick HEADER SELECTED-LABELS(|) LABELS...: chosen labels, one per line
 pick() {
@@ -116,82 +123,243 @@ pick() {
     ${sel:+--selected="$sel"} || return 1
 }
 
-# pick_group GROUP HEADER: tick the true/false Settings of one table, labelled as the schema does
-pick_group() {
-  local group="$1" header="$2" k v l chosen sel=""
-  local keys=() labels=() i
-  while IFS=$'\t' read -r k v l; do
-    keys[${#keys[@]}]="$k"; labels[${#labels[@]}]="$l"
-    [[ "$v" == true ]] && sel="$sel|$l"
-  done < <(settings list --long "$DATA" --from "$FROM" "$group")
-  chosen="$(pick "$header" "$sel" "${labels[@]}")"
-  for ((i = 0; i < ${#keys[@]}; i++)); do
-    if printf '%s\n' "$chosen" | grep -qxF -- "${labels[i]}"; then put "${keys[i]}" true; else put "${keys[i]}" false; fi
+# The schema's install-phase Settings, in schema order, in parallel arrays (bash 3.2: no maps):
+#   Q_K key  Q_T type  Q_DEF default  Q_MIN Q_MAX  Q_CH choices (|)  Q_LB label  Q_HP help
+read -r -d '' QUESTIONS_TEMPLATE <<'TPL' || true
+{{- $us := "\u001f" -}}{{- $rs := "\u001e" -}}
+{{- $schema := include (env "SCHEMA") | fromToml -}}
+{{- range $schema.settings -}}
+  {{- if eq .phase "install" -}}
+    {{- $d := .default -}}
+    {{- if kindIs "slice" $d }}{{ $d = join $rs $d }}{{ end -}}
+    {{- $ch := get . "choices" -}}
+    {{- if kindIs "slice" $ch }}{{ $ch = join $rs $ch }}{{ end -}}
+    {{- printf "%s\n" (join $us (list "Q" (printf "%s.%s" .group .key) .type $d (get . "min") (get . "max") $ch .label .help "E")) -}}
+  {{- end -}}
+{{- end -}}
+TPL
+
+Q_N=0; Q_GROUPS=""
+load_questions() {
+  local schema tag a b c d e f g h _end out
+  schema="$(chezmoi source-path 2>/dev/null)/.chezmoidata/settings.toml"
+  [[ -r "$schema" ]] || die "can't find the Settings schema (is the UnMacOS source set up for chezmoi?)"
+  out="$(SCHEMA="$schema" chezmoi execute-template "$QUESTIONS_TEMPLATE" 2>&1)" || die "can't read the Settings schema: ${out##*: }"
+  Q_N=0; Q_GROUPS=""
+  while IFS=$'\x1f' read -r tag a b c d e f g h _end; do
+    [[ "$tag" == Q ]] || continue
+    Q_K[Q_N]="$a"; Q_T[Q_N]="$b"; Q_DEF[Q_N]="$c"; Q_MIN[Q_N]="$d"; Q_MAX[Q_N]="$e"
+    Q_CH[Q_N]="${f//$'\x1e'/|}"; Q_LB[Q_N]="$g"; Q_HP[Q_N]="$h"
+    [[ " $Q_GROUPS " == *" ${a%%.*} "* ]] || Q_GROUPS="$Q_GROUPS${Q_GROUPS:+ }${a%%.*}"
+    Q_N=$((Q_N + 1))
+  done <<< "$out"
+  return 0
+}
+
+# group_rows GROUP: the row numbers of that group's questions, in schema order
+group_rows() { local i; for ((i = 0; i < Q_N; i++)); do [[ "${Q_K[i]%%.*}" != "$1" ]] || printf '%s ' "$i"; done; }
+# A group of two or more true/false Settings (and nothing else) is one list to tick
+group_is_ticks() {
+  local i n=0
+  for ((i = 0; i < Q_N; i++)); do
+    [[ "${Q_K[i]%%.*}" == "$1" ]] || continue
+    [[ "${Q_T[i]}" == bool ]] || return 1
+    n=$((n + 1))
+  done
+  (( n >= 2 ))
+}
+
+# group_polarity GROUP: how a list of true/false Settings reads, decided here and nowhere else.
+#   GP_HEADER   the question above the list
+#   GP_INVERT   0: a ticked box is a Setting set to true;  1: a ticked box is one set to false
+# The keep.* Settings are "Keep X on" (true = leave it alone): ticking one leaves it alone and
+# nothing starts ticked. To ask it the other way round ("What should UnMacOS change? Untick to
+# leave it as it is", everything starting ticked), set GP_INVERT=1 and reword the header here,
+# and reword the keep labels in the schema (then run: python3 site/build.py --docs).
+group_polarity() {
+  GP_INVERT=0
+  case "$1" in
+    keep) GP_HEADER="What should UnMacOS leave as it is? Tick to keep" ;;
+    *)    GP_HEADER="Tick what you want on" ;;
+  esac
+}
+
+# gum_kind ROW: which gum input asks that Setting
+gum_kind() {
+  local i="$1"
+  case "${Q_T[i]}" in
+    bool) if group_is_ticks "${Q_K[i]%%.*}"; then echo "gum choose --no-limit"; else echo "gum confirm"; fi ;;
+    enum) echo "gum choose" ;;
+    list) if [[ -n "${Q_CH[i]}" || "${Q_K[i]}" == apps.skip ]]; then echo "gum choose --no-limit"; else echo "gum input"; fi ;;
+    *)    echo "gum input" ;;
+  esac
+}
+
+# unmacos-setup --questions: the questions the wizard would ask, one per line, without asking
+print_questions() {
+  local g i
+  load_questions
+  for g in $Q_GROUPS; do
+    for i in $(group_rows "$g"); do
+      printf '%s\t%s\t%s\t%s\n' "$g" "${Q_K[i]}" "$(gum_kind "$i")" "${Q_LB[i]}"
+    done
   done
 }
 
+# cur KEY: what the Setting is so far (this run's replies, else the Answers); a list is a,b,c
+cur() {
+  local i
+  for ((i = ${#SET[@]} - 1; i >= 0; i--)); do
+    [[ "${SET[i]%%=*}" != "$1" ]] || { printf '%s' "${SET[i]#*=}"; return 0; }
+  done
+  sget "$1" | paste -s -d, -
+}
+
+CHANGES=()
+show() {  # ROW VALUE: a value as the summary words it
+  case "${Q_T[$1]}" in
+    bool) if [[ "$2" == true ]]; then echo yes; else echo no; fi ;;
+    *)    echo "${2:-(none)}" ;;
+  esac
+}
+# answer ROW VALUE: keep a reply, and note it for the summary when it differs from what was there
+answer() {
+  local i="$1" old
+  old="$(cur "${Q_K[i]}")"
+  put "${Q_K[i]}" "$2"
+  [[ "$old" == "$2" ]] || CHANGES[${#CHANGES[@]}]="${Q_LB[i]}: $(show "$i" "$old") → $(show "$i" "$2")"
+  return 0
+}
+help_line() { [[ -z "${Q_HP[$1]}" ]] || gum style --faint "${Q_HP[$1]}"; }
+
+# ask_ticks GROUP: tick the true/false Settings of one group, labelled as the schema labels them
+ask_ticks() {
+  local g="$1" i chosen sel="" v ticked
+  local rows=() labels=()
+  group_polarity "$g"
+  for i in $(group_rows "$g"); do
+    rows[${#rows[@]}]="$i"; labels[${#labels[@]}]="${Q_LB[i]}"
+    v="$(cur "${Q_K[i]}")"
+    if { [[ "$v" == true ]] && (( ! GP_INVERT )); } || { [[ "$v" != true ]] && (( GP_INVERT )); }; then
+      sel="$sel|${Q_LB[i]}"
+    fi
+  done
+  chosen="$(pick "$GP_HEADER" "$sel" "${labels[@]}")" || cancel
+  for i in "${rows[@]}"; do
+    ticked=0; ! printf '%s\n' "$chosen" | grep -qxF -- "${Q_LB[i]}" || ticked=1
+    if (( ticked != GP_INVERT )); then answer "$i" true; else answer "$i" false; fi
+  done
+}
+
+ask_bool() {
+  local i="$1" rc=0 def
+  def="$(cur "${Q_K[i]}")"; [[ "$def" == true ]] || def=false
+  help_line "$i"
+  gum confirm "${Q_LB[i]}?" --default="$def" || rc=$?
+  case "$rc" in 0) answer "$i" true ;; 1) answer "$i" false ;; *) cancel ;; esac
+}
+
+ask_enum() {
+  local i="$1" v choices=()
+  IFS='|' read -r -a choices <<< "${Q_CH[i]}"
+  help_line "$i"
+  v="$(printf '%s\n' "${choices[@]}" | gum choose --height 14 --header "${Q_LB[i]}" --selected="$(cur "${Q_K[i]}")")" || cancel
+  answer "$i" "${v:-${Q_DEF[i]}}"
+}
+
+# per-Setting: an app group is described by its Brewfile's first line
+group_describe() { printf '%s%s%s' "$1" "$SEP" "$(nocomma "$(group_about "$1")")"; }
+
+# ask_list ROW: tick from the schema's choices
+ask_list() {
+  local i="$1" c chosen l sel="" now out="" labels=()
+  now="$(cur "${Q_K[i]}")"; now="${now//,/|}"
+  local choices=()
+  IFS='|' read -r -a choices <<< "${Q_CH[i]}"
+  for c in "${choices[@]}"; do
+    l="$c"; [[ "${Q_K[i]}" != apps.groups ]] || l="$(group_describe "$c")"   # per-Setting
+    labels[${#labels[@]}]="$l"
+    ! in_list "$c" "$now" || sel="$sel|$l"
+  done
+  help_line "$i"
+  chosen="$(pick "${Q_LB[i]}" "$sel" "${labels[@]}")" || cancel
+  while IFS= read -r l; do [[ -z "$l" ]] || out="$out${out:+,}${l%%"$SEP"*}"; done <<< "$chosen"
+  answer "$i" "$out"
+}
+
+# per-Setting: the apps to leave out are the ones in the chosen groups, so they follow that answer
+ask_skip() {
+  local i="$1" g items l chosen sel skip_now="" now groups rc=0
+  groups="$(cur apps.groups)"; now="$(cur apps.skip)"
+  if [[ -z "$groups" ]]; then answer "$i" ""; return 0; fi
+  help_line "$i"
+  gum confirm "Leave out some apps in those groups?" --default="$([[ -n "$now" ]] && echo true || echo false)" || rc=$?
+  case "$rc" in 0) ;; 1) return 0 ;; *) cancel ;; esac
+  for g in ${groups//,/ }; do
+    items=(); sel=""
+    while IFS= read -r l; do
+      l="$(nocomma "$l")"; items[${#items[@]}]="$l"
+      in_list "${l%%"$SEP"*}" "${now//,/|}" || sel="$sel|$l"
+    done < <(group_items "$g")
+    chosen="$(pick "$g: untick what you don't want" "$sel" "${items[@]}")" || cancel
+    for l in "${items[@]}"; do
+      printf '%s\n' "$chosen" | grep -qxF -- "$l" || skip_now="$skip_now${skip_now:+,}${l%%"$SEP"*}"
+    done
+  done
+  answer "$i" "$skip_now"
+}
+
+# ask_text ROW: a string, or a whole number (asked again until it is one, in range)
+ask_text() {
+  local i="$1" v range="" ok
+  if [[ "${Q_T[i]}" == int && -n "${Q_MIN[i]}" && -n "${Q_MAX[i]}" ]]; then range=" (${Q_MIN[i]} to ${Q_MAX[i]})"; fi
+  if [[ "${Q_T[i]}" == list ]]; then range=" (separated by commas)"; fi
+  help_line "$i"
+  while :; do
+    v="$(gum input --header "${Q_LB[i]}$range" --value "$(cur "${Q_K[i]}")")" || cancel
+    v="${v:-${Q_DEF[i]}}"
+    ok=1
+    if [[ "${Q_T[i]}" == int ]]; then
+      [[ "$v" =~ ^-?[0-9]+$ ]] || ok=0
+      if (( ok )) && [[ -n "${Q_MIN[i]}" ]] && (( v < Q_MIN[i] )); then ok=0; fi
+      if (( ok )) && [[ -n "${Q_MAX[i]}" ]] && (( v > Q_MAX[i] )); then ok=0; fi
+    fi
+    (( ok )) && break
+    gum style --foreground 1 "Enter a whole number$range"
+  done
+  answer "$i" "${v// /}"
+}
+
+ask_one() {
+  local i="$1"
+  case "${Q_T[i]}" in
+    bool) ask_bool "$i" ;;
+    enum) ask_enum "$i" ;;
+    list) if [[ "${Q_K[i]}" == apps.skip ]]; then ask_skip "$i"
+          elif [[ -n "${Q_CH[i]}" ]]; then ask_list "$i"
+          else ask_text "$i"; fi ;;
+    *)    ask_text "$i" ;;
+  esac
+}
+
 ask() {
-  local l k chosen labels sel g items skip_now
-  local a_theme a_apps a_apps_skip a_weather a_1p
+  local g i
+  load_questions
 
   gum style --border rounded --padding "0 2" --margin "1 0" --border-foreground 4 \
     "UnMacOS setup" "x or Tab ticks and unticks, Enter goes on. Run unmacos-setup again any time."
 
-  put git.name "$(gum input --header "Your name, for git commits" --value "$(sget git.name)" --placeholder "Ada Lovelace")"
-  put git.email "$(gum input --header "Your email, for git commits (stays on this Mac)" --value "$(sget git.email)" --placeholder "ada@example.com")"
-
-  a_1p=false
-  if gum confirm "Read secrets from 1Password? (spotify_player's client ID; needs the 1Password app and CLI)" \
-       --default="$(sget onepassword.enabled)"; then a_1p=true; fi
-  put onepassword.enabled "$a_1p"
-
-  a_theme="${LIVE_THEME:-$(sget look.theme)}"
-  put look.theme "$(find "$REPO/home/dot_local/share/unmacos/themes" -mindepth 1 -maxdepth 1 -type d -exec basename {} \; | sort \
-    | gum choose --height 14 --header "Theme (switch any time: Alt + Ctrl + Shift + Space)" --selected="$a_theme")"
-
-  # App groups
-  a_apps="$(sgetl apps.groups)"; a_apps_skip="$(sgetl apps.skip)"
-  labels=(); sel=""
-  for g in $(groups); do
-    l="$g$SEP$(nocomma "$(group_about "$g")")"; labels+=("$l")
-    in_list "$g" "$a_apps" && sel="$sel|$l"
+  for g in $Q_GROUPS; do
+    if group_is_ticks "$g"; then ask_ticks "$g"
+    else for i in $(group_rows "$g"); do ask_one "$i"; done; fi
   done
-  chosen="$(pick "Extra apps to install (the desktop and terminal tools always are)" "$sel" "${labels[@]}")"
-  a_apps=""
-  while IFS= read -r l; do [[ -n "$l" ]] && a_apps="$a_apps${a_apps:+|}${l%%"$SEP"*}"; done <<< "$chosen"
 
-  if [[ -n "$a_apps" ]] && gum confirm "Leave out some apps in those groups?" --default="$([[ -n "$a_apps_skip" ]] && echo true || echo false)"; then
-    skip_now=""
-    local IFS_was="$IFS"; IFS='|'
-    for g in $a_apps; do
-      IFS="$IFS_was"
-      items=(); sel=""
-      while IFS= read -r l; do
-        l="$(nocomma "$l")"; items+=("$l")
-        in_list "${l%%"$SEP"*}" "$a_apps_skip" || sel="$sel|$l"
-      done < <(group_items "$g")
-      chosen="$(pick "$g: untick what you don't want" "$sel" "${items[@]}")"
-      for l in "${items[@]}"; do
-        printf '%s\n' "$chosen" | grep -qxF -- "$l" || skip_now="$skip_now${skip_now:+|}${l%%"$SEP"*}"
-      done
-      IFS='|'
-    done
-    IFS="$IFS_was"
-    a_apps_skip="$skip_now"
-  elif [[ -z "$a_apps" ]]; then
-    a_apps_skip=""
+  echo
+  if (( ${#CHANGES[@]} )); then
+    gum style --border rounded --padding "0 2" "Changes:" "${CHANGES[@]}"
+  else
+    echo "No changes to your answers."
   fi
-  put apps.groups "${a_apps//|/,}"
-  put apps.skip "${a_apps_skip//|/,}"
-
-  # What UnMacOS leaves alone, and how windows and the pointer behave
-  pick_group keep "What should UnMacOS leave as it is? Tick to keep"
-  pick_group desktop "Windows and pointer"
-
-  a_weather="$(gum input --header "Weather in the bar: a city, airport code or zip, or auto (from your IP)" --value "${LIVE_WEATHER:-$(sget bar.weather)}")"
-  put bar.weather "${a_weather:-auto}"
-
-  echo; swrite - | grep -vE '^#|^$' | gum style --border rounded --padding "0 2"
   gum confirm "Save and apply these?" || { echo "Nothing changed."; exit 0; }
 }
 
@@ -278,6 +446,7 @@ while (( $# )); do
     --export)     mode="export"; [[ $# -gt 1 && "$2" != -* ]] && { file="$2"; shift; } ;;
     --import)     mode="import"; file="${2:?--import needs a file}"; shift ;;
     --checklist)  mode="checklist" ;;
+    --questions)  mode="questions" ;;
     -h|--help)    usage; exit 0 ;;
     *)            usage >&2; exit 2 ;;
   esac
@@ -292,6 +461,7 @@ case "$mode" in
     else swrite -; fi
     exit 0 ;;
   checklist) checklist; exit 0 ;;
+  questions) print_questions; exit 0 ;;
   import)
     [[ -r "$file" ]] || die "can't read $file"
     FROM="$file"; DATA="--no-data"
