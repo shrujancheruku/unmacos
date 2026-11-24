@@ -89,3 +89,27 @@ PY
   echo "$output"
   [ "$status" -ne 0 ]
 }
+
+@test "the reference shows which Settings the wizard asks: a Phase column, and no claim it asks them all" {
+  run python3 - "$SCHEMA" "$REPO_ROOT/docs/settings.md" <<'PY'
+import sys, tomllib
+with open(sys.argv[1], "rb") as f:
+    settings = tomllib.load(f)["settings"]
+text = open(sys.argv[2]).read()
+assert "the wizard asks them" not in text, "says the wizard asks every Setting"
+lines = text.splitlines()
+head = [c.strip() for c in next(l for l in lines if l.startswith("| Group")).split("|")[1:-1]]
+assert "Phase" in head, head
+col = head.index("Phase")
+rows = [l for l in lines if l.startswith("| ") and "`" in l]
+for row, s in zip(rows, settings):
+    assert row.split("|")[1:-1][col].strip() == s["phase"], f"{s['group']}.{s['key']}: {row}"
+PY
+  echo "$output"
+  [ "$status" -eq 0 ]
+  # the site's page has the column too
+  SITE_OUT="$BATS_TEST_TMPDIR/site" python3 "$REPO_ROOT/site/build.py" > /dev/null
+  page="$BATS_TEST_TMPDIR/site/install/settings/index.html"
+  grep -q '<th>Phase</th>' "$page"
+  ! grep -q 'the order the setup wizard asks them' "$page"
+}
