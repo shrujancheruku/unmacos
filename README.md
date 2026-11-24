@@ -20,9 +20,12 @@
 bash -c "$(curl -fsSL https://raw.githubusercontent.com/shrujancheruku/unmacos/main/install.sh)"
 ```
 
-[What you get](#what-you-get) · [Install](#install) · [Keys](#learn-the-keys) · [Make it yours](#make-it-yours) · [Under the hood](#under-the-hood)
+**[Website](https://shrujancheruku.github.io/unmacos/)** · [What you get](#what-you-get) · [Install](#install) · [Keys](#learn-the-keys) · [Make it yours](#make-it-yours) · [Under the hood](#under-the-hood)
 
 ## Why
+
+UnMacOS is a keyboard-first tiling desktop for macOS 15 to 27: dotfiles that set up the Rift tiling
+window manager, SketchyBar, fuzzy menus, terminal apps and live theme switching on Apple silicon Macs.
 
 macOS is a great operating system under a desktop designed for dragging. Windows pile up until you
 arrange them by hand, apps live in a Dock you aim at, settings sit three clicks deep, and every app

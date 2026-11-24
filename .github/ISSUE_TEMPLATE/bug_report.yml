@@ -1,0 +1,36 @@
+name: Bug report
+description: Something in UnMacOS doesn't work as described
+labels: [bug]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: What you did, what you expected, and what happened instead.
+    validations:
+      required: true
+  - type: textarea
+    id: doctor
+    attributes:
+      label: unmacos-doctor output
+      description: Run `unmacos-doctor` and paste the output.
+      render: text
+    validations:
+      required: true
+  - type: input
+    id: macos
+    attributes:
+      label: macOS version
+      placeholder: e.g. macOS 26.1
+    validations:
+      required: true
+  - type: input
+    id: mac
+    attributes:
+      label: Mac model
+      placeholder: e.g. MacBook Pro 14-inch, M1 Pro
+  - type: input
+    id: version
+    attributes:
+      label: UnMacOS version or commit
+      description: "`chezmoi git -- log -1 --oneline`"

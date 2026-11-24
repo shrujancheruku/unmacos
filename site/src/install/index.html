@@ -1,0 +1,93 @@
+<!--
+title: Install UnMacOS on your Mac: one command, a setup wizard, a checklist
+description: How to install UnMacOS on macOS 15 or later: what the one-line installer does, the setup wizard's questions, the few clicks macOS needs, and how to check it worked.
+nav: Install
+-->
+<section class="hero">
+  <div class="wrap">
+    <p class="eyebrow">Install · about 15 minutes on a new Mac</p>
+    <h1>Install UnMacOS</h1>
+    <p class="lede">You need a Mac with Apple silicon on macOS 15 Sequoia or later (macOS 26 Tahoe and 27 included). Open Terminal and run:</p>
+    <div class="install">
+      <pre id="install-cmd">{{INSTALL_CMD}}</pre>
+      <button class="copy" type="button" data-copy="install-cmd">Copy</button>
+    </div>
+    <p class="note">UnMacOS writes the config files it manages (Rift, SketchyBar, Ghostty, tmux, Neovim and others). If you already have your own, back up <code>~/.config</code> first. You can <a href="https://github.com/shrujancheruku/unmacos/blob/main/install.sh">read install.sh</a> before running it.</p>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2>What happens</h2>
+    <ol class="steps">
+      <li>
+        <h3>The installer</h3>
+        <p>It asks for your password once, then installs <a href="https://brew.sh">Homebrew</a> (with Apple's command line tools), <a href="https://www.chezmoi.io/">chezmoi</a> and the UnMacOS files, and starts the setup wizard. It's safe to run again if anything is interrupted.</p>
+      </li>
+      <li>
+        <h3>The setup wizard</h3>
+        <p><code>unmacos-setup</code> asks what you want before anything changes. Arrow keys move, <kbd>x</kbd> or <kbd>Tab</kbd> ticks and unticks, <kbd>Enter</kbd> goes on. Every question has a sensible default.</p>
+        <div class="media narrow" style="margin:16px 0">
+          <video class="lazy" muted loop playsinline width="920" height="720" poster="../media/setup-poster.webp" aria-label="The unmacos-setup wizard: entering a git name and email, choosing a theme, ticking app groups, reviewing what UnMacOS changes, setting the weather place, then the summary">
+            <source data-src="../media/setup.webm" type="video/webm">
+            <source data-src="../media/setup.mp4" type="video/mp4">
+          </video>
+        </div>
+        <div class="table-wrap"><table><thead><tr><th>Question</th><th>What it's for</th></tr></thead><tbody>
+          <tr><td>Git name and email</td><td>Your <code>~/.gitconfig</code>. Stays on your Mac</td></tr>
+          <tr><td>1Password?</td><td>Reads secrets (the Spotify player's client ID) from 1Password. No is fine</td></tr>
+          <tr><td>Theme</td><td>Any of the {{THEME_COUNT}}. Switch later with <kbd>Alt</kbd> + <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>Space</kbd></td></tr>
+          <tr><td>Extra apps</td><td>Optional groups: developer tools, everyday apps, music and video, games, App Store. Untick single apps inside a group</td></tr>
+          <tr><td>What UnMacOS changes</td><td>Apple Intelligence and Liquid Glass off, wallpaper, macOS accent colours, and theming for Firefox, Spotify and Orca. Untick anything you want left alone</td></tr>
+          <tr><td>Windows and pointer</td><td>Animations, focus follows mouse, pointer jumps to the focused window and hides</td></tr>
+          <tr><td>Weather</td><td>The place for the bar's weather, or <code>auto</code> to use your IP</td></tr>
+        </tbody></table></div>
+        <p style="margin-top:14px">Your answers are saved to <code>~/.config/unmacos/setup.toml</code>. Run <code>unmacos-setup</code> again any time to change them.</p>
+      </li>
+      <li>
+        <h3>A few clicks macOS won't let a script make</h3>
+        <p>The installer finishes with a checklist and shows which steps it can see are done. <code>unmacos-setup --checklist</code> shows it again and opens the right System Settings page.</p>
+        <ul>
+          <li><strong>Privacy &amp; Security → Accessibility:</strong> turn on <code>rift</code> and <code>clipse</code>, then run <code>rift service restart</code>. This lets Rift move windows. No SIP changes needed.</li>
+          <li><strong>Log out and back in</strong> once.</li>
+          <li>The first menu you open makes Ghostty ask to run a command: allow it.</li>
+          <li>On macOS 26 and later, approve <strong>UnMacOS: no Apple Intelligence</strong> in General → Device Management (skipped if you kept Apple Intelligence).</li>
+          <li>Run <code>spotify_player</code> once to log in to Spotify, if you use it.</li>
+          <li>In Firefox, click <strong>Pywalfox → Fetch Pywal colors</strong> once.</li>
+        </ul>
+      </li>
+      <li>
+        <h3>Check it</h3>
+        <pre class="block">unmacos-doctor</pre>
+        <p>It checks services, permissions, theme, fonts and menus, and tells you what to fix. When it says <em>All good</em>, press <kbd>Alt</kbd> + <kbd>Space</kbd> and you're in.</p>
+      </li>
+    </ol>
+  </div>
+</section>
+
+<section>
+  <div class="wrap grid-2">
+    <div>
+      <h2>The same setup on another Mac</h2>
+      <p>Export your answers, with today's theme and weather place, and hand them to the installer on the new Mac. It then asks no questions. The file has your git name and email in it, so keep it somewhere private.</p>
+    </div>
+    <pre class="block">unmacos-setup --export ~/setup.toml   # on this Mac
+
+# on the new Mac, with that file copied over:
+UNMACOS_SETUP=~/setup.toml bash -c "$(curl -fsSL \
+  https://raw.githubusercontent.com/shrujancheruku/unmacos/main/install.sh)"</pre>
+  </div>
+</section>
+
+<section>
+  <div class="wrap grid-2">
+    <div>
+      <h2>Updating</h2>
+      <p>Run <code>chezmoi update</code>. Release notes for each version are on <a href="{{REPO_URL}}/releases">GitHub Releases</a>.</p>
+    </div>
+    <div>
+      <h2>Leaving things alone</h2>
+      <p>Everything UnMacOS changes outside its own apps can be switched off in <code>unmacos-setup</code>, or for a single run with a variable such as <code>UNMACOS_KEEP_AI=1 chezmoi apply</code>. The <a href="{{REPO_URL}}#leaving-things-alone">README</a> lists how to undo each one.</p>
+    </div>
+  </div>
+</section>

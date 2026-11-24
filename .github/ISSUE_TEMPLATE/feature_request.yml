@@ -1,0 +1,16 @@
+name: Feature request
+description: Suggest something UnMacOS could do
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What would you like to do?
+      description: The task or annoyance, in your own words.
+    validations:
+      required: true
+  - type: textarea
+    id: idea
+    attributes:
+      label: How might it work?
+      description: Keys, menus, apps, or how Omarchy does it, if relevant.
