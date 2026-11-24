@@ -27,8 +27,9 @@ setup() {
 }
 
 # fixture_source: a copy of the source whose schema has more Settings: two live tune-phase ones in
-# the look group, one live look Setting asked at install, and one install-phase Setting outside the
-# Look. Tune lists the first three (it edits the whole Look) and not the last.
+# the look group, one live look Setting asked at install, one install-phase Setting outside the
+# Look and one live tune-phase Setting outside it. Tune lists all but the install-phase one outside
+# the Look (it edits the whole Look, and every tune-phase Setting).
 fixture_source() {
   local src="$BATS_TEST_TMPDIR/source"
   mkdir -p "$src"
@@ -80,6 +81,18 @@ label = "Fixture volume"
 help = "An install-phase Setting outside the Look."
 phase = "install"
 takes_effect = "apply"
+
+[[settings]]
+group = "fixture"
+key = "lights"
+type = "int"
+default = 3
+min = 0
+max = 9
+label = "Fixture lights"
+help = "A live tune-phase Setting outside the Look: it can't be a Draft Look."
+phase = "tune"
+takes_effect = "live"
 TOML
   mkdir -p "$HOME/.local/share"
   ln -sfn "$src" "$HOME/.local/share/chezmoi"
@@ -267,6 +280,38 @@ snapshot() { (cd "$UNMACOS_STATE/theme" && find . -type f | sort | xargs shasum)
   [ "$status" -eq 0 ]
   [ "$(saved desktop.dock_size)" = 32 ]
   grep -q 'init --apply' "$UNMACOS_CHEZMOI.out"
+}
+
+@test "a live Setting outside the Look shows its badge, is not drafted, and is saved on Save" {
+  printf '#!/bin/sh\necho "chezmoi $*" >> "%s.out"\n' "$UNMACOS_CHEZMOI" > "$UNMACOS_CHEZMOI"
+  chmod +x "$UNMACOS_CHEZMOI"
+  before="$(snapshot)"
+  replies '0|fixture · Fixture lights: 3  [on save]' '0|7' '0|Save'
+  run tune
+  echo "$output"
+  [ "$status" -eq 0 ]
+  grep -q 'fixture · Fixture lights: 3  \[on save\]' "$GUM_LOG"
+  # not previewed: no Keep prompt, no Draft Look, the rendered Look untouched until chezmoi applies
+  ! grep -q 'is on your desktop' "$GUM_LOG"
+  [ ! -e "$GUM_LOG.draft" ]
+  [ ! -e "$(draft_file)" ]
+  [ "$(snapshot)" = "$before" ]
+  [[ "$output" == *"Fixture lights = 7: applies when you save."* ]]
+  [[ "$output" != *"()"* ]]
+  [ "$(saved fixture.lights)" = 7 ]
+  grep -q 'init --apply' "$UNMACOS_CHEZMOI.out"
+}
+
+@test "a live Setting outside the Look picked and then Discard is not saved" {
+  answers="$(cat "$HOME/.config/unmacos/setup.toml")"
+  replies '0|fixture · Fixture lights: 3  [on save]' '0|7' '0|Discard'
+  run tune
+  echo "$output"
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"Nothing changed"* ]]
+  [ "$(cat "$HOME/.config/unmacos/setup.toml")" = "$answers" ]
+  [ ! -e "$(draft_file)" ]
+  [ "$(saved fixture.lights)" = 3 ]
 }
 
 @test "a Draft Look left behind by an earlier session is not saved by this one" {
