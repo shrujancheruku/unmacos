@@ -2,13 +2,14 @@
 # UnMacOS Tune phase: change the Settings meant for the installed desktop, seeing each Look change
 # on the real desktop as a Draft Look before it is kept.
 #   unmacos-tune
-# Lists every Setting the schema marks phase = tune, by group. Pick one, then a preset, "custom…"
-# or a choice. A Look Setting that takes effect live is applied at once as a Draft Look (keep it,
-# try another value, or go back). Any other Setting shows a badge ("after restart", "after logout",
-# "on save") and is not previewed: it applies when you save. Save writes what you picked into your
-# Answers; Discard, Esc and Ctrl-C leave the saved Look exactly as it was.
-# The Settings come from the schema (home/.chezmoidata/settings.toml): a new tune-phase Setting
-# shows up here with no change to this script.
+# Tune edits the Look, so it lists every Setting in the group "look" (the Theme included, whatever
+# its phase) and every other Setting the schema marks phase = tune, by group. Pick one, then a
+# preset, "custom…" or a choice. A Look Setting that takes effect live is applied at once as a
+# Draft Look (keep it, try another value, or go back). Any other Setting shows a badge ("after
+# restart", "after logout", "on save") and is not previewed: it applies when you save. Save writes
+# what you picked into your Answers; Discard, Esc and Ctrl-C leave the saved Look exactly as it was.
+# The Settings come from the schema (home/.chezmoidata/settings.toml): a new look or tune-phase
+# Setting shows up here with no change to this script.
 # Runs on macOS's own bash 3.2, with gum.
 set -euo pipefail
 export PATH="$HOME/.local/bin:/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin"
@@ -16,7 +17,7 @@ export PATH="$HOME/.local/bin:/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin"
 SETUP="${UNMACOS_SETUP_FILE:-$HOME/.config/unmacos/setup.toml}"
 STATE="${UNMACOS_STATE:-$HOME/.local/state/unmacos}"
 
-usage() { sed -n '2,11s/^# \{0,1\}//p' "$0"; }
+usage() { sed -n '2,12s/^# \{0,1\}//p' "$0"; }
 die() { printf 'unmacos-tune: %s\n' "$*" >&2; exit 1; }
 
 # unmacos-settings and unmacos-look sit next to this script in the source, or on PATH once applied
@@ -64,7 +65,7 @@ trap 'exit 130' INT TERM HUP
 cancel() { echo "Nothing changed."; exit 0; }
 
 # --- The Settings ----------------------------------------------------------------------------------
-# The schema's tune-phase Settings, in schema order, in parallel arrays (bash 3.2: no maps):
+# The Look Settings and the other tune-phase Settings, in schema order, in parallel arrays (bash 3.2: no maps):
 #   Q_K key  Q_T type  Q_DEF default  Q_MIN Q_MAX  Q_CH choices (|)  Q_LB label  Q_HP help
 #   Q_TE takes_effect  Q_SAVED the saved value  Q_NEW the value picked here  Q_SET 1 once picked
 #   Q_DRAFT 1 once it is on the desktop as a Draft Look
@@ -72,7 +73,7 @@ read -r -d '' TUNE_TEMPLATE <<'TPL' || true
 {{- $us := "\u001f" -}}{{- $rs := "\u001e" -}}
 {{- $schema := include (env "SCHEMA") | fromToml -}}
 {{- range $schema.settings -}}
-  {{- if eq .phase "tune" -}}
+  {{- if or (eq .group "look") (eq .phase "tune") -}}
     {{- $d := .default -}}
     {{- if kindIs "slice" $d }}{{ $d = join $rs $d }}{{ end -}}
     {{- $ch := get . "choices" -}}

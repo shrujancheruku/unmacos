@@ -26,8 +26,9 @@ setup() {
   look render "$UNMACOS_STATE/theme" >/dev/null
 }
 
-# fixture_source: a copy of the source whose schema has three more tune-phase Settings: a live
-# int, a live enum and a live string, all in the look group. Tune must list them untouched.
+# fixture_source: a copy of the source whose schema has more Settings: two live tune-phase ones in
+# the look group, one live look Setting asked at install, and one install-phase Setting outside the
+# Look. Tune lists the first three (it edits the whole Look) and not the last.
 fixture_source() {
   local src="$BATS_TEST_TMPDIR/source"
   mkdir -p "$src"
@@ -56,6 +57,29 @@ label = "Fixture frame"
 help = "A live enum only the test knows."
 phase = "tune"
 takes_effect = "live"
+
+[[settings]]
+group = "look"
+key = "fixture_tint"
+type = "enum"
+default = "cool"
+choices = ["cool", "warm"]
+label = "Fixture tint"
+help = "A look Setting asked at install, still part of the Look."
+phase = "install"
+takes_effect = "live"
+
+[[settings]]
+group = "fixture"
+key = "volume"
+type = "int"
+default = 5
+min = 1
+max = 11
+label = "Fixture volume"
+help = "An install-phase Setting outside the Look."
+phase = "install"
+takes_effect = "apply"
 TOML
   mkdir -p "$HOME/.local/share"
   ln -sfn "$src" "$HOME/.local/share/chezmoi"
@@ -110,8 +134,11 @@ snapshot() { (cd "$UNMACOS_STATE/theme" && find . -type f | sort | xargs shasum)
   grep -q 'look · Fixture glow: 4$' "$GUM_LOG"
   grep -q 'look · Fixture frame: thin$' "$GUM_LOG"
   grep -q 'desktop · Dock size: 64  \[after logout\]' "$GUM_LOG"
-  # a Setting asked at install is not listed
-  ! grep -q 'Theme' "$GUM_LOG"
+  # the Look is all of group look, whatever the phase: the Theme and an install-phase look Setting
+  grep -q 'look · Theme: ' "$GUM_LOG"
+  grep -q 'look · Fixture tint: cool$' "$GUM_LOG"
+  # an install-phase Setting outside the Look is not listed
+  ! grep -q 'Fixture volume' "$GUM_LOG"
   ! grep -nE 'corner_radius|dock_size|fixture_|look\.theme' "$BIN/executable_unmacos-tune"
 }
 
@@ -176,6 +203,29 @@ snapshot() { (cd "$UNMACOS_STATE/theme" && find . -type f | sort | xargs shasum)
   [ "$status" -eq 0 ]
   [ "$(saved look.fixture_glow)" = 7 ]
   [[ "$output" == *"Enter a whole number from 0 to 20"* ]]
+}
+
+@test "the Theme is listed with its choices; picking one drafts look.theme, and Esc restores the Look" {
+  before="$(snapshot)"
+  current="$(saved look.theme)"
+  replies "0|look · Theme: $current" '0|nord' '130|'
+  run tune
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"Nothing changed"* ]]
+  # nord was on the desktop at the Keep prompt, and every Theme was offered
+  grep -q 'theme = "nord"' "$GUM_LOG.draft"
+  grep -q '  | gruvbox' "$GUM_LOG"
+  # Esc: the saved Theme and its render are back, byte for byte
+  [ ! -e "$(draft_file)" ]
+  [ "$(snapshot)" = "$before" ]
+  [ "$(saved look.theme)" = "$current" ]
+}
+
+@test "an install-phase look Setting is tuned like any other" {
+  replies '0|look · Fixture tint: cool' '0|warm' '0|Keep' '0|Save'
+  run tune
+  [ "$status" -eq 0 ]
+  [ "$(saved look.fixture_tint)" = warm ]
 }
 
 @test "an enum offers its choices" {
