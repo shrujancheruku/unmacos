@@ -60,6 +60,7 @@ load() {
 {{- range $k := list "name" "email" "theme" "weather" }}
 {{ $k }}	{{ if hasKey $s $k }}{{ index $s $k }}{{ else }}{{ get $d $k }}{{ end }}
 {{- end }}
+corner_radius	{{ if hasKey $s "corner_radius" }}{{ $s.corner_radius }}{{ end }}
 use_1password	{{ if hasKey $s "use_1password" }}{{ $s.use_1password }}{{ else }}{{ get $d "use_1password" | default false }}{{ end }}
 {{- range $k := list "apps" "apps_skip" }}
 {{ $k }}	{{ if hasKey $s $k }}{{ index $s $k | join "|" }}{{ else if hasKey $d $k }}{{ index $d $k | join "|" }}{{ else if and (eq $k "apps") (get $d "personal") }}dev|apps|media|games|appstore{{ end }}
@@ -75,7 +76,7 @@ use_1password	{{ if hasKey $s "use_1password" }}{{ $s.use_1password }}{{ else }}
 TPL
 )")" || die "can't read ${1/#$HOME/~} (is it valid TOML?)"
 
-  a_name=""; a_email=""; a_theme=""; a_weather=""; a_use_1password=false; a_apps=""; a_apps_skip=""
+  a_name=""; a_email=""; a_theme=""; a_weather=""; a_corner_radius=""; a_use_1password=false; a_apps=""; a_apps_skip=""
   for k in $KEEP_KEYS; do eval "a_keep_$k=false"; done
   for k in $DESKTOP_KEYS; do eval "a_desktop_$k=true"; done
   while IFS=$'\t' read -r k v; do
@@ -89,6 +90,7 @@ TPL
   [[ -n "$a_email" ]] || a_email="$(git config --global user.email 2>/dev/null || true)"
   [[ -n "$a_theme" ]] || a_theme=tokyo-night
   [[ -n "$a_weather" ]] || a_weather=auto
+  [[ "${a_corner_radius:-}" =~ ^[0-9]+$ ]] || a_corner_radius=""   # unset: UnMacOS's default
   return 0
 }
 
@@ -121,6 +123,11 @@ write_answers() {
   printf 'use_1password = %s\n' "$a_use_1password"
   printf 'theme = %s\n' "$(tq "$a_theme")"
   printf 'weather = %s   # a place for the bar'"'"'s weather, or "auto" (from your IP)\n' "$(tq "$a_weather")"
+  if [[ -n "$a_corner_radius" ]]; then
+    printf 'corner_radius = %s   # px, for windows, bar chips, popups and Spotify\n' "$a_corner_radius"
+  else
+    printf '# corner_radius = 8   # px, for windows, bar chips, popups and Spotify (8 is the default)\n'
+  fi
   printf '\n# Optional app groups (brew/<group>.Brewfile) and apps in them to leave out\n'
   printf 'apps = %s\n' "$(tl "$a_apps")"
   printf 'apps_skip = %s\n' "$(tl "$a_apps_skip")"

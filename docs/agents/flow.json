@@ -1,0 +1,20 @@
+{
+  "tracker": "github",
+  "github_repo": "shrujancheruku/unmacos",
+  "labels": {
+    "size": { "S": "size:S", "M": "size:M", "L": "size:L" },
+    "risk": "risk",
+    "integrated": "integrated",
+    "triage": ["needs-triage", "needs-info", "ready-for-agent", "ready-for-human", "wontfix"]
+  },
+  "risk_paths": [
+    "install.sh",
+    "home/.chezmoiscripts/**",
+    "home/.chezmoi.toml.tmpl",
+    "home/.chezmoiignore",
+    "home/dot_gitconfig.tmpl",
+    "home/private_Library/LaunchAgents/**"
+  ],
+  "slack_prefix": "unmacos",
+  "models": { "haiku": "haiku", "sonnet": "sonnet", "opus": "opus" }
+}

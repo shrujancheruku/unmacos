@@ -37,6 +37,11 @@
   theme = {{ $theme | quote }}
   apps = {{ $apps | toJson }}
   apps_skip = {{ $skip | toJson }}
+{{- /* Corner radius in px (windows, bar chips, popups, Spotify). Only written when setup.toml
+       sets it, so the default in .chezmoidata.toml can change for everyone else. */}}
+{{- if hasKey $s "corner_radius" }}
+  corner_radius = {{ $s.corner_radius | int }}
+{{- end }}
 
 [data.keep]
 {{- range $k := list "ai" "glass" "firefox" "firefox_wallpaper" "spotify" "wallpaper" "accent" "orca" }}

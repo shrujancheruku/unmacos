@@ -6,7 +6,7 @@ local settings = require("settings")
 -- --- tuning ---------------------------------------------------------------
 local COVER_SIZE = 22
 local COVER_SCALE = 0.034
-local COVER_RADIUS = 5
+local COVER_RADIUS = settings.corner_radius
 local SHOW_ON_RIGHT = false
 local POLL_SECONDS = 2.0
 local STARTUP_DELAY = 0.5 -- avoid login race when launched by brew services
