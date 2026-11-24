@@ -58,13 +58,13 @@ golden() {
   golden fixed-light "$BATS_TEST_TMPDIR/out"
 }
 
-@test "render: every shipped Theme renders all 15 templates with no placeholder left" {
+@test "render: every shipped Theme renders all 16 templates with no placeholder left" {
   local theme name
   for theme in "$SHIPPED_SHARE"/themes/*/; do
     name="$(basename "$theme")"
     UNMACOS_THEME="$name" run look render "$BATS_TEST_TMPDIR/$name"
     [ "$status" -eq 0 ] || { echo "$name: $output"; false; }
-    [ "$(ls "$BATS_TEST_TMPDIR/$name"/*.* | grep -vc -e '/colors.toml$' -e '/theme.name$')" -eq 15 ]
+    [ "$(ls "$BATS_TEST_TMPDIR/$name"/*.* | grep -vc -e '/colors.toml$' -e '/theme.name$')" -eq 16 ]
     # colors.toml is the Theme's own file, copied, not rendered
     run grep -rl --exclude=colors.toml '{{' "$BATS_TEST_TMPDIR/$name"
     [ "$status" -eq 1 ] || { echo "$name: placeholders in $output"; false; }
@@ -199,4 +199,23 @@ render_gaps() {
   grep -q '^animate = false$' "$BATS_TEST_TMPDIR/out/rift.toml"
   grep -q '^mouse_hides_on_focus = false$' "$BATS_TEST_TMPDIR/out/rift.toml"
   grep -q '^focus_follows_mouse = true$' "$BATS_TEST_TMPDIR/out/rift.toml"
+}
+
+# theme_script: the 50-theme script chezmoi apply would run, from the current Answers
+theme_script() {
+  unmacos_chezmoi_init >/dev/null
+  unmacos_chezmoi cat "$HOME/.chezmoiscripts/50-theme.sh"
+}
+
+@test "chezmoi apply re-renders the Look when a Setting it reads changes" {
+  local before
+  before="$(theme_script)"
+  [[ "$before" == *unmacos-theme-render* ]]
+  # run_onchange reruns the theme script only when its rendered content changes
+  printf '[desktop]\nanimate = false\n' >> "$HOME/.config/unmacos/setup.toml"
+  [ "$(theme_script)" != "$before" ]
+  # and again for a [look] Setting
+  before="$(theme_script)"
+  printf '[look]\ncorner_radius = 3\n' >> "$HOME/.config/unmacos/setup.toml"
+  [ "$(theme_script)" != "$before" ]
 }

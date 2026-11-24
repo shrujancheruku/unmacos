@@ -308,10 +308,13 @@ The bar and Spotify follow `unmacos-look render` and a reload at once, with no `
 or try it first with `rift-cli execute config set-animate false`.
 
 **Gaps.** 4px everywhere you can see, adjusted for the window borders and for the notch on
-MacBooks. Change `UNMACOS_GAP` in `unmacos-toggle-bar` and the gaps in `dot_config/rift/config.toml`.
+MacBooks. Rift's config is rendered by the Look from `dot_local/share/unmacos/templates/rift.toml.tpl`
+(Rift has no include directive, so `~/.config/rift/config.toml` is a link to the rendered file).
+Its gaps are worked out from the window gap, border width and bar height at the top of that
+template; change those there, and `unmacos-toggle-bar` follows the rendered gaps.
 
 **Your own bits.** Put machine-only shell config in `~/.zshrc.local`. Swap the browser in
-`dot_config/rift/config.toml`, the Wi-Fi interface in `dot_config/sketchybar/items/widgets/wifi.lua`,
+`dot_local/share/unmacos/templates/rift.toml.tpl`, the Wi-Fi interface in `dot_config/sketchybar/items/widgets/wifi.lua`,
 and the optional app groups in `brew/*.Brewfile`.
 
 ### Leaving things alone

@@ -9,24 +9,21 @@ TOGGLE="$REPO_ROOT/home/dot_local/bin/executable_unmacos-toggle-bar"
 setup() {
   unmacos_temp_home
   export UNMACOS_STATE="$BATS_TEST_TMPDIR/state"
-  mkdir -p "$BATS_TEST_TMPDIR/bin" "$UNMACOS_STATE/theme"
-  export PATH="$BATS_TEST_TMPDIR/bin:$PATH"
+  mkdir -p "$UNMACOS_STATE/theme"
   export STUB_LOG="$BATS_TEST_TMPDIR/rift.log"
 }
 
 # stubs HIDDEN INSET: a bar that is hidden (on/off) and a main display whose usable area
-# starts INSET px down (32 under a notch, 0 elsewhere)
+# starts INSET px down (32 under a notch, 0 elsewhere). The stubs are exported functions,
+# which win over the script's PATH (it puts /opt/homebrew/bin first).
 stubs() {
-  cat > "$BATS_TEST_TMPDIR/bin/sketchybar" <<STUB
-#!/bin/bash
-[[ "\$1" == --query ]] && echo '{"hidden":"$1","height":44,"y_offset":0}'
-exit 0
-STUB
-  cat > "$BATS_TEST_TMPDIR/bin/rift-cli" <<STUB
-#!/bin/bash
-if [[ "\$2" == displays ]]; then echo '[{"frame":{"origin":{"x":0,"y":$2}}}]'; else echo "\$*" >> "\$STUB_LOG"; fi
-STUB
-  chmod +x "$BATS_TEST_TMPDIR/bin/"*
+  export STUB_HIDDEN="$1" STUB_INSET="$2"
+  sketchybar() { [[ "$1" == --query ]] && echo "{\"hidden\":\"$STUB_HIDDEN\",\"height\":44,\"y_offset\":0}"; return 0; }
+  rift-cli() {
+    if [[ "$2" == displays ]]; then echo "[{\"frame\":{\"origin\":{\"x\":0,\"y\":$STUB_INSET}}}]"
+    else echo "$*" >> "$STUB_LOG"; fi
+  }
+  export -f sketchybar rift-cli
 }
 
 # rendered_rift SIDE: a rendered Rift config whose outer gaps are SIDE
