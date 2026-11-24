@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 # unmacos-look: the Look renderer. The Look is the Theme plus the visual Settings.
 #   unmacos-look render [--draft] OUT_DIR   render every template into OUT_DIR
+#   unmacos-look draft set KEY=VALUE...     validate, keep as the Draft Look, render, reload
+#   unmacos-look draft save                 write the Draft Look into the Answers, clear it
+#   unmacos-look draft discard              clear it, re-render the saved Look
 #   unmacos-look reload [DIR]               live-reload apps from a rendered DIR
 #                                           (default ~/.local/state/unmacos/theme)
 # render runs ~/.local/share/unmacos/templates/*.tpl through `chezmoi execute-template`
@@ -16,6 +19,8 @@
 # The Theme is UNMACOS_THEME, else the live one (~/.local/state/unmacos/theme.name), else
 # the Answers' look.theme. --draft lays the Draft Look ($UNMACOS_STATE/draft.toml, an
 # Answers-shaped [look] table) over the saved Look Settings, Theme included.
+# Any render without --draft discards a leftover Draft Look. draft set, save and discard
+# render into $UNMACOS_STATE/theme and reload from it. Only look.* Settings can be drafted.
 # reload does nothing past pointing pywal's colors at DIR when UNMACOS_NO_RELOAD=1.
 set -euo pipefail
 # What unmacos-setup told UnMacOS to leave alone (UNMACOS_KEEP_*)
@@ -26,8 +31,9 @@ SHARE="${UNMACOS_SHARE:-$HOME/.local/share/unmacos}"
 STATE="${UNMACOS_STATE:-$HOME/.local/state/unmacos}"
 SETTINGS="${UNMACOS_SETTINGS:-$HOME/.local/bin/unmacos-settings}"
 DRAFT="$STATE/draft.toml"
+ANSWERS="${UNMACOS_SETUP_FILE:-$HOME/.config/unmacos/setup.toml}"
 
-usage() { sed -n '2,20s/^# \{0,1\}//p' "$0"; }
+usage() { sed -n '2,23s/^# \{0,1\}//p' "$0"; }
 die() { printf 'unmacos-look: %s\n' "$*" >&2; exit 1; }
 
 # The first part of the template: work out the Theme and Look, put them in the data, and
@@ -120,6 +126,9 @@ render() {
   mkdir -p "$(dirname "$out")"
   rm -rf "$out"
   mv "$tmp/out" "$out"
+  # A normal render shows the saved Look, so a Draft Look left over from a crash goes,
+  # but only once that render has worked
+  [[ -n "$draft" ]] || rm -f "$DRAFT"
 }
 
 reload() {
@@ -219,7 +228,77 @@ reload() {
   return 0
 }
 
+settings() { /bin/bash "$SETTINGS" "$@"; }
+
+# Render the Look (the Draft Look too, with --draft) into the live directory and reload
+show() {
+  render "$@" "$STATE/theme"
+  reload "$STATE/theme"
+}
+
+# The Settings in the Draft Look as KEY=VALUE lines
+draft_pairs() {
+  [[ -f "$DRAFT" ]] || return 0
+  # list shows every Look Setting, defaults too: keep the ones the draft file names
+  settings list --long look --from "$DRAFT" --no-data \
+    | DRAFT_FILE="$DRAFT" awk -F'\t' 'BEGIN { while ((getline l < ENVIRON["DRAFT_FILE"]) > 0) { split(l, f, " = "); k[f[1]] = 1 } }
+        $1 in k { print $1 "=" $2 }'
+}
+
+draft_set() {
+  (($#)) || die "draft set needs KEY=VALUE..."
+  local pair
+  for pair in "$@"; do
+    [[ "$pair" == look.*=* ]] || die "'$pair' is not look.KEY=VALUE (only look.* Settings can be drafted)"
+  done
+  local tmp pairs=() line
+  tmp="$(mktemp -d)"
+  while IFS= read -r line; do pairs[${#pairs[@]}]="$line"; done < <(draft_pairs)
+  pairs=(${pairs[@]+"${pairs[@]}"} "$@")
+  # Validation (and its message) is unmacos-settings'; the full file is thrown away
+  settings write "$tmp/full.toml" "${pairs[@]}" || exit 1
+  local keys
+  keys="$(printf '%s\n' "${pairs[@]}" | sed 's/=.*//')"
+  settings list look --from "$tmp/full.toml" \
+    | KEYS="$keys" awk 'BEGIN { n = split(ENVIRON["KEYS"], a, "\n"); for (i = 1; i <= n; i++) k[a[i]] = 1 }
+        { split($0, f, " = "); if (f[1] in k) print }' > "$tmp/draft.toml"
+  mkdir -p "$STATE"
+  mv "$tmp/draft.toml" "$DRAFT"
+  rm -rf "$tmp"
+  show --draft
+}
+
+draft_save() {
+  [[ -f "$DRAFT" ]] || die "no Draft Look to save"
+  local pairs=() line
+  while IFS= read -r line; do pairs[${#pairs[@]}]="$line"; done < <(draft_pairs)
+  ((${#pairs[@]})) || { rm -f "$DRAFT"; return 0; }
+  settings write "$ANSWERS" "${pairs[@]}" || exit 1
+  # A live theme.name outranks the Answers' theme, so keep it in step with what was saved
+  local theme
+  theme="$(printf '%s\n' "${pairs[@]}" | sed -n 's/^look\.theme=//p')"
+  [[ -z "$theme" || ! -f "$STATE/theme.name" ]] || printf '%s\n' "$theme" > "$STATE/theme.name"
+  rm -f "$DRAFT"
+  show
+}
+
+draft_discard() {
+  rm -f "$DRAFT"
+  show
+}
+
+draft() {
+  local sub="${1:-}"; (($#)) && shift
+  case "$sub" in
+    set) draft_set "$@" ;;
+    save) draft_save ;;
+    discard) draft_discard ;;
+    *) usage >&2; exit 1 ;;
+  esac
+}
+
 case "${1:-}" in
+  draft) shift; draft "$@" ;;
   render) shift; render "$@" ;;
   reload) shift; reload "$@" ;;
   -h | --help | help) usage ;;
