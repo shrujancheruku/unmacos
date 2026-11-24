@@ -7,43 +7,69 @@
   var root = document.documentElement;
   var select = document.getElementById("theme-select");
 
+  // A picked theme is saved as {slug, ...palette}. The boot script in <head> paints that copy
+  // before this file loads (no flash); here it is re-applied from themes.js, so a palette that
+  // changed in a later deploy updates, and a theme that no longer exists falls back to the system.
+  // With nothing picked ("system"), the site follows prefers-color-scheme, live.
+  var SYSTEM = "system";
+  var DARK = "tokyo-night", LIGHT = "catppuccin-latte";
+  var media = window.matchMedia ? matchMedia("(prefers-color-scheme: light)") : null;
+
   function store(fn) { try { return fn(); } catch (e) { return null; } }
   var saved = store(function () { return JSON.parse(localStorage.getItem(KEY) || "null"); });
-  var prefersLight = window.matchMedia && matchMedia("(prefers-color-scheme: light)").matches;
-  var current = (saved && saved.slug) || (prefersLight ? "catppuccin-latte" : "tokyo-night");
+  var choice = saved && themes[saved.slug] ? saved.slug : SYSTEM;
+  if (saved && choice === SYSTEM) store(function () { localStorage.removeItem(KEY); });
 
-  function apply(slug, persist) {
+  function systemSlug() { return media && media.matches ? LIGHT : DARK; }
+
+  function paint(slug) {
     var p = themes[slug];
     if (!p) return;
     for (var k in p) if (k !== "mode") root.style.setProperty("--" + k, p[k]);
+    root.style.removeProperty("--slug"); // left by older saved copies
     root.dataset.mode = p.mode;
     var meta = document.querySelector('meta[name="theme-color"]');
     if (meta) meta.content = p.bg;
-    current = slug;
+  }
+
+  function choose(slug, persist) {
+    if (slug !== SYSTEM && !themes[slug]) return;
+    choice = slug;
+    paint(slug === SYSTEM ? systemSlug() : slug);
     if (select) select.value = slug;
-    if (persist) {
+    if (!persist) return;
+    store(function () {
+      if (slug === SYSTEM) { localStorage.removeItem(KEY); return; }
       var copy = { slug: slug };
-      for (var c in p) copy[c] = p[c];
-      store(function () { localStorage.setItem(KEY, JSON.stringify(copy)); });
-    }
+      for (var c in themes[slug]) copy[c] = themes[slug][c];
+      localStorage.setItem(KEY, JSON.stringify(copy));
+    });
   }
 
   if (select) {
     select.innerHTML = "";
+    var auto = document.createElement("option");
+    auto.value = SYSTEM;
+    auto.textContent = "Match system";
+    select.appendChild(auto);
     Object.keys(themes).forEach(function (slug) {
       var o = document.createElement("option");
       o.value = slug;
       o.textContent = names[slug] || slug;
       select.appendChild(o);
     });
-    select.value = current;
-    select.addEventListener("change", function () { apply(select.value, true); });
+    select.addEventListener("change", function () { choose(select.value, true); });
+  }
+  choose(choice, false);
+  if (media) {
+    var follow = function () { if (choice === SYSTEM) paint(systemSlug()); };
+    if (media.addEventListener) media.addEventListener("change", follow); else if (media.addListener) media.addListener(follow);
   }
 
   document.addEventListener("click", function (e) {
     var t = e.target.closest("[data-theme]");
     if (t) {
-      apply(t.getAttribute("data-theme"), true);
+      choose(t.getAttribute("data-theme"), true);
       return;
     }
     var c = e.target.closest("[data-copy]");
