@@ -1,12 +1,23 @@
 /* UnMacOS site. Colours are the active theme's palette (Tokyo Night by default,
    Catppuccin Latte for light-mode visitors); site.js swaps them live. */
+
+/* Geist Mono, the desktop's bar and terminal font, for everything monospaced (headings, nav,
+   buttons, keys, code). Body text stays the system sans. One variable file covers weights
+   100-900, subset to Latin plus the punctuation, arrows and symbols the site uses. OFL: fonts/OFL.txt */
+@font-face {
+  font-family: "Geist Mono";
+  src: url("fonts/geist-mono.woff2") format("woff2");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
 :root {
   --bg: #1a1b26; --bg2: #24283b; --bg3: #16161e; --fg: #c0caf5; --muted: #565f89;
   --sel: #414868; --border: #3b4261; --accent: #7aa2f7; --red: #f7768e; --yellow: #e0af68;
   --green: #9ece6a; --cyan: #7dcfff; --blue: #7aa2f7; --magenta: #bb9af7;
   --fg2: color-mix(in srgb, var(--fg) 74%, var(--bg));
   --line: color-mix(in srgb, var(--fg) 16%, var(--bg));
-  --mono: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace;
+  --mono: "Geist Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
   --sans: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", system-ui, sans-serif;
   --radius: 6px;
   --wrap: 1120px;

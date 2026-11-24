@@ -101,7 +101,7 @@ def mock_svg(t: dict, name: str) -> str:
     return (
         f'<svg class="theme-mock" viewBox="0 0 320 118" role="img" aria-label="{name} preview: bar, terminal and colours">'
         f'<rect width="320" height="118" fill="{bg}"/>'
-        f'<g font-family="ui-monospace,SF Mono,Menlo,monospace" font-size="12">'
+        f'<g font-family="Geist Mono,ui-monospace,SF Mono,Menlo,monospace" font-size="12">'
         + chip(8, "1", True) + chip(30, "2") + chip(52, "3") + chip(264, "22:50")
         + f'<rect x="8.5" y="32.5" width="303" height="78" rx="4" fill="none" stroke="{acc}"/>'
         f'<text x="18" y="54"><tspan fill="{g("green")}">❯</tspan><tspan fill="{fg}"> git status </tspan><tspan fill="{g("muted", "foreground")}"># clean</tspan></text>'
@@ -300,8 +300,9 @@ def build(schema: Path = SCHEMA) -> None:
 
     head_boot = (
         "<script>(function(){try{var p=JSON.parse(localStorage.getItem('unmacos-palette')||'null');"
-        "if(!p)return;var r=document.documentElement.style;for(var k in p)if(k!=='mode')r.setProperty('--'+k,p[k]);"
-        "document.documentElement.dataset.mode=p.mode;}catch(e){}})();</script>"
+        "if(!p)return;var r=document.documentElement.style;for(var k in p)if(k!=='mode'&&k!=='slug')r.setProperty('--'+k,p[k]);"
+        "document.documentElement.dataset.mode=p.mode;var m=document.querySelector('meta[name=theme-color]');"
+        "if(m&&p.bg)m.content=p.bg;}catch(e){}})();</script>"
     )
     analytics = (
         f'<script data-goatcounter="https://{GOATCOUNTER_CODE}.goatcounter.com/count" async '
