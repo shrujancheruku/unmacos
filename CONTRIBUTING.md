@@ -53,6 +53,12 @@ A theme is one `colors.toml` in `home/dot_local/share/unmacos/themes/<name>/`, i
 format. Check it in both the picker preview and a full switch (`unmacos-theme-render <name>`).
 The website's themes page is generated from these files, so it updates on its own.
 
+App configs come from `home/dot_local/share/unmacos/templates/*.tpl`, chezmoi templates that
+`unmacos-look render` executes. They read the Theme as `{{ .color.accent }}` (`#rrggbb`),
+`{{ .hex.accent }}` (`rrggbb`), `{{ .rgb.accent }}` (`r,g,b`), `.theme.mode` and `.theme.dark`, and
+the Settings as usual (`{{ .look.corner_radius }}`). A template change shows in the golden output
+under `tests/golden/look/`; regenerate it with `UNMACOS_UPDATE_GOLDEN=1 bats tests/look.bats`.
+
 ## Website
 
 The site lives in `site/`. See [site/README.md](site/README.md) to build and preview it.
