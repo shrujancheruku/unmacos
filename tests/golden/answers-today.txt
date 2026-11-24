@@ -5,7 +5,7 @@
 # Re-runs when this script, the profile or the macOS version changes (upgrades
 # reset these settings).
 # profile hash: <hash>
-# macOS: 27.2.1
+# macOS: <macos>
 #
 # Opt out: UNMACOS_KEEP_AI=1 / UNMACOS_KEEP_GLASS=1 chezmoi apply
 # Undo:    remove the "UnMacOS: no Apple Intelligence" profile in Device Management,
@@ -193,13 +193,13 @@ if [[ ! -x /opt/homebrew/bin/brew ]]; then
 fi
 eval "$(/opt/homebrew/bin/brew shellenv)"
 echo "==> brew bundle (core)"
-brew bundle --file="/Users/shrujan/orca/workspaces/unmacos/35-settings-schema/Brewfile"
+brew bundle --file="<repo>/Brewfile"
 
 # The chosen groups in one Brewfile, without the apps you unticked
 picked="$(mktemp -t unmacos-brewfile)"
 trap 'rm -f "$picked"' EXIT
 for g in "dev" "media"; do
-  cat "/Users/shrujan/orca/workspaces/unmacos/35-settings-schema/brew/$g.Brewfile"
+  cat "<repo>/brew/$g.Brewfile"
 done | awk -v skip="vlc" '
   BEGIN { n = split(skip, s, "|"); for (i = 1; i <= n; i++) drop[s[i]] = 1 }
   /^(brew|cask|mas) "/ { split($0, q, "\""); id = q[2]; sub(/.*\//, "", id); if (id in drop) next }

@@ -89,14 +89,17 @@ unmacos_templated_sources() {
 
 # unmacos_render_templated: what chezmoi would put on disk for every templated source, one
 # "=== <target>" header then its contents. Scripts are included (never run). Content hashes
-# (of themes, Brewfiles) and the temp $HOME are blanked so the golden file stays stable. Needs
+# (of themes, Brewfiles), the temp $HOME, the checkout path and the macOS version are blanked,
+# so the golden file is the same on every Mac and in CI. Needs
 # unmacos_chezmoi_init first, so the Answers are already merged.
 unmacos_render_templated() {
   local src target
   while IFS= read -r src; do
     target="$(unmacos_chezmoi target-path "$REPO_ROOT/$src")" || return 1
     printf '=== %s\n' "${target#"$HOME"/}"
-    unmacos_chezmoi cat "$target" | sed -E -e 's/[0-9a-f]{12,64}/<hash>/g' -e "s|$HOME|<home>|g" || return 1
+    unmacos_chezmoi cat "$target" \
+      | sed -E -e "s|$HOME|<home>|g" -e "s|$REPO_ROOT|<repo>|g" \
+          -e 's/^# macOS: .*/# macOS: <macos>/' -e 's/[0-9a-f]{12,64}/<hash>/g' || return 1
     printf '\n'
   done < <(unmacos_templated_sources)
 }
