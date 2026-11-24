@@ -192,7 +192,15 @@ UNMACOS_SETUP=~/setup.toml bash -c "$(curl -fsSL https://raw.githubusercontent.c
 ```
 
 The file has your git name and email in it, so keep it somewhere private. To stay up to date
-afterwards, run `chezmoi update`.
+afterwards, pick Update in the menu, or run:
+
+```sh
+chezmoi git pull -- --ff-only && unmacos-setup --yes
+```
+
+`unmacos-setup --yes` asks nothing: it keeps your saved answers, moves an older Answers file to
+the current layout and remakes chezmoi's config before applying, which plain `chezmoi update`
+doesn't do.
 
 ## Learn the keys
 

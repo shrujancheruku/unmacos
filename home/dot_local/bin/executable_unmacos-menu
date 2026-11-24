@@ -70,7 +70,14 @@ run() {
     setup)
       unmacos-setup; read -rsp "Press Enter to close" _ ;;
     update)
-      chezmoi update && echo "UnMacOS updated" && sleep 1 ;;
+      # Pull, then the pulled wizard: --yes migrates the Answers and remakes chezmoi's config
+      # (chezmoi init --apply), which plain chezmoi update never does, so new Settings apply too
+      local rc=0
+      chezmoi git pull -- --ff-only \
+        && /bin/bash "$(chezmoi source-path)/dot_local/bin/executable_unmacos-setup" --yes \
+        && echo "UnMacOS updated" || rc=$?
+      read -rsp "Press Enter to close" _ || true
+      return "$rc" ;;
     system)
       case "$(pick system)" in
         lock) pmset displaysleepnow ;;
