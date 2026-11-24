@@ -287,7 +287,18 @@ is `Cmd`, so your muscle memory works.
 
 ## Make it yours
 
-Most choices are a tick box in `unmacos-setup`. The rest live in plain files.
+Most choices are a tick box in `unmacos-setup`. How the desktop looks is tuned on the desktop
+itself, in the Tune phase. The rest live in plain files.
+
+### Make it yours: the Tune phase
+
+Open the menu and pick **Tune the Look**, or run `unmacos-tune`. Choose a Setting (corner radius,
+window gap, border width, bar height, bar at the top or bottom, terminal and bar fonts, window
+animation) and pick a value: your desktop shows it straight away as a Draft Look. Keep it and try
+the next one, then **Save** to write it to `~/.config/unmacos/setup.toml`, or **Discard** to put
+everything back. A Setting marked *after restart*, *after logout* or *on save* can't be shown live;
+it is applied when you save. The installer offers Tune once the desktop is up. Every Setting is
+listed in [docs/settings.md](docs/settings.md).
 
 **Themes.** Each theme is a single `colors.toml` in `~/.local/share/unmacos/themes/<name>/`, in
 Omarchy's format, so any Omarchy theme drops straight in. Copy one, change the colours, and pick it
@@ -299,19 +310,20 @@ rest. They're Omarchy's, downloaded the first time you use a theme (`unmacos-wal
 gets them all). Add your own to `~/.config/unmacos/backgrounds/<theme>/`.
 
 **Corners.** Windows, the bar's chips, popups and Spotify share one corner radius, 8px by default.
-For sharper corners, set `corner_radius = 4` (in pixels) under `[look]` in `~/.config/unmacos/setup.toml` and run `unmacos-setup --yes`.
-The bar and Spotify follow `unmacos-look render` and a reload at once, with no `chezmoi apply`. Apps pick up the new window corners when they next open.
+Change it in the Tune phase (menu → Tune the Look, or `unmacos-tune`): the bar, popups and Spotify
+show it straight away; apps' own window corners change as each app relaunches.
 
 **Weather.** Pin a city from the menu (Weather location) or with `unmacos-weather set Tokyo`.
 
-**Animations.** Windows glide into place. Prefer them to snap? Untick animations in `unmacos-setup`,
-or try it first with `rift-cli execute config set-animate false`.
+**Animations.** Windows glide into place. Prefer them to snap? Turn off *Animate windows into place*
+in the Tune phase; the animation's length is a Setting there too.
 
-**Gaps.** 4px everywhere you can see, adjusted for the window borders and for the notch on
-MacBooks. Rift's config is rendered by the Look from `dot_local/share/unmacos/templates/rift.toml.tpl`
-(Rift has no include directive, so `~/.config/rift/config.toml` is a link to the rendered file).
-Its gaps are worked out from the window gap, border width and bar height at the top of that
-template; change those there, and `unmacos-toggle-bar` follows the rendered gaps.
+**Gaps.** 4px everywhere you can see by default, adjusted for the window borders and for the notch
+on MacBooks. The window gap, border width, bar height and bar position are Settings: change them
+in the Tune phase. Rift's config is rendered by the Look from
+`dot_local/share/unmacos/templates/rift.toml.tpl` (Rift has no include directive, so
+`~/.config/rift/config.toml` is a link to the rendered file: edit the template, not the link), and
+`unmacos-toggle-bar` follows the rendered gaps.
 
 **Your own bits.** Put machine-only shell config in `~/.zshrc.local`. Swap the browser in
 `dot_local/share/unmacos/templates/rift.toml.tpl`, the Wi-Fi interface in `dot_config/sketchybar/items/widgets/wifi.lua`,
