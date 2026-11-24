@@ -477,6 +477,22 @@ gitconfig_text() { unmacos_chezmoi cat "$HOME/.gitconfig"; }
   [[ "$output" == *$'[user]\n\tname = Only Name\n[core]'* ]]
 }
 
+@test "a group of apps with no Brewfile is named as a Feature, and nothing is saved" {
+  # a source copy without games.Brewfile, though the schema still offers games
+  S="$BATS_TEST_TMPDIR/src"
+  mkdir -p "$S"
+  (cd "$REPO_ROOT" && git ls-files -co --exclude-standard | tar -cf - -T -) | tar -xf - -C "$S"
+  rm "$S/brew/games.Brewfile"
+  use_source "$S"
+  mkdir -p "$HOME/.config/unmacos"
+  printf '[apps]\ngroups = ["games"]\n' > "$HOME/.config/unmacos/setup.toml"
+  run wizard --yes --no-apply < /dev/null
+  echo "$output"
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"Feature 'games'"* ]]
+  [[ "$output" != *"app group"* ]]
+}
+
 @test "plain chezmoi init --promptDefaults never asks, and the gitconfig has no [user] section" {
   run unmacos_chezmoi init --promptDefaults < /dev/null
   echo "$output"

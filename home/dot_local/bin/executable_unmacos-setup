@@ -80,7 +80,7 @@ save() {
   FROM="$new"; DATA="--no-data"; SET=()
   local g theme
   for g in $(sgetl apps.groups | tr '|' ' '); do
-    [[ -f "$REPO/brew/$g.Brewfile" ]] || { rm -f "$new"; die "unknown app group '$g' (have: $(groups | tr '\n' ' '))"; }
+    [[ -f "$REPO/brew/$g.Brewfile" ]] || { rm -f "$new"; die "no Brewfile for the Feature '$g' in apps.groups (have: $(groups | tr '\n' ' '))"; }
   done
   theme="$(sget look.theme)"
   [[ -d "$REPO/home/dot_local/share/unmacos/themes/$theme" ]] || { rm -f "$new"; die "unknown theme '$theme'"; }
@@ -108,7 +108,7 @@ nocomma() { printf '%s' "${1//, / · }"; }   # gum's --selected is comma-separat
 # --- Questions -------------------------------------------------------------------
 # Every Setting with phase = install is asked, grouped by the schema's groups, in schema order.
 # The input follows the Setting's type; nothing here names a Setting, except the two places
-# marked "per-Setting" that need more than the schema holds (what an app group is, which apps).
+# marked "per-Setting" that need more than the schema holds (what an app Feature is, which apps).
 
 # UNMACOS_SETUP_UI=1 asks even without a terminal (the tests script a fake gum).
 have_ui() { [[ -n "${UNMACOS_SETUP_UI:-}" || ( -t 0 && -t 1 ) ]] && command -v gum >/dev/null; }
@@ -272,7 +272,7 @@ ask_enum() {
   answer "$i" "${v:-${Q_DEF[i]}}"
 }
 
-# per-Setting: an app group is described by its Brewfile's first line
+# per-Setting: an app Feature is described by its Brewfile's first line
 group_describe() { printf '%s%s%s' "$1" "$SEP" "$(nocomma "$(group_about "$1")")"; }
 
 # ask_list ROW: tick from the schema's choices

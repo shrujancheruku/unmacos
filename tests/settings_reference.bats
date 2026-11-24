@@ -83,3 +83,9 @@ PY
   run grep -c '{{' "$page"
   [ "$output" = "0" ]
 }
+
+@test "the reference says Feature, not app group (GLOSSARY.md)" {
+  run grep -n -i 'app group' "$REPO_ROOT/docs/settings.md"
+  echo "$output"
+  [ "$status" -ne 0 ]
+}

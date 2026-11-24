@@ -15,7 +15,7 @@ corner_radius = 4   # Roundness of windows, bar chips, popups and Spotify, in pi
 weather = "Oslo"   # A city, airport code or zip for the bar's weather, or auto to use your IP address.
 
 [apps]
-groups = ["dev", "media"]   # Optional app groups (brew/<group>.Brewfile). The desktop and terminal tools are always installed.
+groups = ["dev", "media"]   # Optional Features, each a set of apps to install (brew/<name>.Brewfile). The desktop and terminal tools are always installed.
 skip = ["vlc"]   # Apps in the chosen groups that should not be installed, by name.
 
 [onepassword]
