@@ -20,8 +20,11 @@
 #                 the environment wins for one run (bool: only exported when true, as 1;
 #                 int and enum: always). Not for string or list Settings.
 #   ask           optional: ask for it on `chezmoi init` when the Answers don't set it
-#   legacy        optional: the flat top-level key today's Answers files use for it. Read until
-#                 the migration of old Answers lands, then dropped.
+#   legacy        optional: the flat top-level key older Answers files use for it. Still read,
+#                 because an old file can reach chezmoi init before it is migrated (the config
+#                 template runs before the migrate script, and a plain chezmoi init on an old Mac
+#                 skips the wizard). Dropped in the release that stops upgrading from the old
+#                 format, with the migration itself.
 #   feature       optional: the Feature that owns it (filled in by the Features milestone)
 
 # --- Git ---------------------------------------------------------------------------------------
