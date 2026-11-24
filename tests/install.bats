@@ -56,8 +56,8 @@ install() { bash "$REPO_ROOT/install.sh" "$@"; }
   [ "$status" -eq 0 ]
   run grep -q '^name = ' "$HOME/.config/unmacos/setup.toml"
   [ "$status" -ne 0 ]
-  # chezmoi is told every prompt's answer, so it cannot stop to ask for the git name
-  grep -q -- '--promptString=Your name, for git commits=' "$CHEZMOI_LOG"
+  # chezmoi takes every prompt's default, so it cannot stop to ask for the git name
+  grep -qw -- '--promptDefaults' "$CHEZMOI_LOG"
 }
 
 @test "UNMACOS_SETUP=<file> uses that file and never asks, even with a UI" {

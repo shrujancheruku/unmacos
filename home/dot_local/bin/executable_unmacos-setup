@@ -377,17 +377,9 @@ apply() {
   old_hides="$(chezmoi execute-template '{{ (get (get . "desktop" | default dict) "mouse_hides_on_focus") }}' 2>/dev/null || true)"
 
   # chezmoi must never stop to ask: whatever the Answers lack takes its schema default
-  # (git name and email default to empty). chezmoi asks by the Setting's label.
-  local i prompts=()
-  load_questions
-  for ((i = 0; i < Q_N; i++)); do
-    case "${Q_T[i]}" in
-      bool)   prompts[${#prompts[@]}]="--promptBool=${Q_LB[i]}=${Q_DEF[i]}" ;;
-      string) prompts[${#prompts[@]}]="--promptString=${Q_LB[i]}=${Q_DEF[i]}" ;;
-    esac
-  done
+  # (git name and email default to empty), which the config template gives every prompt
   echo "==> chezmoi init --apply"
-  "${UNMACOS_CHEZMOI:-chezmoi}" init --apply --no-tty ${prompts[@]+"${prompts[@]}"}
+  "${UNMACOS_CHEZMOI:-chezmoi}" init --apply --no-tty --promptDefaults
 
   # Theme and weather are state the menus change, so set them only when they differ
   local theme weather want

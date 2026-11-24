@@ -477,6 +477,37 @@ gitconfig_text() { unmacos_chezmoi cat "$HOME/.gitconfig"; }
   [[ "$output" == *$'[user]\n\tname = Only Name\n[core]'* ]]
 }
 
+@test "plain chezmoi init --promptDefaults never asks, and the gitconfig has no [user] section" {
+  run unmacos_chezmoi init --promptDefaults < /dev/null
+  echo "$output"
+  [ "$status" -eq 0 ]
+  run gitconfig_text
+  echo "$output"
+  [ "$status" -eq 0 ]
+  [[ "$output" != *'[user]'* ]]
+}
+
+@test "the wizard's chezmoi init takes the prompt defaults, not answers keyed by label text" {
+  use_source "$REPO_ROOT"
+  init_like_apply
+  grep -qx -- '--promptDefaults' "$BATS_TEST_TMPDIR/chezmoi.args"
+  ! grep -qE -- '^--prompt(String|Bool)' "$BATS_TEST_TMPDIR/chezmoi.args"
+}
+
+@test "chezmoi init --promptDefaults takes an asked Setting's default from the schema" {
+  # a source with only the config template and a schema whose git.name has a default
+  S="$BATS_TEST_TMPDIR/src"
+  mkdir -p "$S/.chezmoidata"
+  cp "$REPO_ROOT/home/.chezmoi.toml.tmpl" "$S/"
+  sed '/^key = "name"$/,/^default = /s/^default = ""$/default = "Schema Default"/' \
+    "$REPO_ROOT/home/.chezmoidata/settings.toml" > "$S/.chezmoidata/settings.toml"
+  grep -q 'Schema Default' "$S/.chezmoidata/settings.toml"
+  run chezmoi --source "$S" --destination "$HOME" --no-tty init --promptDefaults < /dev/null
+  echo "$output"
+  [ "$status" -eq 0 ]
+  [ "$(chezmoi --source "$S" execute-template '{{ .git.name }}')" = "Schema Default" ]
+}
+
 @test "the checklist lists setting git name and email when they are empty, and not when set" {
   use_source "$REPO_ROOT"
   wizard --yes --no-apply < /dev/null
