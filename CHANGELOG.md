@@ -9,7 +9,7 @@ full notes for each are on [GitHub Releases](https://github.com/shrujancheruku/u
 - The bar's chips, popups and the clock's inner pill and the windows share 8px corners (bar chips were 9–10px, windows 4px).
 
 ### Added
-- `corner_radius` in `setup.toml` sets one corner radius for windows, bar chips, popups and Spotify.
+- `corner_radius` in `setup.toml` sets one corner radius for windows, bar chips, popups and Spotify. The bar and Spotify read it from the rendered Look, so it updates without `chezmoi apply`.
 
 ## [1.5.0] - 2026-11-23
 

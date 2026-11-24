@@ -300,7 +300,7 @@ gets them all). Add your own to `~/.config/unmacos/backgrounds/<theme>/`.
 
 **Corners.** Windows, the bar's chips, popups and Spotify share one corner radius, 8px by default.
 For sharper corners, set `corner_radius = 4` (in pixels) under `[look]` in `~/.config/unmacos/setup.toml` and run `unmacos-setup --yes`.
-Apps pick up the new window corners when they next open.
+The bar and Spotify follow `unmacos-look render` and a reload at once, with no `chezmoi apply`. Apps pick up the new window corners when they next open.
 
 **Weather.** Pin a city from the menu (Weather location) or with `unmacos-weather set Tokyo`.
 

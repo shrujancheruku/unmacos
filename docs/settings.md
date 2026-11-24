@@ -12,7 +12,7 @@ Your answers live in `~/.config/unmacos/setup.toml`; any Setting you leave out k
 | git | `name` | Your name, for git commits | string | `""` | any text | Goes into ~/.gitconfig. Stays on this Mac. | apply | install |
 | git | `email` | Your email, for git commits | string | `""` | any text | Goes into ~/.gitconfig. Stays on this Mac. | apply | install |
 | look | `theme` | Theme | enum | `tokyo-night` | catppuccin, catppuccin-latte, ethereal, everforest, flexoki-light, gruvbox, hackerman, jade-horse, kanagawa, last-horizon, lumon, lupine, matte-black, miasma, nord, retro-82, ristretto, rose-pine, solitude, starship, tokyo-night, vantablack, white | The colours of the whole desktop. Switch any time with Alt + Ctrl + Shift + Space. | live | install |
-| look | `corner_radius` | Corner radius | int | `8` | 0 to 24 | Roundness of windows, bar chips, popups and Spotify, in pixels. Apps pick it up when they restart. | apply | tune |
+| look | `corner_radius` | Corner radius | int | `8` | 0 to 24 | Roundness of windows, bar chips, popups and Spotify, in pixels. Apps pick it up when they restart. | restart:apps | tune |
 | bar | `weather` | Weather place | string | `auto` | any text | A city, airport code or zip for the bar's weather, or auto to use your IP address. | live | install |
 | apps | `groups` | Extra apps to install | list | `(none)` | dev, apps, media, games, appstore | Optional Features, each a set of apps to install (brew/<name>.Brewfile). The desktop and terminal tools are always installed. | apply | install |
 | apps | `skip` | Apps to leave out | list | `(none)` | any names | Apps in the chosen groups that should not be installed, by name. | apply | install |

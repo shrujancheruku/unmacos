@@ -82,7 +82,7 @@ max = 24
 label = "Corner radius"
 help = "Roundness of windows, bar chips, popups and Spotify, in pixels. Apps pick it up when they restart."
 phase = "tune"
-takes_effect = "apply"
+takes_effect = "restart:apps"
 env = "UNMACOS_CORNER_RADIUS"
 legacy = "corner_radius"
 

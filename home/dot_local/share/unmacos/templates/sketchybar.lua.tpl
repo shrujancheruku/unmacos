@@ -16,4 +16,6 @@ return {
 	popup_border = 0xff{{ .bare.muted }},
 	bg1 = 0xff{{ .bare.darker_background }},
 	bg2 = 0xff{{ .bare.lighter_background }},
+	-- Look Setting, not a colour: chips and popups round like the windows
+	corner_radius = {{ .look.corner_radius }},
 }
