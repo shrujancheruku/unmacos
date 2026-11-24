@@ -80,3 +80,32 @@ unmacos_shellcheck_shipped() {
   done < <(unmacos_shipped_scripts)
   shellcheck -x "${files[@]}"
 }
+
+# unmacos_templated_sources: every templated source file (relative to the repo root) except
+# chezmoi's own config template, which is covered by `chezmoi init`.
+unmacos_templated_sources() {
+  (cd "$REPO_ROOT" && find home -type f -name '*.tmpl' ! -path 'home/.chezmoi.toml.tmpl' | sort)
+}
+
+# unmacos_render_templated: what chezmoi would put on disk for every templated source, one
+# "=== <target>" header then its contents. Scripts are included (never run). Content hashes
+# (of themes, Brewfiles) and the temp $HOME are blanked so the golden file stays stable. Needs
+# unmacos_chezmoi_init first, so the Answers are already merged.
+unmacos_render_templated() {
+  local src target
+  while IFS= read -r src; do
+    target="$(unmacos_chezmoi target-path "$REPO_ROOT/$src")" || return 1
+    printf '=== %s\n' "${target#"$HOME"/}"
+    unmacos_chezmoi cat "$target" | sed -E -e 's/[0-9a-f]{12,64}/<hash>/g' -e "s|$HOME|<home>|g" || return 1
+    printf '\n'
+  done < <(unmacos_templated_sources)
+}
+
+# unmacos_stub_op: put a fake 1Password CLI first on PATH, so templates that read a secret
+# render without 1Password installed.
+unmacos_stub_op() {
+  mkdir -p "$BATS_TEST_TMPDIR/stubs"
+  printf '#!/bin/sh\necho stub-op-secret\n' > "$BATS_TEST_TMPDIR/stubs/op"
+  chmod +x "$BATS_TEST_TMPDIR/stubs/op"
+  export PATH="$BATS_TEST_TMPDIR/stubs:$PATH"
+}
