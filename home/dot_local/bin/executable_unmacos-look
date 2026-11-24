@@ -82,8 +82,6 @@ render() {
     shift
   done
   [[ -n "$out" ]] || die "render needs an OUT_DIR"
-  # A normal render shows the saved Look, so a Draft Look left over from a crash goes
-  [[ -n "$draft" ]] || rm -f "$DRAFT"
 
   local tmp
   tmp="$(mktemp -d)"
@@ -128,6 +126,9 @@ render() {
   mkdir -p "$(dirname "$out")"
   rm -rf "$out"
   mv "$tmp/out" "$out"
+  # A normal render shows the saved Look, so a Draft Look left over from a crash goes,
+  # but only once that render has worked
+  [[ -n "$draft" ]] || rm -f "$DRAFT"
 }
 
 reload() {

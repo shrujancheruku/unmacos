@@ -176,6 +176,7 @@ snapshot() { (cd "$1" && find . -type f | sort | xargs shasum) ; }
 
 @test "draft save writes only the drafted keys into the Answers and clears the draft" {
   bash "$UNMACOS_SETTINGS" write "$HOME/.config/unmacos/setup.toml" look.corner_radius=3
+  cp "$HOME/.config/unmacos/setup.toml" "$BATS_TEST_TMPDIR/answers-before"
   run look draft set look.theme=nord
   [ "$status" -eq 0 ]
   run look draft save
@@ -185,8 +186,12 @@ snapshot() { (cd "$1" && find . -type f | sort | xargs shasum) ; }
   [ "$(bash "$UNMACOS_SETTINGS" get look.corner_radius)" = 3 ]
   # the saved Look is what is rendered live now
   [ "$(cat "$UNMACOS_STATE/theme/theme.name")" = nord ]
-  # only the drafted key joined the Answers
-  grep -q 'nord' "$HOME/.config/unmacos/setup.toml"
+  # only the drafted key changed in the Answers: the whole file differs by its theme line
+  run diff "$BATS_TEST_TMPDIR/answers-before" "$HOME/.config/unmacos/setup.toml"
+  [ "$status" -eq 1 ]
+  changed="$(printf '%s\n' "$output" | grep '^[<>]')"
+  [ "$(printf '%s\n' "$changed" | wc -l | tr -d ' ')" = 2 ]
+  ! printf '%s\n' "$changed" | grep -v '^[<>] theme = '
   run look render "$BATS_TEST_TMPDIR/after-save"
   [ "$(cat "$BATS_TEST_TMPDIR/after-save/theme.name")" = nord ]
 }
@@ -198,4 +203,25 @@ snapshot() { (cd "$1" && find . -type f | sort | xargs shasum) ; }
   [ "$status" -eq 0 ]
   [ "$(cat "$BATS_TEST_TMPDIR/out/theme.name")" = tokyo-night ]
   [ ! -e "$UNMACOS_STATE/draft.toml" ]
+}
+
+@test "draft save of a Theme replaces a live theme.name so the saved Theme shows" {
+  mkdir -p "$UNMACOS_STATE"
+  printf 'everforest\n' > "$UNMACOS_STATE/theme.name"
+  run look draft set look.theme=nord
+  [ "$status" -eq 0 ]
+  run look draft save
+  [ "$status" -eq 0 ]
+  [ "$(bash "$UNMACOS_SETTINGS" get look.theme)" = nord ]
+  [ "$(cat "$UNMACOS_STATE/theme.name")" = nord ]
+  [ "$(cat "$UNMACOS_STATE/theme/theme.name")" = nord ]
+}
+
+@test "a normal render that fails leaves a leftover Draft Look in place" {
+  mkdir -p "$UNMACOS_STATE"
+  printf 'look.theme = "nord"\n' > "$UNMACOS_STATE/draft.toml"
+  UNMACOS_THEME=no-such-theme run look render "$BATS_TEST_TMPDIR/out"
+  [ "$status" -ne 0 ]
+  [[ "$output" == *"no theme 'no-such-theme'"* ]]
+  [ -f "$UNMACOS_STATE/draft.toml" ]
 }
