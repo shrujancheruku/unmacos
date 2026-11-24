@@ -71,6 +71,30 @@ golden() {
   done
 }
 
+@test "render: corner_radius reaches the bar and Spotify's CSS, and follows the Setting" {
+  run look render "$BATS_TEST_TMPDIR/default"
+  [ "$status" -eq 0 ]
+  grep -qx $'\tcorner_radius = 8,' "$BATS_TEST_TMPDIR/default/sketchybar.lua"
+  grep -q -- '--border-radius-base: 8px;' "$BATS_TEST_TMPDIR/default/spicetify-user.css"
+  grep -q '^  border-radius: 8px;' "$BATS_TEST_TMPDIR/default/spicetify-user.css"
+  # changing the Setting and rendering again is all it takes: no chezmoi apply
+  printf '[look]\ntheme = "tokyo-night"\ncorner_radius = 3\n' > "$HOME/.config/unmacos/setup.toml"
+  run look render "$BATS_TEST_TMPDIR/changed"
+  [ "$status" -eq 0 ]
+  grep -qx $'\tcorner_radius = 3,' "$BATS_TEST_TMPDIR/changed/sketchybar.lua"
+  grep -q -- '--border-radius-base: 3px;' "$BATS_TEST_TMPDIR/changed/spicetify-user.css"
+  grep -q '^  border-radius: 3px;' "$BATS_TEST_TMPDIR/changed/spicetify-user.css"
+}
+
+@test "render --draft: the Draft Look's corner_radius wins over the saved one" {
+  mkdir -p "$UNMACOS_STATE"
+  printf '[look]\ncorner_radius = 5\n' > "$UNMACOS_STATE/draft.toml"
+  run look render --draft "$BATS_TEST_TMPDIR/draft"
+  [ "$status" -eq 0 ]
+  grep -qx $'\tcorner_radius = 5,' "$BATS_TEST_TMPDIR/draft/sketchybar.lua"
+  grep -q -- '--border-radius-base: 5px;' "$BATS_TEST_TMPDIR/draft/spicetify-user.css"
+}
+
 @test "render: a file the Theme ships replaces the rendered template" {
   UNMACOS_THEME=tokyo-night run look render "$BATS_TEST_TMPDIR/out"
   [ "$status" -eq 0 ]

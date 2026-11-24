@@ -98,8 +98,10 @@ animate = false
 mouse_hides_on_focus = false
 TOML
   unmacos_chezmoi_init
-  run unmacos_chezmoi cat "$HOME/.config/sketchybar/settings.lua"
-  [[ "$output" == *"corner_radius = 4,"* ]]
+  # corner_radius reaches macOS's window corners on apply; the bar and Spotify read the
+  # rendered Look instead (tests/look.bats)
+  run unmacos_chezmoi cat "$HOME/.chezmoiscripts/40-no-ai-no-glass.sh"
+  [[ "$output" == *"NSConvolutionOverride1 -float 4"* ]]
 }
 
 @test "a Setting marked ask is asked on init when the Answers omit it" {
