@@ -58,13 +58,13 @@ golden() {
   golden fixed-light "$BATS_TEST_TMPDIR/out"
 }
 
-@test "render: every shipped Theme renders all 15 templates with no placeholder left" {
+@test "render: every shipped Theme renders all 16 templates with no placeholder left" {
   local theme name
   for theme in "$SHIPPED_SHARE"/themes/*/; do
     name="$(basename "$theme")"
     UNMACOS_THEME="$name" run look render "$BATS_TEST_TMPDIR/$name"
     [ "$status" -eq 0 ] || { echo "$name: $output"; false; }
-    [ "$(ls "$BATS_TEST_TMPDIR/$name"/*.* | grep -vc -e '/colors.toml$' -e '/theme.name$')" -eq 15 ]
+    [ "$(ls "$BATS_TEST_TMPDIR/$name"/*.* | grep -vc -e '/colors.toml$' -e '/theme.name$')" -eq 16 ]
     # colors.toml is the Theme's own file, copied, not rendered
     run grep -rl --exclude=colors.toml '{{' "$BATS_TEST_TMPDIR/$name"
     [ "$status" -eq 1 ] || { echo "$name: placeholders in $output"; false; }
@@ -248,4 +248,68 @@ snapshot() { (cd "$1" && find . -type f | sort | xargs shasum) ; }
   [ "$status" -ne 0 ]
   [[ "$output" == *"no theme 'no-such-theme'"* ]]
   [ -f "$UNMACOS_STATE/draft.toml" ]
+}
+
+# rift_gap FILE SECTION KEY: a number from Rift's rendered config
+rift_gap() { awk -v sec="[settings.layout.gaps.$2]" -v key="$3" '$0 == sec {on=1; next} /^\[/ {on=0} on && $1 == key {print $3}' "$1"; }
+
+# render_gaps GAP BORDER BAR_HEIGHT CHIP_HEIGHT: render with those Look values as a Draft Look
+render_gaps() {
+  mkdir -p "$UNMACOS_STATE"
+  printf '[look]\nwindow_gap = %s\nborder_width = %s\nbar_height = %s\nchip_height = %s\n' "$1" "$2" "$3" "$4" > "$UNMACOS_STATE/draft.toml"
+  look render --draft "$BATS_TEST_TMPDIR/rift"
+}
+
+@test "render: Rift's gaps are derived from window gap, border width and bar height" {
+  # window gap, border, bar height, chip height -> inner, sides/bottom, top (no notch)
+  local row g b h c inner side top
+  for row in "4 6 44 30 16 10 47" "0 2 40 24 4 2 34" "8 3 52 36 14 11 55" "12 0 30 30 12 12 42"; do
+    read -r g b h c inner side top <<<"$row"
+    render_gaps "$g" "$b" "$h" "$c"
+    f="$BATS_TEST_TMPDIR/rift/rift.toml"
+    [ "$(rift_gap "$f" inner horizontal)" = "$inner" ]
+    [ "$(rift_gap "$f" inner vertical)" = "$inner" ]
+    [ "$(rift_gap "$f" outer left)" = "$side" ]
+    [ "$(rift_gap "$f" outer right)" = "$side" ]
+    [ "$(rift_gap "$f" outer bottom)" = "$side" ]
+    [ "$(rift_gap "$f" outer top)" = "$top" ]
+  done
+}
+
+@test "chezmoi apply links Rift's config to the rendered one and never writes its content" {
+  unmacos_chezmoi_init
+  run unmacos_chezmoi_dry_run
+  [ "$status" -eq 0 ]
+  run unmacos_chezmoi managed --include=symlinks
+  [[ "$output" == *".config/rift/config.toml"* ]]
+  run unmacos_chezmoi cat "$HOME/.config/rift/config.toml"
+  [ "$output" = "$HOME/.local/state/unmacos/theme/rift.toml" ]
+}
+
+@test "render: the animation and focus Settings flow into Rift's config" {
+  printf '[desktop]\nanimate = false\nmouse_hides_on_focus = false\n' >> "$HOME/.config/unmacos/setup.toml"
+  run look render "$BATS_TEST_TMPDIR/out"
+  [ "$status" -eq 0 ]
+  grep -q '^animate = false$' "$BATS_TEST_TMPDIR/out/rift.toml"
+  grep -q '^mouse_hides_on_focus = false$' "$BATS_TEST_TMPDIR/out/rift.toml"
+  grep -q '^focus_follows_mouse = true$' "$BATS_TEST_TMPDIR/out/rift.toml"
+}
+
+# theme_script: the 50-theme script chezmoi apply would run, from the current Answers
+theme_script() {
+  unmacos_chezmoi_init >/dev/null
+  unmacos_chezmoi cat "$HOME/.chezmoiscripts/50-theme.sh"
+}
+
+@test "chezmoi apply re-renders the Look when a Setting it reads changes" {
+  local before
+  before="$(theme_script)"
+  [[ "$before" == *unmacos-theme-render* ]]
+  # run_onchange reruns the theme script only when its rendered content changes
+  printf '[desktop]\nanimate = false\n' >> "$HOME/.config/unmacos/setup.toml"
+  [ "$(theme_script)" != "$before" ]
+  # and again for a [look] Setting
+  before="$(theme_script)"
+  printf '[look]\ncorner_radius = 3\n' >> "$HOME/.config/unmacos/setup.toml"
+  [ "$(theme_script)" != "$before" ]
 }

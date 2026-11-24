@@ -98,11 +98,6 @@ animate = false
 mouse_hides_on_focus = false
 TOML
   unmacos_chezmoi_init
-  run unmacos_chezmoi cat "$HOME/.config/rift/config.toml"
-  [ "$status" -eq 0 ]
-  [[ "$output" == *"animate = false"* ]]
-  [[ "$output" == *"mouse_hides_on_focus = false"* ]]
-  [[ "$output" == *"focus_follows_mouse = true"* ]]
   # corner_radius reaches macOS's window corners on apply; the bar and Spotify read the
   # rendered Look instead (tests/look.bats)
   run unmacos_chezmoi cat "$HOME/.chezmoiscripts/40-no-ai-no-glass.sh"
