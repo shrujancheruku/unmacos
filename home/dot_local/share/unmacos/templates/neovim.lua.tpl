@@ -2,25 +2,25 @@
 -- a base16 colourscheme built from the theme's own palette, so Neovim matches
 -- the terminal for every theme.
 local function apply()
-	vim.o.background = "{{ mode }}"
+	vim.o.background = "{{ .theme.mode }}"
 	require("mini.base16").setup({
 		palette = {
-			base00 = "{{ background }}",
-			base01 = "{{ lighter_background }}",
-			base02 = "{{ selection }}",
-			base03 = "{{ muted }}",
-			base04 = "{{ dark_foreground }}",
-			base05 = "{{ foreground }}",
-			base06 = "{{ light_foreground }}",
-			base07 = "{{ bright_foreground }}",
-			base08 = "{{ red }}",
-			base09 = "{{ orange }}",
-			base0A = "{{ yellow }}",
-			base0B = "{{ green }}",
-			base0C = "{{ cyan }}",
-			base0D = "{{ blue }}",
-			base0E = "{{ magenta }}",
-			base0F = "{{ brown }}",
+			base00 = "{{ .theme.background }}",
+			base01 = "{{ .theme.lighter_background }}",
+			base02 = "{{ .theme.selection }}",
+			base03 = "{{ .theme.muted }}",
+			base04 = "{{ .theme.dark_foreground }}",
+			base05 = "{{ .theme.foreground }}",
+			base06 = "{{ .theme.light_foreground }}",
+			base07 = "{{ .theme.bright_foreground }}",
+			base08 = "{{ .theme.red }}",
+			base09 = "{{ .theme.orange }}",
+			base0A = "{{ .theme.yellow }}",
+			base0B = "{{ .theme.green }}",
+			base0C = "{{ .theme.cyan }}",
+			base0D = "{{ .theme.blue }}",
+			base0E = "{{ .theme.magenta }}",
+			base0F = "{{ .theme.brown }}",
 		},
 	})
 	vim.g.colors_name = "unmacos"
