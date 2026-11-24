@@ -269,6 +269,14 @@ snapshot() { (cd "$UNMACOS_STATE/theme" && find . -type f | sort | xargs shasum)
   [ "$(saved look.fixture_tint)" = warm ]
 }
 
+@test "a true/false Setting marks its default among on and off" {
+  replies '0|look · Animate windows into place: true' '0|off' '0|Keep' '0|Discard'
+  run tune
+  [ "$status" -eq 0 ]
+  grep -q '  | on (default)$' "$GUM_LOG"
+  grep -q '  | off$' "$GUM_LOG"
+}
+
 @test "an enum offers its choices" {
   replies '0|look · Fixture frame: thin' '0|none' '0|Keep' '0|Save'
   run tune
@@ -382,7 +390,7 @@ stub_chezmoi() {
 }
 
 @test "the main menu has a Tune entry that runs unmacos-tune" {
-  grep -q 'tune\\tTune the look' "$REPO_ROOT/home/dot_config/television/cable/unmacos-main.toml"
+  grep -q 'tune\\tTune the Look' "$REPO_ROOT/home/dot_config/television/cable/unmacos-main.toml"
   grep -qE '^    tune\)' "$BIN/executable_unmacos-menu"
   sed -n '/^    tune)/,/;;/p' "$BIN/executable_unmacos-menu" | grep -q 'unmacos-tune'
 }

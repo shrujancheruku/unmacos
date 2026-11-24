@@ -177,9 +177,11 @@ ask_value() {
   gum style --faint "${Q_HP[i]}"
   case "${Q_T[i]}" in
     int|enum|bool)
-      local list
+      local list def="${Q_DEF[i]}"
+      # a true/false is offered as on/off, so its default is marked as one too
+      [[ "${Q_T[i]}" != bool ]] || { [[ "$def" == true ]] && def=on || def=off; }
       list="$(presets "$i" | while IFS= read -r v; do
-        [[ "$v" == "${Q_DEF[i]}" ]] && printf '%s (default)\n' "$v" || printf '%s\n' "$v"
+        [[ "$v" == "$def" ]] && printf '%s (default)\n' "$v" || printf '%s\n' "$v"
       done)"
       [[ "${Q_T[i]}" == int ]] && list="$list"$'\n'"$CUSTOM"
       choice="$(printf '%s\n%s\n' "$list" "$BACK" | gum choose --height 14 --header "${Q_LB[i]} (now $cur)")" || cancel

@@ -45,7 +45,9 @@ The tests never touch your real home folder. Each test gets a temporary `$HOME` 
 answers in `tests/fixtures/setup.toml`, then runs `chezmoi apply --dry-run` against this checkout.
 `tests/test_helper.bash` documents the helpers to use in new tests. shellcheck covers every shipped
 shell script; templated scripts are rendered with the fixture answers before they are checked. A
-finding you cannot fix gets a `# shellcheck disable=… # reason` comment next to it.
+finding you cannot fix gets a `# shellcheck disable=… # reason` comment next to it. Leave
+`tests/golden` out of a shellcheck run by hand (`shellcheck $(find home install.sh …)`): the
+goldens are rendered output, compared byte for byte, and are checked through their templates.
 
 ## Themes
 

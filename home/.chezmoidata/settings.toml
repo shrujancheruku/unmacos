@@ -122,7 +122,7 @@ type = "enum"
 default = "GeistMono Nerd Font"
 choices = ["GeistMono Nerd Font", "Hack Nerd Font", "VictorMono Nerd Font"]
 label = "Bar font"
-help = "The font of the top bar's text. These are the Nerd Fonts UnMacOS installs. Hack has no semibold or heavy weight, so its bar text uses bold."
+help = "The font of the bar's text. These are the Nerd Fonts UnMacOS installs. Hack has no semibold or heavy weight, so its bar text uses bold."
 phase = "tune"
 takes_effect = "live"
 
@@ -181,7 +181,7 @@ default = 44
 min = 30
 max = 80
 label = "Bar height"
-help = "Height of the top bar, in pixels. The chips inside follow it, and Rift reserves the room."
+help = "Height of the bar, in pixels. The chips inside follow it, and Rift reserves the room."
 phase = "tune"
 takes_effect = "live"
 

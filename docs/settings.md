@@ -15,12 +15,12 @@ Your answers live in `~/.config/unmacos/setup.toml`; any Setting you leave out k
 | look | `corner_radius` | Corner radius | int | `8` | 0 to 24 | Roundness of bar chips, popups and Spotify (shown at once) and of windows (as each app relaunches), in pixels. | live | tune |
 | look | `terminal_font` | Terminal font | enum | `Geist Mono Nerd Font Mono` | Geist Mono Nerd Font Mono, Hack Nerd Font Mono, VictorMono Nerd Font Mono | The font Ghostty draws text in. These are the Nerd Fonts UnMacOS installs, so icons keep working. | live | tune |
 | look | `terminal_font_size` | Terminal font size | int | `16` | 8 to 32 | Ghostty's text size, in points. | live | tune |
-| look | `bar_font` | Bar font | enum | `GeistMono Nerd Font` | GeistMono Nerd Font, Hack Nerd Font, VictorMono Nerd Font | The font of the top bar's text. These are the Nerd Fonts UnMacOS installs. Hack has no semibold or heavy weight, so its bar text uses bold. | live | tune |
+| look | `bar_font` | Bar font | enum | `GeistMono Nerd Font` | GeistMono Nerd Font, Hack Nerd Font, VictorMono Nerd Font | The font of the bar's text. These are the Nerd Fonts UnMacOS installs. Hack has no semibold or heavy weight, so its bar text uses bold. | live | tune |
 | look | `animate` | Animate windows into place | bool | `true` | on or off | Windows glide to their new spot instead of jumping. | live | tune |
 | look | `animation_duration` | Animation duration | int | `150` | 50 to 500 | How long a window takes to glide into place, in milliseconds. Only matters while window animation is on. | live | tune |
 | look | `window_gap` | Window gap | int | `4` | 0 to 24 | Visible space between tiled windows and the screen edge, in pixels. Rift adds the border width on top so the gap stays even. | live | tune |
 | look | `border_width` | Border width | int | `6` | 0 to 12 | Width of the focused-window border, in pixels. Rift's gaps grow with it so borders never overlap. | live | tune |
-| look | `bar_height` | Bar height | int | `44` | 30 to 80 | Height of the top bar, in pixels. The chips inside follow it, and Rift reserves the room. | live | tune |
+| look | `bar_height` | Bar height | int | `44` | 30 to 80 | Height of the bar, in pixels. The chips inside follow it, and Rift reserves the room. | live | tune |
 | look | `bar_position` | Bar position | enum | `top` | top, bottom | Whether the bar sits at the top or the bottom of the screen. Rift reserves that edge for it. | live | tune |
 | bar | `weather` | Weather place | string | `auto` | any text | A city, airport code or zip for the bar's weather, or auto to use your IP address. | live | install |
 | apps | `groups` | Extra apps to install | list | `(none)` | dev, apps, media, games, appstore | Optional Features, each a set of apps to install (brew/<name>.Brewfile). The desktop and terminal tools are always installed. | apply | install |
