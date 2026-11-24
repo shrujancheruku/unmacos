@@ -322,6 +322,12 @@ ask_text() {
   help_line "$i"
   while :; do
     v="$(gum input --header "${Q_LB[i]}$range" --value "$(cur "${Q_K[i]}")")" || cancel
+    # trim the ends, and for a list the ends of each item; spaces inside a value stay
+    if [[ "${Q_T[i]}" == list ]]; then
+      v="$(printf '%s' "$v" | sed -E 's/[[:space:]]*,[[:space:]]*/,/g; s/^[[:space:]]+//; s/[[:space:]]+$//')"
+    else
+      v="$(printf '%s' "$v" | sed -E 's/^[[:space:]]+//; s/[[:space:]]+$//')"
+    fi
     v="${v:-${Q_DEF[i]}}"
     ok=1
     if [[ "${Q_T[i]}" == int ]]; then
@@ -332,7 +338,7 @@ ask_text() {
     (( ok )) && break
     gum style --foreground 1 "Enter a whole number$range"
   done
-  answer "$i" "${v// /}"
+  answer "$i" "$v"
 }
 
 ask_one() {

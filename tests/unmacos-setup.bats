@@ -409,6 +409,21 @@ replies() { printf '%s\n' "$@" > "$GUM_REPLIES"; }
   [[ "$output" == *"--header Windows and pointer --selected=Animate windows into place,"* ]]
 }
 
+@test "a text answer keeps the spaces inside it" {
+  use_source "$REPO_ROOT"
+  answers_without_apps
+  unmacos_chezmoi_init
+  stub_gum
+  # name and weather place with spaces (and stray ones around them), the rest as they are; save
+  replies '0|QA Tester' '0|qa@example.invalid' '0|tokyo-night' '0|  New York ' '0|' '1|' '0|' '0|' '0|'
+  run wizard --no-apply
+  echo "$output"
+  [ "$status" -eq 0 ]
+  [ "$(saved git.name)" = "QA Tester" ]
+  [ "$(saved bar.weather)" = "New York" ]
+  [[ "$output" == *"Weather place: auto → New York"* ]]
+}
+
 @test "an install-phase int Setting from the schema is asked with gum input, in range" {
   answers_without_apps
   source_with_fixture
