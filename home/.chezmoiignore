@@ -1,3 +1,11 @@
+{{- /*
+  chezmoi reads this file before it renders anything, so this is where an out-of-date config stops.
+  A config made before the Settings schema has flat name and theme keys and no [data.look], and
+  chezmoi apply does not remake its config, so tell the user what does.
+*/ -}}
+{{- if and (not (hasKey . "look")) (or (hasKey . "name") (hasKey . "theme")) -}}
+{{-   fail "UnMacOS settings have a new layout and chezmoi's config predates it. Run: unmacos-setup --yes (it moves your answers over and runs chezmoi init --apply; nothing else changes)" -}}
+{{- end }}
 # Not deployed to $HOME
 README.md
 LICENSE

@@ -1,0 +1,313 @@
+# The Settings schema: every Setting UnMacOS understands, and the only place their defaults live.
+#
+# One [[settings]] entry per Setting, in the order the wizard and the docs show them. A user's
+# Answers (~/.config/unmacos/setup.toml) are merged over these defaults by .chezmoi.toml.tmpl,
+# the same way for every entry, so templates read the result as .<group>.<key>.
+#
+# Fields:
+#   group, key    where the value lives: Answers table [<group>] and template data .<group>.<key>
+#   type          bool | int | enum | string | list
+#   default       used when the Answers don't set it
+#   min, max      int only: the allowed range
+#   choices       enum: the allowed values; list: the allowed items
+#   label, help   plain English for the wizard and the generated docs
+#   pick_label    optional: the wizard's tick-box text, when its group is asked the other way round
+#                 from the label (keep.*: ticked means UnMacOS changes it, so the box reads "Turn off
+#                 X" where the label reads "Keep X on")
+#   phase         install (asked before anything installs) | tune (changed on the installed desktop)
+#   takes_effect  live | apply | restart:<app> | logout
+#   env           optional: prefs.sh exports it as this environment variable; a value already in
+#                 the environment wins for one run (bool: only exported when true, as 1;
+#                 int and enum: always). Not for string or list Settings.
+#   ask           optional: ask for it on `chezmoi init` when the Answers don't set it
+#   legacy        optional: the flat top-level key older Answers files use for it. Still read,
+#                 because an old file can reach chezmoi init before it is migrated (the config
+#                 template runs before the migrate script, and a plain chezmoi init on an old Mac
+#                 skips the wizard). Dropped in the release that stops upgrading from the old
+#                 format, with the migration itself.
+#   feature       optional: the Feature that owns it (filled in by the Features milestone)
+
+# --- Git ---------------------------------------------------------------------------------------
+
+[[settings]]
+group = "git"
+key = "name"
+type = "string"
+default = ""
+label = "Your name, for git commits"
+help = "Goes into ~/.gitconfig. Stays on this Mac."
+phase = "install"
+takes_effect = "apply"
+ask = true
+legacy = "name"
+
+[[settings]]
+group = "git"
+key = "email"
+type = "string"
+default = ""
+label = "Your email, for git commits"
+help = "Goes into ~/.gitconfig. Stays on this Mac."
+phase = "install"
+takes_effect = "apply"
+ask = true
+legacy = "email"
+
+# --- Look --------------------------------------------------------------------------------------
+
+[[settings]]
+group = "look"
+key = "theme"
+type = "enum"
+default = "tokyo-night"
+choices = [
+  "catppuccin", "catppuccin-latte", "ethereal", "everforest", "flexoki-light", "gruvbox",
+  "hackerman", "jade-horse", "kanagawa", "last-horizon", "lumon", "lupine", "matte-black",
+  "miasma", "nord", "retro-82", "ristretto", "rose-pine", "solitude", "starship",
+  "tokyo-night", "vantablack", "white",
+]
+label = "Theme"
+help = "The colours of the whole desktop. Switch any time with Alt + Ctrl + Shift + Space."
+phase = "install"
+takes_effect = "live"
+legacy = "theme"
+
+[[settings]]
+group = "look"
+key = "corner_radius"
+type = "int"
+default = 8
+min = 0
+max = 24
+label = "Corner radius"
+help = "Roundness of windows, bar chips, popups and Spotify, in pixels. Apps pick it up when they restart."
+phase = "tune"
+takes_effect = "apply"
+env = "UNMACOS_CORNER_RADIUS"
+legacy = "corner_radius"
+
+# --- Bar ---------------------------------------------------------------------------------------
+
+[[settings]]
+group = "bar"
+key = "weather"
+type = "string"
+default = "auto"
+label = "Weather place"
+help = "A city, airport code or zip for the bar's weather, or auto to use your IP address."
+phase = "install"   # asked by the wizard until M2's Tune phase, which moves it back to tune
+takes_effect = "live"
+legacy = "weather"
+
+# --- Apps --------------------------------------------------------------------------------------
+
+[[settings]]
+group = "apps"
+key = "groups"
+type = "list"
+default = []
+choices = ["dev", "apps", "media", "games", "appstore"]
+label = "Extra apps to install"
+help = "Optional Features, each a set of apps to install (brew/<name>.Brewfile). The desktop and terminal tools are always installed."
+phase = "install"
+takes_effect = "apply"
+legacy = "apps"
+
+[[settings]]
+group = "apps"
+key = "skip"
+type = "list"
+default = []
+label = "Apps to leave out"
+help = "Apps in the chosen groups that should not be installed, by name."
+phase = "install"
+takes_effect = "apply"
+legacy = "apps_skip"
+
+# --- 1Password ---------------------------------------------------------------------------------
+
+[[settings]]
+group = "onepassword"
+key = "enabled"
+type = "bool"
+default = false
+label = "Read secrets from 1Password"
+help = "For spotify_player's client ID. Needs the 1Password app and its CLI integration."
+phase = "install"
+takes_effect = "apply"
+ask = true
+legacy = "use_1password"
+
+[[settings]]
+group = "onepassword"
+key = "spotify_client_id_ref"
+type = "string"
+default = "op://Private/spotify-player/client_id"
+label = "Spotify client ID in 1Password"
+help = "The 1Password reference spotify_player reads its client ID from. Only used when 1Password is on."
+phase = "tune"
+takes_effect = "apply"
+
+# --- Windows and pointer (Rift) ------------------------------------------------------------------
+
+[[settings]]
+group = "desktop"
+key = "animate"
+type = "bool"
+default = true
+label = "Animate windows into place"
+help = "Windows glide to their new spot instead of jumping."
+phase = "install"   # asked by the wizard until M2's Tune phase, which moves it back to tune
+takes_effect = "restart:rift"
+
+[[settings]]
+group = "desktop"
+key = "focus_follows_mouse"
+type = "bool"
+default = true
+label = "Focus follows the mouse"
+help = "The window under the pointer takes focus without a click."
+phase = "install"   # asked by the wizard until M2's Tune phase, which moves it back to tune
+takes_effect = "restart:rift"
+
+[[settings]]
+group = "desktop"
+key = "mouse_follows_focus"
+type = "bool"
+default = true
+label = "Pointer follows keyboard focus"
+help = "Move the pointer to the window you focus with the keyboard."
+phase = "install"   # asked by the wizard until M2's Tune phase, which moves it back to tune
+takes_effect = "restart:rift"
+
+[[settings]]
+group = "desktop"
+key = "mouse_hides_on_focus"
+type = "bool"
+default = true
+label = "Hide the pointer after a keyboard focus"
+help = "Hide the pointer after that until you move the mouse."
+phase = "install"   # asked by the wizard until M2's Tune phase, which moves it back to tune
+takes_effect = "restart:rift"
+
+# --- Dock --------------------------------------------------------------------------------------
+
+[[settings]]
+group = "desktop"
+key = "dock_autohide"
+type = "bool"
+default = true
+label = "Hide the Dock"
+help = "The Dock slides away until you move the pointer to the screen edge."
+phase = "tune"
+takes_effect = "logout"
+
+[[settings]]
+group = "desktop"
+key = "dock_size"
+type = "int"
+default = 64
+min = 16
+max = 128
+label = "Dock size"
+help = "Size of the Dock's icons, in pixels (16 to 128)."
+phase = "tune"
+takes_effect = "logout"
+
+# --- What UnMacOS changes (true = leave it as it is) ---------------------------------------------
+
+[[settings]]
+group = "keep"
+key = "ai"
+type = "bool"
+default = false
+label = "Keep Apple Intelligence on"
+pick_label = "Turn off Apple Intelligence (macOS 26+)"
+help = "UnMacOS turns Apple Intelligence off (macOS 26+). Set to true to leave it as it is."
+phase = "install"
+takes_effect = "apply"
+env = "UNMACOS_KEEP_AI"
+
+[[settings]]
+group = "keep"
+key = "glass"
+type = "bool"
+default = false
+label = "Keep Liquid Glass on"
+pick_label = "Turn off Liquid Glass (macOS 26+)"
+help = "UnMacOS turns Liquid Glass off (macOS 26+). Set to true to leave it as it is."
+phase = "install"
+takes_effect = "logout"
+env = "UNMACOS_KEEP_GLASS"
+
+[[settings]]
+group = "keep"
+key = "wallpaper"
+type = "bool"
+default = false
+label = "Keep my wallpaper"
+pick_label = "Set the desktop wallpaper from the theme"
+help = "UnMacOS sets the desktop wallpaper from the theme. Set to true to leave it as it is."
+phase = "install"
+takes_effect = "live"
+env = "UNMACOS_KEEP_WALLPAPER"
+
+[[settings]]
+group = "keep"
+key = "accent"
+type = "bool"
+default = false
+label = "Keep macOS's accent colours"
+pick_label = "Set macOS's accent and highlight colours from the theme"
+help = "UnMacOS sets macOS's accent and highlight colours from the theme. Set to true to leave them."
+phase = "install"
+takes_effect = "live"
+env = "UNMACOS_KEEP_ACCENT"
+
+[[settings]]
+group = "keep"
+key = "firefox"
+type = "bool"
+default = false
+label = "Keep Firefox as it is"
+pick_label = "Theme Firefox (Pywalfox and Dark Reader)"
+help = "UnMacOS themes Firefox with Pywalfox and Dark Reader. Set to true to leave it alone."
+phase = "install"
+takes_effect = "apply"
+env = "UNMACOS_KEEP_FIREFOX"
+
+[[settings]]
+group = "keep"
+key = "firefox_wallpaper"
+type = "bool"
+default = false
+label = "Keep Firefox's new tab page"
+pick_label = "Use the theme's wallpaper on Firefox's new tab page"
+help = "UnMacOS shows the theme's wallpaper on Firefox's new tab page. Set to true to leave it alone."
+phase = "install"
+takes_effect = "apply"
+env = "UNMACOS_KEEP_FIREFOX_WALLPAPER"
+
+[[settings]]
+group = "keep"
+key = "spotify"
+type = "bool"
+default = false
+label = "Keep Spotify as it is"
+pick_label = "Theme the Spotify app with Spicetify (media apps)"
+help = "UnMacOS themes the Spotify app with Spicetify (media apps). Set to true to leave it alone."
+phase = "install"
+takes_effect = "apply"
+env = "UNMACOS_KEEP_SPOTIFY"
+
+[[settings]]
+group = "keep"
+key = "orca"
+type = "bool"
+default = false
+label = "Keep Orca's colours"
+pick_label = "Recolour Orca to match the theme (if you use it)"
+help = "UnMacOS recolours Orca to match the theme, if you use it. Set to true to leave it alone."
+phase = "install"
+takes_effect = "live"
+env = "UNMACOS_KEEP_ORCA"

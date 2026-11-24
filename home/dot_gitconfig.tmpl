@@ -1,7 +1,13 @@
-# UnMacOS: git (name/email asked on `chezmoi init`)
+# UnMacOS: git (name and email are optional; left empty, the user section is left out)
+{{ if or .git.name .git.email -}}
 [user]
-	name = {{ .name }}
-	email = {{ .email }}
+{{- if .git.name }}
+	name = {{ .git.name }}
+{{- end }}
+{{- if .git.email }}
+	email = {{ .git.email }}
+{{- end }}
+{{ end -}}
 [core]
 	pager = delta
 [interactive]

@@ -1,0 +1,5 @@
+# The oldest Answers format: personal = true meant every optional app group.
+name = "Test User"
+email = "test@example.invalid"
+use_1password = false
+personal = true

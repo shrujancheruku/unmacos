@@ -192,7 +192,15 @@ UNMACOS_SETUP=~/setup.toml bash -c "$(curl -fsSL https://raw.githubusercontent.c
 ```
 
 The file has your git name and email in it, so keep it somewhere private. To stay up to date
-afterwards, run `chezmoi update`.
+afterwards, pick Update in the menu, or run:
+
+```sh
+chezmoi git pull -- --ff-only && unmacos-setup --yes
+```
+
+`unmacos-setup --yes` asks nothing: it keeps your saved answers, moves an older Answers file to
+the current layout and remakes chezmoi's config before applying, which plain `chezmoi update`
+doesn't do.
 
 ## Learn the keys
 
@@ -291,7 +299,7 @@ rest. They're Omarchy's, downloaded the first time you use a theme (`unmacos-wal
 gets them all). Add your own to `~/.config/unmacos/backgrounds/<theme>/`.
 
 **Corners.** Windows, the bar's chips, popups and Spotify share one corner radius, 8px by default.
-For sharper corners, set `corner_radius = 4` (in pixels) in `~/.config/unmacos/setup.toml` and run `chezmoi init --apply`.
+For sharper corners, set `corner_radius = 4` (in pixels) under `[look]` in `~/.config/unmacos/setup.toml` and run `unmacos-setup --yes`.
 Apps pick up the new window corners when they next open.
 
 **Weather.** Pin a city from the menu (Weather location) or with `unmacos-weather set Tokyo`.

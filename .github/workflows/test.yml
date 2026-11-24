@@ -1,0 +1,31 @@
+name: Tests
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: tests-${{ github.ref }}
+  # Superseded PR runs are cancelled; a push to main always finishes.
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  bats:
+    # shellcheck runs inside the bats suite (tests/shellcheck.bats), so one job covers both.
+    runs-on: macos-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12" # site/build.py reads the Settings schema with tomllib (3.11+)
+      - name: Install bats-core, shellcheck and chezmoi
+        run: brew install bats-core shellcheck chezmoi
+      - name: Check the Settings reference is current
+        run: python3 site/build.py --docs --check
+      - name: Run the tests
+        run: bats --print-output-on-failure tests/
