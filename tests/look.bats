@@ -253,26 +253,55 @@ snapshot() { (cd "$1" && find . -type f | sort | xargs shasum) ; }
 # rift_gap FILE SECTION KEY: a number from Rift's rendered config
 rift_gap() { awk -v sec="[settings.layout.gaps.$2]" -v key="$3" '$0 == sec {on=1; next} /^\[/ {on=0} on && $1 == key {print $3}' "$1"; }
 
-# render_gaps GAP BORDER BAR_HEIGHT CHIP_HEIGHT: render with those Look values as a Draft Look
+# render_gaps GAP BORDER BAR_HEIGHT [POSITION]: render with those Settings as a Draft Look
 render_gaps() {
   mkdir -p "$UNMACOS_STATE"
-  printf '[look]\nwindow_gap = %s\nborder_width = %s\nbar_height = %s\nchip_height = %s\n' "$1" "$2" "$3" "$4" > "$UNMACOS_STATE/draft.toml"
+  printf '[look]\nwindow_gap = %s\nborder_width = %s\nbar_height = %s\nbar_position = "%s"\n' "$1" "$2" "$3" "${4:-top}" > "$UNMACOS_STATE/draft.toml"
   look render --draft "$BATS_TEST_TMPDIR/rift"
 }
 
-@test "render: Rift's gaps are derived from window gap, border width and bar height" {
-  # window gap, border, bar height, chip height -> inner, sides/bottom, top (no notch)
-  local row g b h c inner side top
-  for row in "4 6 44 30 16 10 47" "0 2 40 24 4 2 34" "8 3 52 36 14 11 55" "12 0 30 30 12 12 42"; do
-    read -r g b h c inner side top <<<"$row"
-    render_gaps "$g" "$b" "$h" "$c"
+@test "render: Rift's gaps are derived from window gap, border width, bar height and position" {
+  # gap, border, bar height -> inner, side, bar edge (side + (bar + chip) / 2, chip = bar - 14; no notch)
+  local row g b h inner side edge f
+  for row in "4 6 44 16 10 47" "0 2 40 4 2 35" "8 3 52 14 11 56" "12 0 30 12 12 35"; do
+    read -r g b h inner side edge <<<"$row"
     f="$BATS_TEST_TMPDIR/rift/rift.toml"
+    render_gaps "$g" "$b" "$h" top
     [ "$(rift_gap "$f" inner horizontal)" = "$inner" ]
     [ "$(rift_gap "$f" inner vertical)" = "$inner" ]
     [ "$(rift_gap "$f" outer left)" = "$side" ]
     [ "$(rift_gap "$f" outer right)" = "$side" ]
     [ "$(rift_gap "$f" outer bottom)" = "$side" ]
-    [ "$(rift_gap "$f" outer top)" = "$top" ]
+    [ "$(rift_gap "$f" outer top)" = "$edge" ]
+    render_gaps "$g" "$b" "$h" bottom
+    [ "$(rift_gap "$f" inner horizontal)" = "$inner" ]
+    [ "$(rift_gap "$f" outer left)" = "$side" ]
+    [ "$(rift_gap "$f" outer right)" = "$side" ]
+    [ "$(rift_gap "$f" outer top)" = "$side" ]
+    [ "$(rift_gap "$f" outer bottom)" = "$edge" ]
+  done
+}
+
+@test "render: border width and bar settings reach borders and the bar in the same render" {
+  render_gaps 4 9 50 bottom
+  grep -q '^width=9.0$' "$BATS_TEST_TMPDIR/rift/borders.sh"
+  [ "$(rift_gap "$BATS_TEST_TMPDIR/rift/rift.toml" outer left)" = 13 ]
+  grep -q 'bar_height = 50,' "$BATS_TEST_TMPDIR/rift/sketchybar.lua"
+  grep -q 'chip_height = 36,' "$BATS_TEST_TMPDIR/rift/sketchybar.lua"
+  grep -q 'bar_position = "bottom",' "$BATS_TEST_TMPDIR/rift/sketchybar.lua"
+}
+
+@test "layout Settings are tune-phase, live, and default to today's layout" {
+  [ "$(bash "$UNMACOS_SETTINGS" get look.window_gap 2>/dev/null)" = 4 ]
+  [ "$(bash "$UNMACOS_SETTINGS" get look.border_width 2>/dev/null)" = 6 ]
+  [ "$(bash "$UNMACOS_SETTINGS" get look.bar_height 2>/dev/null)" = 44 ]
+  [ "$(bash "$UNMACOS_SETTINGS" get look.bar_position 2>/dev/null)" = top ]
+  for k in window_gap border_width bar_height bar_position; do
+    run python3 -c "
+import tomllib,sys
+s=[x for x in tomllib.load(open('$REPO_ROOT/home/.chezmoidata/settings.toml','rb'))['settings'] if x['key']=='$k'][0]
+assert s['phase']=='tune' and s['takes_effect']=='live' and s['group']=='look'"
+    [ "$status" -eq 0 ]
   done
 }
 

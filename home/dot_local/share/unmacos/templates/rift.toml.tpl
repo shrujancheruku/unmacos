@@ -1,18 +1,20 @@
 {{/* Rift has no include directive, so unmacos-look renders the whole config (ADR-0003).
   chezmoi only symlinks ~/.config/rift/config.toml to the rendered file, so apply never overwrites it.
-  Look values with defaults here: window_gap, border_width (JankyBorders), bar_height and
-  bar_y_offset (SketchyBar's bar), chip_height (its chips). The desktop Settings come from
+  Look values: window_gap, border_width (JankyBorders), bar_height and bar_position
+  (SketchyBar's bar; its chips are bar_height - 14 tall), bar_y_offset (optional). The desktop Settings come from
   unmacos-settings, which is not part of the Look data. */ -}}
 {{- $settings := env "UNMACOS_SETTINGS" | default (joinPath (env "HOME") ".local/bin/unmacos-settings") -}}
 {{- $desktop := (output "/usr/bin/env" "-u" "CHEZMOI_SOURCE_DIR" "/bin/bash" $settings "list" "desktop" | fromToml).desktop -}}
-{{- $gap := 4 -}}{{- if hasKey .look "window_gap" }}{{ $gap = .look.window_gap | int }}{{ end -}}
-{{- $border := 6 -}}{{- if hasKey .look "border_width" }}{{ $border = .look.border_width | int }}{{ end -}}
-{{- $bar := 44 -}}{{- if hasKey .look "bar_height" }}{{ $bar = .look.bar_height | int }}{{ end -}}
-{{- $chip := 30 -}}{{- if hasKey .look "chip_height" }}{{ $chip = .look.chip_height | int }}{{ end -}}
+{{- $gap := .look.window_gap | int -}}
+{{- $border := .look.border_width | int -}}
+{{- $bar := .look.bar_height | int -}}
+{{- $chip := sub $bar 14 -}}
 {{- $yoff := 0 -}}{{- if hasKey .look "bar_y_offset" }}{{ $yoff = .look.bar_y_offset | int }}{{ end -}}
 {{- $side := add $gap $border -}}
-{{- /* the bar's chips are centred in it: their bottom edge is y_offset + (bar + chip) / 2 */ -}}
-{{- $top := add $yoff (div (add $bar $chip) 2) $side -}}
+{{- /* the bar's chips are centred in it: their far edge is y_offset + (bar + chip) / 2 from the bar's screen edge */ -}}
+{{- $reserve := add $yoff (div (add $bar $chip) 2) $side -}}
+{{- $top := $side -}}{{- $bottom := $side -}}
+{{- if eq .look.bar_position "bottom" }}{{ $bottom = $reserve }}{{ else }}{{ $top = $reserve }}{{ end -}}
 # Rift config: Omarchy/Hyprland-style binary splitting on macOS
 # Rendered by unmacos-look from templates/rift.toml.tpl. Do not edit; Rift reloads it live.
 #
@@ -65,14 +67,14 @@ default_orientation = "perpendicular"
 
 # A visible {{ $gap }}px gap on every side. Rift measures gaps between window frames,
 # but JankyBorders draws its {{ $border }}px border outside the frame, so the gaps are
-# derived from the Look: sides and bottom = gap + border, inner = gap + 2 * border,
-# top = bottom of the bar's chips + gap + border.
+# derived from the Look: sides = gap + border, inner = gap + 2 * border, and the edge the
+# bar sits on (bar_position) = far edge of the bar's chips + gap + border, the other = sides.
 # top below is for screens without a notch. At start, and whenever the bar is
 # hidden or shown, unmacos-toggle-bar recomputes it for the actual display.
 [settings.layout.gaps.outer]
 top = {{ $top }}
 left = {{ $side }}
-bottom = {{ $side }}
+bottom = {{ $bottom }}
 right = {{ $side }}
 
 [settings.layout.gaps.inner]

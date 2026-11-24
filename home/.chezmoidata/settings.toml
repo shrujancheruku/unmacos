@@ -86,6 +86,53 @@ takes_effect = "restart:apps"
 env = "UNMACOS_CORNER_RADIUS"
 legacy = "corner_radius"
 
+[[settings]]
+group = "look"
+key = "window_gap"
+type = "int"
+default = 4
+min = 0
+max = 24
+label = "Window gap"
+help = "Visible space between tiled windows and the screen edge, in pixels. Rift adds the border width on top so the gap stays even."
+phase = "tune"
+takes_effect = "live"
+
+[[settings]]
+group = "look"
+key = "border_width"
+type = "int"
+default = 6
+min = 0
+max = 12
+label = "Border width"
+help = "Width of the focused-window border, in pixels. Rift's gaps grow with it so borders never overlap."
+phase = "tune"
+takes_effect = "live"
+
+[[settings]]
+group = "look"
+key = "bar_height"
+type = "int"
+default = 44
+min = 30
+max = 80
+label = "Bar height"
+help = "Height of the top bar, in pixels. The chips inside follow it, and Rift reserves the room."
+phase = "tune"
+takes_effect = "live"
+
+[[settings]]
+group = "look"
+key = "bar_position"
+type = "enum"
+default = "top"
+choices = ["top", "bottom"]
+label = "Bar position"
+help = "Whether the bar sits at the top or the bottom of the screen. Rift reserves that edge for it."
+phase = "tune"
+takes_effect = "live"
+
 # --- Bar ---------------------------------------------------------------------------------------
 
 [[settings]]

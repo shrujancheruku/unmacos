@@ -10,6 +10,10 @@ email = "test@example.invalid"   # Goes into ~/.gitconfig. Stays on this Mac.
 [look]
 theme = "nord"   # The colours of the whole desktop. Switch any time with Alt + Ctrl + Shift + Space.
 corner_radius = 4   # Roundness of windows, bar chips, popups and Spotify, in pixels. Apps pick it up when they restart.
+# window_gap = 4   # Visible space between tiled windows and the screen edge, in pixels. Rift adds the border width on top so the gap stays even.
+# border_width = 6   # Width of the focused-window border, in pixels. Rift's gaps grow with it so borders never overlap.
+# bar_height = 44   # Height of the top bar, in pixels. The chips inside follow it, and Rift reserves the room.
+# bar_position = "top"   # Whether the bar sits at the top or the bottom of the screen. Rift reserves that edge for it.
 
 [bar]
 weather = "Oslo"   # A city, airport code or zip for the bar's weather, or auto to use your IP address.
