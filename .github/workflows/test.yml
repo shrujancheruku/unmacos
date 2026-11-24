@@ -20,7 +20,12 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12" # site/build.py reads the Settings schema with tomllib (3.11+)
       - name: Install bats-core, shellcheck and chezmoi
         run: brew install bats-core shellcheck chezmoi
+      - name: Check the Settings reference is current
+        run: python3 site/build.py --docs --check
       - name: Run the tests
         run: bats --print-output-on-failure tests/
