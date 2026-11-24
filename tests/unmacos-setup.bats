@@ -493,6 +493,48 @@ gitconfig_text() { unmacos_chezmoi cat "$HOME/.gitconfig"; }
   [[ "$output" != *"app group"* ]]
 }
 
+# --- An Answers file that can't be used ------------------------------------------------
+
+# bad_answers TEXT: a saved Answers file with that text; runs the wizard, keeping its output
+bad_answers() {
+  use_source "$REPO_ROOT"
+  mkdir -p "$HOME/.config/unmacos"
+  printf '%s\n' "$1" > "$HOME/.config/unmacos/setup.toml"
+  cp "$HOME/.config/unmacos/setup.toml" "$BATS_TEST_TMPDIR/before"
+}
+
+@test "--yes with wrong values says each one once, how to fix it, and stops" {
+  bad_answers $'theme = "nope"\ncorner_radius = 99'
+  run wizard --yes --no-apply < /dev/null
+  echo "$output"
+  [ "$status" -eq 1 ]
+  [ "$(grep -c 'look.theme' <<< "$output")" -eq 1 ]
+  [ "$(grep -c 'look.corner_radius' <<< "$output")" -eq 1 ]
+  [[ "$output" == *"fix or delete ~/.config/unmacos/setup.toml"* ]]
+  cmp "$BATS_TEST_TMPDIR/before" "$HOME/.config/unmacos/setup.toml"
+}
+
+@test "--yes with an Answers file that is not TOML says so once, how to fix it, and stops" {
+  bad_answers 'theme = '
+  run wizard --yes --no-apply < /dev/null
+  echo "$output"
+  [ "$status" -eq 1 ]
+  [ "$(grep -c 'valid TOML' <<< "$output")" -eq 1 ]
+  [[ "$output" == *"fix or delete ~/.config/unmacos/setup.toml"* ]]
+  cmp "$BATS_TEST_TMPDIR/before" "$HOME/.config/unmacos/setup.toml"
+}
+
+@test "the wizard checks the Answers before asking anything" {
+  bad_answers 'corner_radius = 99'
+  stub_gum
+  : > "$GUM_REPLIES"
+  run wizard --no-apply < /dev/null
+  echo "$output"
+  [ "$status" -eq 1 ]
+  [ "$(grep -c 'look.corner_radius' <<< "$output")" -eq 1 ]
+  [ ! -s "$GUM_LOG" ]
+}
+
 @test "plain chezmoi init --promptDefaults never asks, and the gitconfig has no [user] section" {
   run unmacos_chezmoi init --promptDefaults < /dev/null
   echo "$output"

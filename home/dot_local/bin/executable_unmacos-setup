@@ -467,6 +467,12 @@ while (( $# )); do
 done
 command -v chezmoi >/dev/null || die "needs chezmoi (brew install chezmoi)"
 
+# Check the saved Answers once, before anything reads them (each read would say the same again).
+# --import checks its own file; --questions reads only the schema.
+if [[ "$mode" != import && "$mode" != questions && -e "$SETUP" ]]; then
+  settings validate "$SETUP" >/dev/null || die "fix or delete ${SETUP/#$HOME/~}, then run unmacos-setup again"
+fi
+
 case "$mode" in
   export)
     load_live; load_git
