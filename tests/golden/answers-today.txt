@@ -108,7 +108,7 @@ if [[ "${UNMACOS_KEEP_GLASS:-}" != 1 ]]; then
   defaults write -g com.apple.SwiftUI.DisableSolarium -bool true
   defaults write com.apple.ControlCenter com.apple.SwiftUI.DisableSolarium -bool false
   # Small window corners (private AppKit key; 1 = windows/sheets, 2 = panels), the
-  # same radius as the bar's chips: corner_radius in setup.toml. Apps pick it up when
+  # same radius as the bar's chips: [look] corner_radius in setup.toml. Apps pick it up when
   # they relaunch.
   defaults write -g NSConvolutionOverride1 -float 4
   defaults write -g NSConvolutionOverride2 -float 4
@@ -510,8 +510,8 @@ return {
   paddings = 4,
   group_paddings = 6,
   chip_height = 30, -- every chip; unmacos-toggle-bar reads it for the window gap
-  -- Chips and popups use the windows' corner radius: corner_radius in
-  -- ~/.config/unmacos/setup.toml, then chezmoi apply.
+  -- Chips and popups use the windows' corner radius: [look] corner_radius in
+  -- ~/.config/unmacos/setup.toml, then unmacos-setup --yes.
   corner_radius = 4,
 
   icons = "sf-symbols", -- alternatively available: NerdFont
@@ -538,7 +538,7 @@ return {
 
 === .config/spicetify/Themes/UnMacOS/user.css
 /* UnMacOS: Spotify follows the UnMacOS theme. Colors come from color.ini
-   (rendered per theme); this only matches the desktop's corners (corner_radius in setup.toml). */
+   (rendered per theme); this only matches the desktop's corners ([look] corner_radius in setup.toml). */
 :root {
   --border-radius-base: 4px;
 }
