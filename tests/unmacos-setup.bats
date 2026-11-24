@@ -21,6 +21,19 @@ setup() {
   export GIT_CONFIG_GLOBAL="$BATS_TEST_TMPDIR/no-gitconfig"
 }
 
+# grouped_answers: the same Answers in the grouped shape that the migration writes
+grouped_answers() {
+  mkdir -p "$HOME/.config/unmacos"
+  cat > "$HOME/.config/unmacos/setup.toml" <<'TOML'
+[git]
+name = "Test User"
+email = "test@example.invalid"
+
+[onepassword]
+enabled = false
+TOML
+}
+
 # Answers with only who you are: no theme, weather, corner radius, apps, [keep] or [desktop]
 answers_without_apps() {
   mkdir -p "$HOME/.config/unmacos"
@@ -331,7 +344,7 @@ replies() { printf '%s\n' "$@" > "$GUM_REPLIES"; }
 
 @test "cancelling a question leaves the Answers untouched" {
   use_source "$REPO_ROOT"
-  answers_without_apps
+  grouped_answers
   unmacos_chezmoi_init
   before="$(cat "$HOME/.config/unmacos/setup.toml")"
   stub_gum
@@ -347,7 +360,7 @@ replies() { printf '%s\n' "$@" > "$GUM_REPLIES"; }
 
 @test "declining the final confirmation leaves the Answers untouched" {
   use_source "$REPO_ROOT"
-  answers_without_apps
+  grouped_answers
   unmacos_chezmoi_init
   before="$(cat "$HOME/.config/unmacos/setup.toml")"
   stub_gum
