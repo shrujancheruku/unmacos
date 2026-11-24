@@ -13,6 +13,7 @@ SHARE="${UNMACOS_SHARE:-$HOME/.local/share/unmacos}"
 STATE="${UNMACOS_STATE:-$HOME/.local/state/unmacos}"
 
 notify() {
+  # shellcheck disable=SC2016 # the JavaScript passed to osascript uses $, not shell variables
   osascript -l JavaScript -e '
     ObjC.import("Foundation");
     const c = $.NSDistributedNotificationCenter.defaultCenter;

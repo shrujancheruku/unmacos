@@ -80,8 +80,8 @@ for r in "${sorted[@]}"; do
         [[ -n "$(git -C "$r" status --porcelain 2>/dev/null)" ]] && dirty="1"
 
     # ahead/behind (safe if no upstream)
-    if git -C "$r" rev-parse --abbrev-ref --symbolic-full-name @{u} >/dev/null 2>&1; then
-        read -r behind ahead < <(git -C "$r" rev-list --left-right --count @{u}...HEAD 2>/dev/null | awk '{print $1, $2}')
+    if git -C "$r" rev-parse --abbrev-ref --symbolic-full-name '@{u}' >/dev/null 2>&1; then
+        read -r behind ahead < <(git -C "$r" rev-list --left-right --count '@{u}...HEAD' 2>/dev/null | awk '{print $1, $2}')
         ahead="${ahead:-0}"
         behind="${behind:-0}"
     else

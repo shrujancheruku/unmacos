@@ -1,0 +1,5 @@
+# Fixture Answers for the tests: the minimum an install needs, so nothing prompts.
+name = "Test User"
+email = "test@example.invalid"
+use_1password = false
+theme = "tokyo-night"

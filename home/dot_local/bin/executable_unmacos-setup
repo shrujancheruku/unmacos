@@ -10,6 +10,7 @@
 # Answers live in ~/.config/unmacos/setup.toml (git name and email included: keep exports
 # somewhere private). chezmoi reads it through .chezmoi.toml.tmpl.
 # Runs on macOS's own bash 3.2: install.sh calls it before Homebrew's bash exists.
+# shellcheck disable=SC2154 # the a_* answers are set by eval in load(), which shellcheck cannot follow
 set -euo pipefail
 export PATH="$HOME/.local/bin:/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin"
 
@@ -184,7 +185,7 @@ ask() {
   if gum confirm "Read secrets from 1Password? (spotify_player's client ID; needs the 1Password app and CLI)" \
        --default="$a_use_1password"; then a_use_1password=true; else a_use_1password=false; fi
 
-  a_theme="$(ls "$REPO/home/dot_local/share/unmacos/themes" \
+  a_theme="$(find "$REPO/home/dot_local/share/unmacos/themes" -mindepth 1 -maxdepth 1 -type d -exec basename {} \; | sort \
     | gum choose --height 14 --header "Theme (switch any time: Alt + Ctrl + Shift + Space)" --selected="$a_theme")"
 
   # App groups

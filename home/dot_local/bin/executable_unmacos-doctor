@@ -1,6 +1,7 @@
 #!/bin/bash
 # UnMacOS doctor: checks that the desktop is installed and running.
 #   unmacos-doctor        exit code = number of failures
+# shellcheck disable=SC1091,SC2016 # SC2016: check() evals its command later, so $ must stay literal. SC1091: prefs.sh is generated on the Mac, not in the repo
 set -uo pipefail
 eval "$(/opt/homebrew/bin/brew shellenv 2>/dev/null)" || true
 export PATH="$HOME/.local/bin:$PATH"
