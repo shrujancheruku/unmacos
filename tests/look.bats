@@ -325,6 +325,21 @@ render_fonts() {
   golden fixed-dark-fonts "$BATS_TEST_TMPDIR/fonts"
 }
 
+# The other branches: the VictorMono terminal font, the Hack bar font (bold for every heavier
+# weight) and window animation off (desktop.animate is in the Answers: only look.* can be drafted)
+@test "render: the other font branches and animation off render byte for byte to their golden" {
+  fixture_share
+  mkdir -p "$UNMACOS_STATE" && echo fixed-dark > "$UNMACOS_STATE/theme.name"
+  printf '[desktop]\nanimate = false\n' >> "$HOME/.config/unmacos/setup.toml"
+  printf '[look]\nterminal_font = "VictorMono Nerd Font Mono"\nbar_font = "Hack Nerd Font"\n' > "$UNMACOS_STATE/draft.toml"
+  look render --draft "$BATS_TEST_TMPDIR/fonts-alt"
+  grep -qx 'font-family = "VictorMono Nerd Font Mono"' "$BATS_TEST_TMPDIR/fonts-alt/ghostty-font.conf"
+  grep -q 'font_text = "Hack Nerd Font",' "$BATS_TEST_TMPDIR/fonts-alt/sketchybar.lua"
+  grep -q 'Semibold = "Bold",' "$BATS_TEST_TMPDIR/fonts-alt/sketchybar.lua"
+  grep -qx 'animate = false' "$BATS_TEST_TMPDIR/fonts-alt/rift.toml"
+  golden fixed-dark-fonts-alt "$BATS_TEST_TMPDIR/fonts-alt"
+}
+
 @test "font and animation Settings are tune-phase, live, and default to today's values" {
   [ "$(bash "$UNMACOS_SETTINGS" get look.terminal_font 2>/dev/null)" = "Geist Mono Nerd Font Mono" ]
   [ "$(bash "$UNMACOS_SETTINGS" get look.terminal_font_size 2>/dev/null)" = 16 ]
