@@ -342,3 +342,47 @@ theme_script() {
   printf '[look]\ncorner_radius = 3\n' >> "$HOME/.config/unmacos/setup.toml"
   [ "$(theme_script)" != "$before" ]
 }
+
+# reload_stubs: let reload run with every app it drives stubbed and only Rift "running".
+# The stubs are exported functions, so they also reach unmacos-toggle-bar --sync.
+reload_stubs() {
+  unset UNMACOS_NO_RELOAD
+  export UNMACOS_KEEP_ACCENT=1 UNMACOS_KEEP_ORCA=1 UNMACOS_KEEP_SPOTIFY=1 UNMACOS_KEEP_WALLPAPER=1
+  export STUB_LOG="$BATS_TEST_TMPDIR/rift.log"
+  pgrep() { [[ "${*: -1}" == rift ]]; }
+  pkill() { return 0; }
+  osascript() { return 0; }
+  ps() { return 0; }
+  sketchybar() { [[ "$1" == --query ]] && echo '{"hidden":"off","height":44,"y_offset":0,"position":"top"}'; return 0; }
+  rift-cli() { [[ "$2" == displays ]] && { echo '[{"frame":{"origin":{"x":0,"y":0}}}]'; return 0; }; echo "$*" >> "$STUB_LOG"; }
+  export -f pgrep pkill osascript ps sketchybar rift-cli
+  mkdir -p "$HOME/.local/bin"
+  install -m 755 "$REPO_ROOT/home/dot_local/bin/executable_unmacos-toggle-bar" "$HOME/.local/bin/unmacos-toggle-bar"
+}
+
+@test "reload: with Rift running it reloads Rift's config, then re-fits the outer gaps to the bar" {
+  look render "$UNMACOS_STATE/theme"
+  reload_stubs
+  run look reload
+  [ "$status" -eq 0 ]
+  # the default Look: side 10, top 47 (no notch, bar shown)
+  [ "$(cat "$STUB_LOG")" = "$(printf 'execute config reload\nexecute config set-outer-gaps 47 10 10 10')" ]
+}
+
+@test "reload: UNMACOS_NO_RELOAD=1 leaves Rift alone" {
+  look render "$UNMACOS_STATE/theme"
+  reload_stubs
+  UNMACOS_NO_RELOAD=1 run look reload
+  [ "$status" -eq 0 ]
+  [ ! -e "$STUB_LOG" ]
+}
+
+@test "reload: with Rift not running it never calls rift-cli" {
+  look render "$UNMACOS_STATE/theme"
+  reload_stubs
+  pgrep() { return 1; }
+  export -f pgrep
+  run look reload
+  [ "$status" -eq 0 ]
+  [ ! -e "$STUB_LOG" ]
+}

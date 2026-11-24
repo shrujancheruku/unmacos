@@ -63,13 +63,13 @@ rendered_rift() {
   [ "$(cat "$STUB_LOG")" = "execute config set-outer-gaps 10 10 10 10" ]
 }
 
-@test "toggle-bar --sync: a bottom bar reserves the bottom gap and leaves the top at the side gap" {
+@test "toggle-bar --sync: a bottom bar on a notched display reserves the bottom gap and leaves the top at the side gap" {
   stubs off 32
   STUB_POS=bottom
   export STUB_POS
   rendered_rift 5
   run bash "$TOGGLE" --sync
   [ "$status" -eq 0 ]
-  # the notch inset only affects the top edge
-  [ "$(cat "$STUB_LOG")" = "execute config set-outer-gaps 0 5 42 5" ]
+  # the notch inset only comes off a top bar's gap: Rift's area already starts below it
+  [ "$(cat "$STUB_LOG")" = "execute config set-outer-gaps 5 5 42 5" ]
 }

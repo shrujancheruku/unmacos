@@ -164,6 +164,13 @@ reload() {
   # Accent and highlight colours (dialogs, buttons, selection). UNMACOS_KEEP_ACCENT=1 skips it.
   [[ "${UNMACOS_KEEP_ACCENT:-}" != 1 && -x "$HOME/.local/bin/unmacos-accent" ]] && "$HOME/.local/bin/unmacos-accent" "$theme" >/dev/null 2>&1 || true
   pgrep -xq sketchybar && sketchybar --reload >/dev/null 2>&1 || true
+  # Rift: hot_reload can't be trusted to see a new render through chezmoi's symlink, so
+  # reload its config, then re-fit the outer gaps to the bar for its current shown/hidden
+  # state (toggle-bar --sync), as only that knows the display's notch inset.
+  if pgrep -xq rift; then
+    rift-cli execute config reload >/dev/null 2>&1 || true
+    [[ -x "$HOME/.local/bin/unmacos-toggle-bar" ]] && "$HOME/.local/bin/unmacos-toggle-bar" --sync >/dev/null 2>&1 || true
+  fi
   pgrep -xq borders && [[ -x "$HOME/.config/borders/bordersrc" ]] && "$HOME/.config/borders/bordersrc" >/dev/null 2>&1 &
   pgrep -xq tmux && tmux source-file "$dir/tmux.conf" >/dev/null 2>&1 || true
   # Ghostty reloads its config on SIGUSR2. pgrep/pkill can't see the Ghostty app
