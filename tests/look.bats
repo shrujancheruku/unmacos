@@ -58,17 +58,41 @@ golden() {
   golden fixed-light "$BATS_TEST_TMPDIR/out"
 }
 
-@test "render: every shipped Theme renders all 14 templates with no placeholder left" {
+@test "render: every shipped Theme renders all 15 templates with no placeholder left" {
   local theme name
   for theme in "$SHIPPED_SHARE"/themes/*/; do
     name="$(basename "$theme")"
     UNMACOS_THEME="$name" run look render "$BATS_TEST_TMPDIR/$name"
     [ "$status" -eq 0 ] || { echo "$name: $output"; false; }
-    [ "$(ls "$BATS_TEST_TMPDIR/$name"/*.* | grep -vc -e '/colors.toml$' -e '/theme.name$')" -eq 14 ]
+    [ "$(ls "$BATS_TEST_TMPDIR/$name"/*.* | grep -vc -e '/colors.toml$' -e '/theme.name$')" -eq 15 ]
     # colors.toml is the Theme's own file, copied, not rendered
     run grep -rl --exclude=colors.toml '{{' "$BATS_TEST_TMPDIR/$name"
     [ "$status" -eq 1 ] || { echo "$name: placeholders in $output"; false; }
   done
+}
+
+@test "render: corner_radius reaches the bar and Spotify's CSS, and follows the Setting" {
+  run look render "$BATS_TEST_TMPDIR/default"
+  [ "$status" -eq 0 ]
+  grep -qx $'\tcorner_radius = 8,' "$BATS_TEST_TMPDIR/default/sketchybar.lua"
+  grep -q -- '--border-radius-base: 8px;' "$BATS_TEST_TMPDIR/default/spicetify-user.css"
+  grep -q '^  border-radius: 8px;' "$BATS_TEST_TMPDIR/default/spicetify-user.css"
+  # changing the Setting and rendering again is all it takes: no chezmoi apply
+  printf '[look]\ntheme = "tokyo-night"\ncorner_radius = 3\n' > "$HOME/.config/unmacos/setup.toml"
+  run look render "$BATS_TEST_TMPDIR/changed"
+  [ "$status" -eq 0 ]
+  grep -qx $'\tcorner_radius = 3,' "$BATS_TEST_TMPDIR/changed/sketchybar.lua"
+  grep -q -- '--border-radius-base: 3px;' "$BATS_TEST_TMPDIR/changed/spicetify-user.css"
+  grep -q '^  border-radius: 3px;' "$BATS_TEST_TMPDIR/changed/spicetify-user.css"
+}
+
+@test "render --draft: the Draft Look's corner_radius wins over the saved one" {
+  mkdir -p "$UNMACOS_STATE"
+  printf '[look]\ncorner_radius = 5\n' > "$UNMACOS_STATE/draft.toml"
+  run look render --draft "$BATS_TEST_TMPDIR/draft"
+  [ "$status" -eq 0 ]
+  grep -qx $'\tcorner_radius = 5,' "$BATS_TEST_TMPDIR/draft/sketchybar.lua"
+  grep -q -- '--border-radius-base: 5px;' "$BATS_TEST_TMPDIR/draft/spicetify-user.css"
 }
 
 @test "render: a file the Theme ships replaces the rendered template" {

@@ -16,4 +16,6 @@ return {
 	popup_border = 0xffb7b5ac,
 	bg1 = 0xffe5e2d8,
 	bg2 = 0xffe6e4d9,
+	-- Look Setting, not a colour: chips and popups round like the windows
+	corner_radius = 8,
 }

@@ -63,8 +63,8 @@ if [[ "${UNMACOS_KEEP_GLASS:-}" != 1 ]]; then
   defaults write -g com.apple.SwiftUI.DisableSolarium -bool true
   defaults write com.apple.ControlCenter com.apple.SwiftUI.DisableSolarium -bool false
   # Small window corners (private AppKit key; 1 = windows/sheets, 2 = panels), the
-  # same radius as the bar's chips: [look] corner_radius in setup.toml. Apps pick it up when
-  # they relaunch.
+  # same radius as the bar's chips: the Look's corner_radius. Written on apply (the bar and
+  # Spotify follow unmacos-look render live); apps pick it up when they relaunch.
   defaults write -g NSConvolutionOverride1 -float {{ .look.corner_radius }}
   defaults write -g NSConvolutionOverride2 -float {{ .look.corner_radius }}
   if (( major >= 27 )); then
