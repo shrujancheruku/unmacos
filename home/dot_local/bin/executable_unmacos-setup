@@ -8,9 +8,9 @@
 #   unmacos-setup --import FILE    use FILE's answers (no questions), save and apply
 #   unmacos-setup --checklist      the steps macOS won't let a script do, and which are done
 # Answers live in ~/.config/unmacos/setup.toml (git name and email included: keep exports
-# somewhere private). chezmoi reads it through .chezmoi.toml.tmpl.
+# somewhere private). unmacos-settings reads, checks and writes them; chezmoi reads them through
+# .chezmoi.toml.tmpl.
 # Runs on macOS's own bash 3.2: install.sh calls it before Homebrew's bash exists.
-# shellcheck disable=SC2154 # the a_* answers are set by eval in load(), which shellcheck cannot follow
 set -euo pipefail
 export PATH="$HOME/.local/bin:/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin"
 
@@ -19,127 +19,72 @@ STATE="${UNMACOS_STATE:-$HOME/.local/state/unmacos}"
 REPO="$(chezmoi execute-template '{{ .chezmoi.workingTree }}' 2>/dev/null || true)"
 [[ -d "$REPO/brew" ]] || REPO="$HOME/.local/share/chezmoi"
 
-KEEP_KEYS="ai glass wallpaper accent firefox firefox_wallpaper spotify orca"
-DESKTOP_KEYS="animate focus_follows_mouse mouse_follows_focus mouse_hides_on_focus"
 SEP=" — "   # between an option's name and its description
 
 usage() { sed -n '2,12s/^# \{0,1\}//p' "$0"; }
 die() { printf 'unmacos-setup: %s\n' "$*" >&2; exit 1; }
 
 # --- Answers -----------------------------------------------------------------
-# Kept in plain variables (bash 3.2 has no associative arrays): a_<key>.
-# Lists are "|"-separated.
+# Every read and write of the Answers goes through unmacos-settings. Lists are "|"-separated here.
 
-keep_label() {
-  case "$1" in
-    ai)                echo "Turn off Apple Intelligence (macOS 26+)" ;;
-    glass)             echo "Turn off Liquid Glass (macOS 26+)" ;;
-    wallpaper)         echo "Set the desktop wallpaper from the theme" ;;
-    accent)            echo "Set macOS's accent and highlight colours from the theme" ;;
-    firefox)           echo "Theme Firefox (Pywalfox and Dark Reader)" ;;
-    firefox_wallpaper) echo "Use the theme's wallpaper on Firefox's new tab page" ;;
-    spotify)           echo "Theme the Spotify app with Spicetify (media apps)" ;;
-    orca)              echo "Recolour Orca to match the theme (if you use it)" ;;
-  esac
-}
-desktop_label() {
-  case "$1" in
-    animate)              echo "Animate windows into place" ;;
-    focus_follows_mouse)  echo "Focus follows the mouse" ;;
-    mouse_follows_focus)  echo "Move the pointer to the window you focus with the keyboard" ;;
-    mouse_hides_on_focus) echo "Hide the pointer after that until you move the mouse" ;;
-  esac
-}
+# It sits next to this script in the source (install.sh runs it from there, before chezmoi has
+# applied anything), or on PATH once applied.
+HERE="$(cd "$(dirname "$0")" && pwd)"
+SETTINGS=""
+for c in "$HERE/unmacos-settings" "$HERE/executable_unmacos-settings"; do
+  [[ -r "$c" ]] && { SETTINGS="$c"; break; }
+done
+[[ -n "$SETTINGS" ]] || SETTINGS="$(command -v unmacos-settings || true)"
+[[ -n "$SETTINGS" ]] || die "can't find unmacos-settings"
+settings() { /bin/bash "$SETTINGS" "$@"; }
 
-# load FILE [nodata]: answers from FILE, then chezmoi's current data (unless nodata), then the
-# Settings schema's defaults. Each Setting becomes a_<legacy key> (a_theme, a_apps, ...) or, for
-# the [keep] and [desktop] tables, a_<group>_<key>; a_<name>_default holds its default.
-load() {
-  local out k v
-  out="$(F="$1" NODATA="${2:-}" chezmoi execute-template "$(cat <<'TPL'
-{{- $s := dict -}}
-{{- if stat (env "F") }}{{ $s = include (env "F") | fromToml }}{{ end -}}
-{{- $d := omit . "chezmoi" "settings" -}}{{ if env "NODATA" }}{{ $d = dict }}{{ end -}}
-{{- range .settings -}}
-  {{- $legacy := get . "legacy" -}}
-  {{- $name := $legacy | default (printf "%s_%s" .group .key) -}}
-  {{- $v := .default -}}
-  {{- $dg := get $d .group }}{{ if and (kindIs "map" $dg) (hasKey $dg .key) }}{{ $v = index $dg .key }}{{ end -}}
-  {{- $sg := get $s .group -}}
-  {{- if and (kindIs "map" $sg) (hasKey $sg .key) }}{{ $v = index $sg .key -}}
-  {{- else if and $legacy (hasKey $s $legacy) (not (kindIs "map" (index $s $legacy))) }}{{ $v = index $s $legacy }}{{ end }}
-{{ $name }}	{{ if kindIs "slice" $v }}{{ $v | join "|" }}{{ else }}{{ $v }}{{ end }}
-{{ $name }}_default	{{ if kindIs "slice" .default }}{{ .default | join "|" }}{{ else }}{{ .default }}{{ end }}
-{{- end }}
-TPL
-)")" || die "can't read ${1/#$HOME/~} (is it valid TOML?)"
-
-  a_name=""; a_email=""; a_theme=""; a_weather=""; a_corner_radius=""; a_use_1password=""; a_apps=""; a_apps_skip=""
-  a_corner_radius_default=""
-  for k in $KEEP_KEYS; do eval "a_keep_$k="; done
-  for k in $DESKTOP_KEYS; do eval "a_desktop_$k="; done
-  while IFS=$'\t' read -r k v; do
-    [[ "$k" =~ ^[a-z_0-9]+$ ]] || continue
-    case "$k" in
-      *_default) ;;
-      keep_*|desktop_*|use_1password) [[ "$v" == true ]] && v=true || v=false ;;
-    esac
-    printf -v "a_$k" '%s' "$v"
-  done <<< "$out"
-  [[ -n "$a_name" ]] || a_name="$(git config --global user.name 2>/dev/null || true)"
-  [[ -n "$a_email" ]] || a_email="$(git config --global user.email 2>/dev/null || true)"
-  # corner_radius is only written when it differs from the default, so a new default reaches you
-  [[ "${a_corner_radius:-}" =~ ^[0-9]+$ && "$a_corner_radius" != "$a_corner_radius_default" ]] || a_corner_radius=""
-  return 0
-}
+FROM="$SETUP"          # the Answers being read
+DATA="--data"          # --no-data: ignore what chezmoi was asked at init (an import's own Answers)
+SET=()                 # KEY=VALUE changes made on top of FROM
+sget() { settings get "$DATA" --from "$FROM" "$1"; }
+sgetl() { sget "$1" | paste -s -d'|' -; }   # a list as a|b|c
+put() { SET[${#SET[@]}]="$1=$2"; }
+swrite() { settings write "$1" "$DATA" --from "$FROM" ${SET[@]+"${SET[@]}"}; }
+is_true() { [[ "$(sget "$1")" == true ]]; }
 
 # What this Mac uses right now (the menus change these, not setup.toml)
+LIVE_THEME=""; LIVE_WEATHER=""
 load_live() {
-  local t w
-  t="$(cat "$STATE/theme.name" 2>/dev/null || true)"; [[ -n "$t" ]] && a_theme="$t"
+  local w
+  LIVE_THEME="$(cat "$STATE/theme.name" 2>/dev/null || true)"
+  [[ -z "$LIVE_THEME" ]] || put look.theme "$LIVE_THEME"
   if [[ -e "$STATE/weather.location" ]]; then
-    w="$(cat "$STATE/weather.location")"; a_weather="${w:-auto}"
+    w="$(cat "$STATE/weather.location")"; LIVE_WEATHER="${w:-auto}"
+    put bar.weather "$LIVE_WEATHER"
   fi
   return 0
 }
 
-tq() { local s="${1//\\/\\\\}"; s="${s//\"/\\\"}"; printf '"%s"' "$s"; }
-tl() {  # "a|b" -> ["a", "b"]
-  local out="" item IFS='|'
-  for item in $1; do [[ -n "$item" ]] && out="$out${out:+, }$(tq "$item")"; done
-  printf '[%s]' "$out"
-}
-var() { local n="$1"; printf '%s' "${!n}"; }
-
-write_answers() {
-  local k
-  printf '# UnMacOS setup: your answers to unmacos-setup (run it again to change them).\n'
-  printf '# Copy this file to another Mac and run: unmacos-setup --import FILE\n'
-  # shellcheck disable=SC2016 # the $(curl …) is for the reader to run
-  printf '# or, on a fresh Mac: UNMACOS_SETUP=FILE bash -c "$(curl -fsSL https://raw.githubusercontent.com/shrujancheruku/unmacos/main/install.sh)"\n\n'
-  printf 'name = %s\n' "$(tq "$a_name")"
-  printf 'email = %s\n' "$(tq "$a_email")"
-  printf 'use_1password = %s\n' "$a_use_1password"
-  printf 'theme = %s\n' "$(tq "$a_theme")"
-  printf 'weather = %s   # a place for the bar'"'"'s weather, or "auto" (from your IP)\n' "$(tq "$a_weather")"
-  if [[ -n "$a_corner_radius" ]]; then
-    printf 'corner_radius = %s   # px, for windows, bar chips, popups and Spotify\n' "$a_corner_radius"
-  else
-    printf '# corner_radius = %s   # px, for windows, bar chips, popups and Spotify (%s is the default)\n' "$a_corner_radius_default" "$a_corner_radius_default"
-  fi
-  printf '\n# Optional app groups (brew/<group>.Brewfile) and apps in them to leave out\n'
-  printf 'apps = %s\n' "$(tl "$a_apps")"
-  printf 'apps_skip = %s\n' "$(tl "$a_apps_skip")"
-  printf '\n# true = leave this as it is (the same as UNMACOS_KEEP_<NAME>=1)\n[keep]\n'
-  for k in $KEEP_KEYS; do printf '%s = %s\n' "$k" "$(var "a_keep_$k")"; done
-  printf '\n# Rift (window manager) behaviour\n[desktop]\n'
-  for k in $DESKTOP_KEYS; do printf '%s = %s\n' "$k" "$(var "a_desktop_$k")"; done
+# Git's own name and email stand in until the Answers have one
+load_git() {
+  local v
+  if [[ -z "$(sget git.name)" ]]; then v="$(git config --global user.name 2>/dev/null || true)"; [[ -z "$v" ]] || put git.name "$v"; fi
+  if [[ -z "$(sget git.email)" ]]; then v="$(git config --global user.email 2>/dev/null || true)"; [[ -z "$v" ]] || put git.email "$v"; fi
+  return 0
 }
 
 save() {
+  local new="$SETUP.new"
   mkdir -p "$(dirname "$SETUP")"
-  write_answers > "$SETUP.tmp" && mv "$SETUP.tmp" "$SETUP"
+  swrite "$new" || { rm -f "$new"; exit 1; }
+  # check what is about to be saved
+  FROM="$new"; DATA="--no-data"; SET=()
+  local g theme name email
+  for g in $(sgetl apps.groups | tr '|' ' '); do
+    [[ -f "$REPO/brew/$g.Brewfile" ]] || { rm -f "$new"; die "unknown app group '$g' (have: $(groups | tr '\n' ' '))"; }
+  done
+  theme="$(sget look.theme)"
+  [[ -d "$REPO/home/dot_local/share/unmacos/themes/$theme" ]] || { rm -f "$new"; die "unknown theme '$theme'"; }
+  name="$(sget git.name)"; email="$(sget git.email)"
+  [[ -n "$name" && -n "$email" ]] || { rm -f "$new"; die "git name and email are needed (run unmacos-setup in a terminal)"; }
+  mv "$new" "$SETUP"
   chmod 600 "$SETUP"
+  FROM="$SETUP"
   echo "Saved ${SETUP/#$HOME/~}"
 }
 
@@ -171,22 +116,41 @@ pick() {
     ${sel:+--selected="$sel"} || return 1
 }
 
+# pick_group GROUP HEADER: tick the true/false Settings of one table, labelled as the schema does
+pick_group() {
+  local group="$1" header="$2" k v l chosen sel=""
+  local keys=() labels=() i
+  while IFS=$'\t' read -r k v l; do
+    keys[${#keys[@]}]="$k"; labels[${#labels[@]}]="$l"
+    [[ "$v" == true ]] && sel="$sel|$l"
+  done < <(settings list --long "$DATA" --from "$FROM" "$group")
+  chosen="$(pick "$header" "$sel" "${labels[@]}")"
+  for ((i = 0; i < ${#keys[@]}; i++)); do
+    if printf '%s\n' "$chosen" | grep -qxF -- "${labels[i]}"; then put "${keys[i]}" true; else put "${keys[i]}" false; fi
+  done
+}
+
 ask() {
   local l k chosen labels sel g items skip_now
+  local a_theme a_apps a_apps_skip a_weather a_1p
 
   gum style --border rounded --padding "0 2" --margin "1 0" --border-foreground 4 \
     "UnMacOS setup" "x or Tab ticks and unticks, Enter goes on. Run unmacos-setup again any time."
 
-  a_name="$(gum input --header "Your name, for git commits" --value "$a_name" --placeholder "Ada Lovelace")"
-  a_email="$(gum input --header "Your email, for git commits (stays on this Mac)" --value "$a_email" --placeholder "ada@example.com")"
+  put git.name "$(gum input --header "Your name, for git commits" --value "$(sget git.name)" --placeholder "Ada Lovelace")"
+  put git.email "$(gum input --header "Your email, for git commits (stays on this Mac)" --value "$(sget git.email)" --placeholder "ada@example.com")"
 
+  a_1p=false
   if gum confirm "Read secrets from 1Password? (spotify_player's client ID; needs the 1Password app and CLI)" \
-       --default="$a_use_1password"; then a_use_1password=true; else a_use_1password=false; fi
+       --default="$(sget onepassword.enabled)"; then a_1p=true; fi
+  put onepassword.enabled "$a_1p"
 
-  a_theme="$(find "$REPO/home/dot_local/share/unmacos/themes" -mindepth 1 -maxdepth 1 -type d -exec basename {} \; | sort \
+  a_theme="${LIVE_THEME:-$(sget look.theme)}"
+  put look.theme "$(find "$REPO/home/dot_local/share/unmacos/themes" -mindepth 1 -maxdepth 1 -type d -exec basename {} \; | sort \
     | gum choose --height 14 --header "Theme (switch any time: Alt + Ctrl + Shift + Space)" --selected="$a_theme")"
 
   # App groups
+  a_apps="$(sgetl apps.groups)"; a_apps_skip="$(sgetl apps.skip)"
   labels=(); sel=""
   for g in $(groups); do
     l="$g$SEP$(nocomma "$(group_about "$g")")"; labels+=("$l")
@@ -217,32 +181,17 @@ ask() {
   elif [[ -z "$a_apps" ]]; then
     a_apps_skip=""
   fi
+  put apps.groups "${a_apps//|/,}"
+  put apps.skip "${a_apps_skip//|/,}"
 
-  # What UnMacOS changes (keep = unticked)
-  labels=(); sel=""
-  for k in $KEEP_KEYS; do
-    l="$(keep_label "$k")"; labels+=("$l")
-    [[ "$(var "a_keep_$k")" == true ]] || sel="$sel|$l"
-  done
-  chosen="$(pick "What should UnMacOS change? Untick to leave it as it is" "$sel" "${labels[@]}")"
-  for k in $KEEP_KEYS; do
-    if printf '%s\n' "$chosen" | grep -qxF -- "$(keep_label "$k")"; then eval "a_keep_$k=false"; else eval "a_keep_$k=true"; fi
-  done
+  # What UnMacOS leaves alone, and how windows and the pointer behave
+  pick_group keep "What should UnMacOS leave as it is? Tick to keep"
+  pick_group desktop "Windows and pointer"
 
-  labels=(); sel=""
-  for k in $DESKTOP_KEYS; do
-    l="$(desktop_label "$k")"; labels+=("$l")
-    [[ "$(var "a_desktop_$k")" == true ]] && sel="$sel|$l"
-  done
-  chosen="$(pick "Windows and pointer" "$sel" "${labels[@]}")"
-  for k in $DESKTOP_KEYS; do
-    if printf '%s\n' "$chosen" | grep -qxF -- "$(desktop_label "$k")"; then eval "a_desktop_$k=true"; else eval "a_desktop_$k=false"; fi
-  done
+  a_weather="$(gum input --header "Weather in the bar: a city, airport code or zip, or auto (from your IP)" --value "${LIVE_WEATHER:-$(sget bar.weather)}")"
+  put bar.weather "${a_weather:-auto}"
 
-  a_weather="$(gum input --header "Weather in the bar: a city, airport code or zip, or auto (from your IP)" --value "$a_weather")"
-  a_weather="${a_weather:-auto}"
-
-  echo; write_answers | sed -n '/^name/,$p' | grep -v '^#' | gum style --border rounded --padding "0 2"
+  echo; swrite - | grep -vE '^#|^$' | gum style --border rounded --padding "0 2"
   gum confirm "Save and apply these?" || { echo "Nothing changed."; exit 0; }
 }
 
@@ -258,14 +207,16 @@ apply() {
   chezmoi init --apply
 
   # Theme and weather are state the menus change, so set them only when they differ
-  if [[ -n "$old_theme" && "$a_theme" != "$old_theme" ]] && command -v unmacos-theme-render >/dev/null; then
-    echo "==> theme: $a_theme"; unmacos-theme-render "$a_theme"
+  local theme weather want
+  theme="$(sget look.theme)"; weather="$(sget bar.weather)"
+  if [[ -n "$old_theme" && "$theme" != "$old_theme" ]] && command -v unmacos-theme-render >/dev/null; then
+    echo "==> theme: $theme"; unmacos-theme-render "$theme"
   fi
-  local want="$a_weather"; [[ "$want" == auto ]] && want=""
+  want="$weather"; [[ "$want" == auto ]] && want=""
   if [[ "$want" != "$old_weather" ]] && command -v unmacos-weather >/dev/null; then
-    echo "==> weather: $a_weather"; unmacos-weather set "$a_weather" || true
+    echo "==> weather: $weather"; unmacos-weather set "$weather" || true
   fi
-  if [[ -n "$old_hides" && "$old_hides" != "$a_desktop_mouse_hides_on_focus" ]] && pgrep -xq rift; then
+  if [[ -n "$old_hides" && "$old_hides" != "$(sget desktop.mouse_hides_on_focus)" ]] && pgrep -xq rift; then
     echo "Hiding the pointer changes after: rift service restart"
   fi
   echo; checklist
@@ -274,7 +225,6 @@ apply() {
 # --- Checklist -----------------------------------------------------------------
 
 checklist() {
-  load "$SETUP"
   local major; major="$(sw_vers -productVersion | cut -d. -f1)"
   local todo=0 opens=()
   step() {  # step DONE(0/1/-) TEXT [SETTINGS-URL]
@@ -291,22 +241,22 @@ checklist() {
     "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility"
   step - "Log out and back in once (Spaces and menu bar settings)"
   step - "The first menu you open makes Ghostty ask to run a command: allow it"
-  if (( major >= 26 )) && [[ "$a_keep_ai" != true ]]; then
+  if (( major >= 26 )) && ! is_true keep.ai; then
     step "$(ok sh -c 'profiles show -type configuration | grep -q io.github.unmacos.no-ai')" \
       "Approve the \"UnMacOS: no Apple Intelligence\" profile in Device Management" \
       "x-apple.systempreferences:com.apple.Profiles-Settings.extension"
   fi
-  if [[ "$a_use_1password" == true ]]; then
+  if is_true onepassword.enabled; then
     # shellcheck disable=SC2016 # expanded by sh -c
     step "$(ok sh -c '[ "$(op account list --format json | jq length)" -gt 0 ]')" \
       "1Password: sign in, then Settings > Developer > Integrate with 1Password CLI"
   fi
   step "$(ok test -s "$HOME/.cache/spotify-player/credentials.json")" "spotify_player: run it once to log in to Spotify"
-  if [[ "$a_keep_firefox" != true ]]; then
+  if ! is_true keep.firefox; then
     step - "Firefox: Pywalfox toolbar icon > Fetch Pywal colors (once)"
     step - "Firefox pages: Dark Reader > Settings > Advanced > Import ~/.local/state/unmacos/theme/darkreader.json"
   fi
-  in_list appstore "$a_apps" && step - "Sign in to the App Store, then: chezmoi apply (installs the App Store apps)"
+  in_list appstore "$(sgetl apps.groups)" && step - "Sign in to the App Store, then: chezmoi apply (installs the App Store apps)"
   step "$(ok unmacos-doctor)" "unmacos-doctor says All good"
 
   if (( ${#opens[@]} )) && have_ui; then
@@ -337,24 +287,22 @@ command -v chezmoi >/dev/null || die "needs chezmoi (brew install chezmoi)"
 
 case "$mode" in
   export)
-    load "$SETUP"; load_live
-    if [[ -n "$file" ]]; then write_answers > "$file"; chmod 600 "$file"; echo "Wrote $file" >&2
-    else write_answers; fi
+    load_live; load_git
+    if [[ -n "$file" ]]; then swrite "$file"; echo "Wrote $file" >&2
+    else swrite -; fi
     exit 0 ;;
   checklist) checklist; exit 0 ;;
   import)
     [[ -r "$file" ]] || die "can't read $file"
-    load "$file" nodata ;;
-  yes) load "$SETUP"; load_live ;;
+    FROM="$file"; DATA="--no-data"
+    settings validate "$file" || exit 1
+    load_git ;;
+  yes) load_live; load_git ;;
   ask)
-    load "$SETUP"; load_live
+    load_live; load_git
     if have_ui; then ask
     else echo "unmacos-setup: no terminal (or no gum): keeping the saved answers or defaults" >&2; fi ;;
 esac
-
-for g in ${a_apps//|/ }; do [[ -f "$REPO/brew/$g.Brewfile" ]] || die "unknown app group '$g' (have: $(groups | tr '\n' ' '))"; done
-[[ -d "$REPO/home/dot_local/share/unmacos/themes/$a_theme" ]] || die "unknown theme '$a_theme'"
-[[ -n "$a_name" && -n "$a_email" ]] || die "git name and email are needed (run unmacos-setup in a terminal)"
 
 save
 (( apply_after )) && apply
