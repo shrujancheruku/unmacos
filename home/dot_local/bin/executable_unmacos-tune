@@ -1,0 +1,298 @@
+#!/bin/bash
+# UnMacOS Tune phase: change the Settings meant for the installed desktop, seeing each Look change
+# on the real desktop as a Draft Look before it is kept.
+#   unmacos-tune
+# Lists every Setting the schema marks phase = tune, by group. Pick one, then a preset, "custom…"
+# or a choice. A Look Setting that takes effect live is applied at once as a Draft Look (keep it,
+# try another value, or go back). Any other Setting shows a badge ("after restart", "after logout",
+# "on save") and is not previewed: it applies when you save. Save writes what you picked into your
+# Answers; Discard, Esc and Ctrl-C leave the saved Look exactly as it was.
+# The Settings come from the schema (home/.chezmoidata/settings.toml): a new tune-phase Setting
+# shows up here with no change to this script.
+# Runs on macOS's own bash 3.2, with gum.
+set -euo pipefail
+export PATH="$HOME/.local/bin:/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin"
+
+SETUP="${UNMACOS_SETUP_FILE:-$HOME/.config/unmacos/setup.toml}"
+STATE="${UNMACOS_STATE:-$HOME/.local/state/unmacos}"
+
+usage() { sed -n '2,11s/^# \{0,1\}//p' "$0"; }
+die() { printf 'unmacos-tune: %s\n' "$*" >&2; exit 1; }
+
+# unmacos-settings and unmacos-look sit next to this script in the source, or on PATH once applied
+HERE="$(cd "$(dirname "$0")" && pwd)"
+find_tool() {
+  local c
+  for c in "$HERE/$1" "$HERE/executable_$1"; do
+    [[ -r "$c" ]] && { printf '%s' "$c"; return 0; }
+  done
+  command -v "$1" || true
+}
+SETTINGS="${UNMACOS_SETTINGS:-$(find_tool unmacos-settings)}"
+LOOK="${UNMACOS_LOOK:-$(find_tool unmacos-look)}"
+settings() { /bin/bash "$SETTINGS" "$@"; }
+look() { /bin/bash "$LOOK" "$@"; }
+
+case "${1:-}" in
+  -h|--help|help) usage; exit 0 ;;
+  "") ;;
+  *) usage >&2; exit 1 ;;
+esac
+
+[[ -n "$SETTINGS" ]] || die "can't find unmacos-settings"
+[[ -n "$LOOK" ]] || die "can't find unmacos-look"
+command -v chezmoi >/dev/null || die "needs chezmoi (brew install chezmoi)"
+# UNMACOS_SETUP_UI=1 runs without a terminal (the tests script a fake gum).
+if ! { [[ -n "${UNMACOS_SETUP_UI:-}" || ( -t 0 && -t 1 ) ]] && command -v gum >/dev/null; }; then
+  die "needs a terminal and gum (brew install gum)"
+fi
+
+# --- The Draft Look is never left behind ----------------------------------------------------------
+# Whatever ends this script (Esc, Ctrl-C, an error, Discard) throws the Draft Look away, unless
+# it was saved first.
+
+DRAFTED=0
+discard_draft() {
+  if (( DRAFTED )); then
+    DRAFTED=0
+    look draft discard >/dev/null 2>&1 || true
+  fi
+}
+trap discard_draft EXIT
+trap 'exit 130' INT TERM HUP
+
+cancel() { echo "Nothing changed."; exit 0; }
+
+# --- The Settings ----------------------------------------------------------------------------------
+# The schema's tune-phase Settings, in schema order, in parallel arrays (bash 3.2: no maps):
+#   Q_K key  Q_T type  Q_DEF default  Q_MIN Q_MAX  Q_CH choices (|)  Q_LB label  Q_HP help
+#   Q_TE takes_effect  Q_SAVED the saved value  Q_NEW the value picked here  Q_SET 1 once picked
+#   Q_DRAFT 1 once it is on the desktop as a Draft Look
+read -r -d '' TUNE_TEMPLATE <<'TPL' || true
+{{- $us := "\u001f" -}}{{- $rs := "\u001e" -}}
+{{- $schema := include (env "SCHEMA") | fromToml -}}
+{{- range $schema.settings -}}
+  {{- if eq .phase "tune" -}}
+    {{- $d := .default -}}
+    {{- if kindIs "slice" $d }}{{ $d = join $rs $d }}{{ end -}}
+    {{- $ch := get . "choices" -}}
+    {{- if kindIs "slice" $ch }}{{ $ch = join $rs $ch }}{{ end -}}
+    {{- printf "%s\n" (join $us (list "Q" (printf "%s.%s" .group .key) .type $d (get . "min") (get . "max") $ch .label .help .takes_effect "E")) -}}
+  {{- end -}}
+{{- end -}}
+TPL
+
+Q_N=0; Q_ORDER=""
+load_settings() {
+  local schema tag a b c d e f g h t _end out i
+  schema="$(chezmoi source-path 2>/dev/null)/.chezmoidata/settings.toml"
+  [[ -r "$schema" ]] || die "can't find the Settings schema (is the UnMacOS source set up for chezmoi?)"
+  out="$(SCHEMA="$schema" chezmoi execute-template "$TUNE_TEMPLATE" 2>&1)" || die "can't read the Settings schema: ${out##*: }"
+  Q_N=0
+  while IFS=$'\x1f' read -r tag a b c d e f g h t _end; do
+    [[ "$tag" == Q ]] || continue
+    Q_K[Q_N]="$a"; Q_T[Q_N]="$b"; Q_DEF[Q_N]="$c"; Q_MIN[Q_N]="$d"; Q_MAX[Q_N]="$e"
+    Q_CH[Q_N]="${f//$'\x1e'/|}"; Q_LB[Q_N]="$g"; Q_HP[Q_N]="$h"; Q_TE[Q_N]="$t"
+    Q_NEW[Q_N]=""; Q_SET[Q_N]=0; Q_DRAFT[Q_N]=0
+    Q_SAVED[Q_N]="$(settings get "$a" | paste -s -d',' -)"
+    Q_N=$((Q_N + 1))
+  done <<< "$out"
+  # rows by group, groups in the order the schema first names them
+  Q_ORDER=""
+  local groups="" g2
+  for ((i = 0; i < Q_N; i++)); do
+    g2="${Q_K[i]%%.*}"
+    [[ " $groups " == *" $g2 "* ]] || groups="$groups${groups:+ }$g2"
+  done
+  for g2 in $groups; do
+    for ((i = 0; i < Q_N; i++)); do
+      [[ "${Q_K[i]%%.*}" != "$g2" ]] || Q_ORDER="$Q_ORDER$i "
+    done
+  done
+  return 0
+}
+
+value_of() { if [[ "${Q_SET[$1]}" == 1 ]]; then printf '%s' "${Q_NEW[$1]}"; else printf '%s' "${Q_SAVED[$1]}"; fi; }
+
+# badge ROW: when a change shows up, if not at once
+badge() {
+  case "${Q_TE[$1]}" in
+    live) ;;
+    logout) printf 'after logout' ;;
+    restart:*) printf 'after restart' ;;
+    *) printf 'on save' ;;
+  esac
+}
+# Only a Look Setting that takes effect live can be a Draft Look
+previewable() { [[ "${Q_TE[$1]}" == live && "${Q_K[$1]}" == look.* ]]; }
+
+# item ROW: the line in the Settings list
+item() {
+  local i="$1" b
+  b="$(badge "$i")"
+  printf '%s · %s: %s%s' "${Q_K[i]%%.*}" "${Q_LB[i]}" "$(value_of "$i")" "${b:+  [$b]}"
+}
+
+# --- Asking ----------------------------------------------------------------------------------------
+
+in_list() { [[ "|$2|" == *"|$1|"* ]]; }
+err() { gum style --foreground 1 "$*"; }
+
+# presets ROW: ready-made values, one per line. An int gets its range's ends, quarters and default;
+# an enum its choices; a true/false on and off. Nothing here names a Setting.
+presets() {
+  local i="$1" lo hi
+  case "${Q_T[i]}" in
+    int)
+      lo="${Q_MIN[i]}"; hi="${Q_MAX[i]}"
+      if [[ -n "$lo" && -n "$hi" ]]; then
+        { echo "$lo"; echo $((lo + (hi - lo) / 4)); echo $((lo + (hi - lo) / 2))
+          echo $((lo + (hi - lo) * 3 / 4)); echo "$hi"; echo "${Q_DEF[i]}"; } | sort -n -u
+      else
+        echo "${Q_DEF[i]}"
+      fi ;;
+    enum) printf '%s\n' "${Q_CH[i]//|/$'\n'}" ;;
+    bool) printf '%s\n' on off ;;
+  esac
+}
+
+CUSTOM="custom…"
+BACK="← back"
+
+# ask_value ROW: the value picked for that Setting in ASKED; fails when the user goes back
+ask_value() {
+  local i="$1" cur choice v lo hi
+  cur="$(value_of "$i")"; lo="${Q_MIN[i]}"; hi="${Q_MAX[i]}"
+  gum style --faint "${Q_HP[i]}"
+  case "${Q_T[i]}" in
+    int|enum|bool)
+      local list
+      list="$(presets "$i" | while IFS= read -r v; do
+        [[ "$v" == "${Q_DEF[i]}" ]] && printf '%s (default)\n' "$v" || printf '%s\n' "$v"
+      done)"
+      [[ "${Q_T[i]}" == int ]] && list="$list"$'\n'"$CUSTOM"
+      choice="$(printf '%s\n%s\n' "$list" "$BACK" | gum choose --height 14 --header "${Q_LB[i]} (now $cur)")" || cancel
+      [[ "$choice" != "$BACK" ]] || return 1
+      choice="${choice% (default)}"
+      if [[ "$choice" == "$CUSTOM" ]]; then
+        while :; do
+          choice="$(gum input --header "${Q_LB[i]} (${lo:-any} to ${hi:-any})" --value "$cur")" || cancel
+          if [[ "$choice" =~ ^-?[0-9]+$ ]] && { [[ -z "$lo" ]] || (( choice >= lo )); } && { [[ -z "$hi" ]] || (( choice <= hi )); }; then
+            break
+          fi
+          err "Enter a whole number from ${lo:-any} to ${hi:-any}."
+        done
+      fi
+      case "${Q_T[i]}:$choice" in bool:on) choice=true ;; bool:off) choice=false ;; esac
+      ASKED="$choice" ;;
+    list)
+      if [[ -n "${Q_CH[i]}" ]]; then
+        choice="$(printf '%s\n' "${Q_CH[i]//|/$'\n'}" | gum choose --no-limit --height 14 --header "${Q_LB[i]}")" || cancel
+        ASKED="$(printf '%s\n' "$choice" | paste -s -d',' -)"
+      else
+        ASKED="$(gum input --header "${Q_LB[i]} (a, b, c)" --value "$cur")" || cancel
+      fi ;;
+    *)
+      ASKED="$(gum input --header "${Q_LB[i]}" --value "$cur")" || cancel ;;
+  esac
+}
+
+# draft ROW VALUE: that Look Setting, as a Draft Look on the desktop now
+draft() {
+  local out
+  if out="$(look draft set "${Q_K[$1]}=$2" 2>&1)"; then
+    DRAFTED=1; Q_DRAFT[$1]=1
+  else
+    err "${out##*: }"
+    return 1
+  fi
+}
+
+# tune ROW: pick a value; a previewable one is on the desktop at once, to keep, replace or leave
+tune() {
+  local i="$1" prev_set prev_new choice
+  while :; do
+    ask_value "$i" || return 0
+    if ! previewable "$i"; then
+      Q_NEW[i]="$ASKED"; Q_SET[i]=1
+      echo "${Q_LB[i]} = $ASKED: applies when you save ($(badge "$i"))."
+      return 0
+    fi
+    prev_set="${Q_SET[i]}"; prev_new="${Q_NEW[i]}"
+    draft "$i" "$ASKED" || continue
+    Q_NEW[i]="$ASKED"; Q_SET[i]=1
+    choice="$(printf '%s\n' "Keep" "Try another" "Back" | gum choose --header "${Q_LB[i]} = $ASKED is on your desktop")" || cancel
+    case "$choice" in
+      Keep) return 0 ;;
+      "Try another") ;;
+      *)
+        # back: the desktop shows what it showed before this pick
+        if [[ "$prev_set" == 1 ]]; then draft "$i" "$prev_new" || true; else draft "$i" "${Q_SAVED[i]}" || true; fi
+        Q_NEW[i]="$prev_new"; Q_SET[i]="$prev_set"
+        return 0 ;;
+    esac
+  done
+}
+
+# --- Saving ------------------------------------------------------------------------------------------
+
+# save: Look Settings go through the Draft Look (it renders and reloads the apps); the rest are
+# written to the Answers and applied by chezmoi.
+save() {
+  local i other=() looks=() pending=0 new="$SETUP.new"
+  for ((i = 0; i < Q_N; i++)); do
+    [[ "${Q_SET[i]}" == 1 ]] || continue
+    pending=1
+    if [[ "${Q_K[i]}" == look.* ]]; then
+      (( Q_DRAFT[i] )) || looks[${#looks[@]}]="${Q_K[i]}=${Q_NEW[i]}"
+    else
+      other[${#other[@]}]="${Q_K[i]}=${Q_NEW[i]}"
+    fi
+  done
+  (( pending )) || cancel
+  if (( ${#other[@]} )); then
+    mkdir -p "$(dirname "$SETUP")"
+    settings write "$new" --data --from "$SETUP" "${other[@]}" || { rm -f "$new"; die "can't save"; }
+    mv "$new" "$SETUP"; chmod 600 "$SETUP"
+  fi
+  if (( ${#looks[@]} )) || (( DRAFTED )); then
+    (( ${#looks[@]} == 0 )) || look draft set "${looks[@]}" >/dev/null || die "can't save the Look"
+    DRAFTED=1
+    look draft save >/dev/null || die "can't save the Look"
+    DRAFTED=0
+  fi
+  if (( ${#other[@]} )); then
+    echo "==> chezmoi init --apply"
+    "${UNMACOS_CHEZMOI:-chezmoi}" init --apply --no-tty --promptDefaults
+  fi
+  echo "Saved ${SETUP/#$HOME/~}"
+}
+
+# --- Main --------------------------------------------------------------------------------------------
+
+SAVE_ITEM="Save"
+DISCARD_ITEM="Discard"
+
+main() {
+  local i items choice row
+  load_settings
+  (( Q_N )) || { echo "No Settings to tune."; return 0; }
+  # a Draft Look left by an earlier session is not this one's to keep
+  [[ ! -e "$STATE/draft.toml" ]] || look draft discard >/dev/null 2>&1 || true
+  gum style --bold "Tune: pick a Setting. Look changes show on your desktop before you keep them."
+  while :; do
+    items=""
+    for i in $Q_ORDER; do items="$items$(item "$i")"$'\n'; done
+    choice="$(printf '%s%s\n%s\n' "$items" "$SAVE_ITEM" "$DISCARD_ITEM" | gum choose --height 14 --header "Settings")" || cancel
+    case "$choice" in
+      "$SAVE_ITEM") save; return 0 ;;
+      "$DISCARD_ITEM") cancel ;;
+    esac
+    row=""
+    for i in $Q_ORDER; do [[ "$(item "$i")" != "$choice" ]] || { row="$i"; break; }; done
+    [[ -n "$row" ]] || continue
+    tune "$row"
+  done
+}
+
+main

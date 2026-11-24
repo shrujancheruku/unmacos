@@ -94,6 +94,33 @@ install() { bash "$REPO_ROOT/install.sh" "$@"; }
   [ "$(grep '^wizard' "$CHEZMOI_LOG")" = "wizard --yes" ]
 }
 
+# the applied Tune phase, as a recorder
+tune_recorder() {
+  mkdir -p "$HOME/.local/bin"
+  printf '#!/bin/sh\necho "tune" >> "$CHEZMOI_LOG"\n' > "$HOME/.local/bin/unmacos-tune"
+  chmod +x "$HOME/.local/bin/unmacos-tune"
+}
+
+@test "with a terminal the installer offers the Tune phase once the desktop is up, and runs it on yes" {
+  tune_recorder
+  GUM_REPLY="Install with defaults" UNMACOS_SETUP_UI=1 run install
+  echo "$output"
+  [ "$status" -eq 0 ]
+  grep -q 'gum confirm Tune the look' "$GUM_LOG"
+  grep -qx 'tune' "$CHEZMOI_LOG"
+}
+
+@test "the Tune offer is never made without a terminal, or for an imported Answers file" {
+  tune_recorder
+  run install < /dev/null
+  [ "$status" -eq 0 ]
+  printf '[look]\ntheme = "nord"\n' > "$BATS_TEST_TMPDIR/in.toml"
+  UNMACOS_SETUP="$BATS_TEST_TMPDIR/in.toml" UNMACOS_SETUP_UI=1 run install
+  [ "$status" -eq 0 ]
+  ! grep -q 'Tune the look' "$GUM_LOG"
+  ! grep -qx 'tune' "$CHEZMOI_LOG"
+}
+
 @test "install.sh is bash 3.2 clean: it runs under /bin/bash" {
   run /bin/bash -n "$REPO_ROOT/install.sh"
   [ "$status" -eq 0 ]

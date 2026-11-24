@@ -62,3 +62,10 @@ fi
 
 say "Done"
 "$HOME/.local/bin/unmacos-doctor" || true
+
+# The desktop is up: offer the Tune phase (Look Settings shown live). Only with a terminal, and
+# not for an imported Answers file.
+if [[ -z "${UNMACOS_SETUP:-}" && -x "$HOME/.local/bin/unmacos-tune" ]] \
+   && [[ -n "${UNMACOS_SETUP_UI:-}" || ( -t 0 && -t 1 ) ]]; then
+  if gum confirm "Tune the look on your desktop now?"; then "$HOME/.local/bin/unmacos-tune" || true; fi
+fi
