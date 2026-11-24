@@ -3,9 +3,12 @@
 #   unmacos-toggle-bar          toggle the bar
 #   unmacos-toggle-bar --sync   only fix the gaps for the bar's current state
 # Gaps are visible gaps: JankyBorders draws its border outside each window, so the
-# border width is added on top. unmacos-look derives that side gap (gap + border) when it
-# renders Rift's config (templates/rift.toml.tpl), so it is read back from there; with
-# nothing rendered yet UNMACOS_GAP + UNMACOS_BORDER (4 + 6) stand in.
+# border width is added on top. unmacos-look derives them when it renders Rift's config
+# (templates/rift.toml.tpl): the side gap (gap + border), and on the bar's edge (the larger of
+# top and bottom) the room the bar needs. Both are read back from there, so a bar still settling
+# after `sketchybar --reload` can't hand Rift its old height; SketchyBar is asked only whether
+# the bar is hidden. With nothing rendered yet the bar's own height and position, and
+# UNMACOS_GAP + UNMACOS_BORDER (4 + 6), stand in.
 export PATH="/opt/homebrew/bin:$PATH"
 RENDERED="${UNMACOS_STATE:-$HOME/.local/state/unmacos}/theme/rift.toml"
 GAP="${UNMACOS_GAP:-4}"            # visible gap
@@ -19,26 +22,34 @@ if [[ "${1:-}" != "--sync" ]]; then
   sketchybar --bar hidden="$hidden"
 fi
 
-side="$(awk '$0 == "[settings.layout.gaps.outer]" {on=1; next} /^\[/ {on=0} on && $1 == "left" {print $3; exit}' "$RENDERED" 2>/dev/null)"
-[[ "$side" =~ ^[0-9]+$ ]] || side=$((GAP + BORDER))
-if [[ "$hidden" == "on" ]]; then
-  want="$side"
+# outer NAME: that outer gap in the rendered Rift config, or nothing
+outer() {
+  awk -v k="$1" '$0 == "[settings.layout.gaps.outer]" {on=1; next} /^\[/ {on=0} on && $1 == k {print $3; exit}' "$RENDERED" 2>/dev/null
+}
+side="$(outer left)"; r_top="$(outer top)"; r_bottom="$(outer bottom)"
+if [[ "$side" =~ ^[0-9]+$ && "$r_top" =~ ^[0-9]+$ && "$r_bottom" =~ ^[0-9]+$ ]]; then
+  if ((r_bottom > r_top)); then position=bottom; want="$r_bottom"; else position=top; want="$r_top"; fi
 else
-  # Pills are centred in the bar, so their bottom edge is at y_offset + (height + pill) / 2
+  # nothing rendered: work it out from the bar as it is now
+  side=$((GAP + BORDER))
+  position="$(jq -r '.position // "top"' <<<"$bar")"
+  # Pills are centred in the bar, so their far edge is at y_offset + (height + pill) / 2
   want="$(jq -r --arg p "$ITEM_H" --argjson s "$side" \
     '(if $p == "" then (.height // 0) - 14 else ($p | tonumber) end) as $c
      | ((.y_offset // 0) + ((.height // 0) + $c) / 2 + $s) | floor' <<<"$bar")"
 fi
-# Rift's tiling area starts below what macOS reserves at the top of the main
-# display (32px under a MacBook notch, 0 elsewhere), so a top bar's gap loses that.
-# A bottom bar leaves the top at the side gap: the area already starts below the notch.
-inset="$(rift-cli query displays 2>/dev/null \
-  | jq -r '[.[] | select(.frame.origin.x == 0) | .frame.origin.y][0] // 0 | floor' 2>/dev/null || echo 0)"
-[[ "$inset" =~ ^[0-9]+$ ]] || inset=0
+[[ "$hidden" != "on" ]] || want="$side"
+
 top="$side"; bottom="$side"
-if [[ "$(jq -r '.position // "top"' <<<"$bar")" == bottom ]]; then
+if [[ "$position" == bottom ]]; then
   bottom="$want"
-else
+elif [[ "$hidden" != "on" ]]; then
+  # Rift's tiling area starts below what macOS reserves at the top of the main display (32px
+  # under a MacBook notch, 0 elsewhere), so a top bar's gap loses that. A bottom bar leaves the
+  # top at the side gap: the area already starts below the notch.
+  inset="$(rift-cli query displays 2>/dev/null \
+    | jq -r '[.[] | select(.frame.origin.x == 0) | .frame.origin.y][0] // 0 | floor' 2>/dev/null || echo 0)"
+  [[ "$inset" =~ ^[0-9]+$ ]] || inset=0
   top=$((want - inset)); ((top < 0)) && top=0
 fi
 rift-cli execute config set-outer-gaps "$top" "$side" "$bottom" "$side" >/dev/null
