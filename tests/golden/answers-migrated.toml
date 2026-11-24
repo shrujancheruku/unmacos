@@ -1,0 +1,41 @@
+# UnMacOS setup: your answers to unmacos-setup (run it again to change them).
+# Only the Settings you changed have a value; the others are commented out with their default.
+# Copy this file to another Mac and run: unmacos-setup --import FILE
+# or, on a fresh Mac: UNMACOS_SETUP=FILE bash -c "$(curl -fsSL https://raw.githubusercontent.com/shrujancheruku/unmacos/main/install.sh)"
+
+[git]
+name = "Test User"   # Goes into ~/.gitconfig. Stays on this Mac.
+email = "test@example.invalid"   # Goes into ~/.gitconfig. Stays on this Mac.
+
+[look]
+theme = "nord"   # The colours of the whole desktop. Switch any time with Alt + Ctrl + Shift + Space.
+corner_radius = 4   # Roundness of windows, bar chips, popups and Spotify, in pixels. Apps pick it up when they restart.
+
+[bar]
+weather = "Oslo"   # A city, airport code or zip for the bar's weather, or auto to use your IP address.
+
+[apps]
+groups = ["dev", "media"]   # Optional app groups (brew/<group>.Brewfile). The desktop and terminal tools are always installed.
+skip = ["vlc"]   # Apps in the chosen groups that should not be installed, by name.
+
+[onepassword]
+enabled = true   # For spotify_player's client ID. Needs the 1Password app and its CLI integration.
+# spotify_client_id_ref = "op://Private/spotify-player/client_id"   # The 1Password reference spotify_player reads its client ID from. Only used when 1Password is on.
+
+[desktop]
+animate = false   # Windows glide to their new spot instead of jumping.
+# focus_follows_mouse = true   # The window under the pointer takes focus without a click.
+mouse_follows_focus = false   # Move the pointer to the window you focus with the keyboard.
+mouse_hides_on_focus = false   # Hide the pointer after that until you move the mouse.
+# dock_autohide = true   # The Dock slides away until you move the pointer to the screen edge.
+# dock_size = 64   # Size of the Dock's icons, in pixels (16 to 128).
+
+[keep]
+ai = true   # UnMacOS turns Apple Intelligence off (macOS 26+). Set to true to leave it as it is.
+# glass = false   # UnMacOS turns Liquid Glass off (macOS 26+). Set to true to leave it as it is.
+wallpaper = true   # UnMacOS sets the desktop wallpaper from the theme. Set to true to leave it as it is.
+# accent = false   # UnMacOS sets macOS's accent and highlight colours from the theme. Set to true to leave them.
+firefox = true   # UnMacOS themes Firefox with Pywalfox and Dark Reader. Set to true to leave it alone.
+# firefox_wallpaper = false   # UnMacOS shows the theme's wallpaper on Firefox's new tab page. Set to true to leave it alone.
+spotify = true   # UnMacOS themes the Spotify app with Spicetify (media apps). Set to true to leave it alone.
+# orca = false   # UnMacOS recolours Orca to match the theme, if you use it. Set to true to leave it alone.

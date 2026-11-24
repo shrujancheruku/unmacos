@@ -10,7 +10,12 @@
 #                                            Settings that differ from their default get a value;
 #                                            the rest are commented lines with default and help.
 #                                            KEY=VALUE changes a Setting first (a list: a,b,c).
+#   unmacos-settings migrate FILE            move an Answers file from the old format (flat keys,
+#                                            personal = true) to the grouped one, keeping the
+#                                            original beside it as FILE.bak. Does nothing to a file
+#                                            that is already migrated.
 # list, get and write read the Answers from --from FILE (default ~/.config/unmacos/setup.toml).
+# Reading the default file migrates it first, so an old file upgrades by itself.
 # For Settings the user is asked about at `chezmoi init`, a value chezmoi already holds fills in
 # what the Answers leave out; --no-data turns that off.
 # The Settings schema (home/.chezmoidata/settings.toml) says what exists, which types and ranges
@@ -23,7 +28,7 @@ ANSWERS="${UNMACOS_SETUP_FILE:-$HOME/.config/unmacos/setup.toml}"
 US=$'\x1f'   # between the fields of a row
 RS=$'\x1e'   # between the items of a list
 
-usage() { sed -n '2,16s/^# \{0,1\}//p' "$0"; }
+usage() { sed -n '2,20s/^# \{0,1\}//p' "$0"; }
 die() { printf 'unmacos-settings: %s\n' "$*" >&2; exit 1; }
 
 # --- Reading ------------------------------------------------------------------------
@@ -57,8 +62,12 @@ read -r -d '' ROWS_TEMPLATE <<'TPL' || true
         {{- end -}}
       {{- end -}}
     {{- end -}}
-  {{- else if not (hasKey $legacies $name) -}}
-    {{- printf "U%s%s is not a Setting UnMacOS knows\n" $us $name -}}
+  {{- else -}}
+    {{- /* a flat key is the old format: the file needs migrating, whether or not UnMacOS knows the key */ -}}
+    {{- printf "M%s%s\n" $us $name -}}
+    {{- if and (not (hasKey $legacies $name)) (ne $name "personal") -}}
+      {{- printf "U%s%s is not a Setting UnMacOS knows\n" $us $name -}}
+    {{- end -}}
   {{- end -}}
 {{- end -}}
 {{- range $schema.settings -}}
@@ -70,6 +79,9 @@ read -r -d '' ROWS_TEMPLATE <<'TPL' || true
     {{- $v = index $ag .key -}}{{- $src = "answers" -}}
   {{- else if and $legacy (hasKey $answers $legacy) (not (kindIs "map" (index $answers $legacy))) -}}
     {{- $v = index $answers $legacy -}}{{- $src = "answers" -}}
+  {{- else if and (eq .group "apps") (eq .key "groups") (kindIs "bool" (get $answers "personal")) (get $answers "personal") -}}
+    {{- /* the old personal = true meant every optional app group */ -}}
+    {{- $v = .choices -}}{{- $src = "answers" -}}
   {{- else if and (get . "ask") (kindIs "map" $dg) (hasKey $dg .key) -}}
     {{- $v = index $dg .key -}}{{- $src = "data" -}}
   {{- else -}}
@@ -91,17 +103,19 @@ TPL
 
 SCHEMA_FILE=""
 N=0
+OLD_FORMAT=0   # load found flat keys, the old Answers format
 # load FILE WITH_DATA(1/0) REQUIRED(1/0): fill the arrays; unknown-key warnings go to stderr
 load() {
   local out tag a b c d e f g h _src j k _end
-  [[ -n "$SCHEMA_FILE" ]] || SCHEMA_FILE="$(chezmoi source-path 2>/dev/null)/.chezmoidata/settings.toml"
+  [[ -n "$SCHEMA_FILE" ]] || SCHEMA_FILE="${CHEZMOI_SOURCE_DIR:-$(chezmoi source-path 2>/dev/null)}/.chezmoidata/settings.toml"
   [[ -r "$SCHEMA_FILE" ]] || die "can't find the Settings schema (is the UnMacOS source set up for chezmoi?)"
   if [[ "$3" == 1 && ! -r "$1" ]]; then die "can't read ${1/#$HOME/~}"; fi
   out="$(SCHEMA="$SCHEMA_FILE" ANSWERS_FILE="$1" WITH_DATA="$( [[ "$2" == 1 ]] && echo 1 || true )" \
     chezmoi execute-template "$ROWS_TEMPLATE" 2>&1)" || die "can't read ${1/#$HOME/~} (is it valid TOML?): ${out##*: }"
-  N=0
+  N=0; OLD_FORMAT=0
   while IFS="$US" read -r tag a b c d e f g h _src j k _end; do
     case "$tag" in
+      M) OLD_FORMAT=1 ;;
       U) printf 'unmacos-settings: warning: %s (in %s)\n' "$a" "${1/#$HOME/~}" >&2 ;;
       S) K[N]="$a"; T[N]="$b"; DEF[N]="$c"; MIN[N]="$d"; MAX[N]="$e"; CH[N]="$f"; LB[N]="$g"
          HP[N]="$h"; KIND[N]="$j"; VAL[N]="$k"; N=$((N + 1)) ;;
@@ -242,11 +256,57 @@ emit_answers() {
   done
 }
 
+# write_file PATH: the Answers as emit_answers prints them, replacing PATH in one step.
+# Every step is checked by hand: callers may run it where `set -e` does not apply.
+write_file() {
+  local tmp="$1.tmp.$$"
+  mkdir -p "$(dirname "$1")" || return 1
+  if ! { emit_answers > "$tmp" && chmod 600 "$tmp" && mv "$tmp" "$1"; }; then   # 600: git name and email are in it
+    rm -f "$tmp"
+    return 1
+  fi
+}
+
+# --- Migrating -------------------------------------------------------------------------------
+
+# migrate_file FILE: if FILE is in the old format, keep a copy of it (FILE.bak, or .bak.2, .bak.3 …
+# when earlier ones exist) and rewrite it in the grouped format with the same values. A file
+# already in the grouped format is left alone. Fails, changing nothing, if a value is wrong or
+# the folder can't be written to.
+migrate_file() {
+  local f="$1" bak n=1
+  load "$f" 0 1
+  (( OLD_FORMAT )) || return 0
+  check_all || { printf 'unmacos-settings: not migrating %s until that is fixed\n' "${f/#$HOME/~}" >&2; return 1; }
+  bak="$f.bak"
+  while [[ -e "$bak" ]]; do n=$((n + 1)); bak="$f.bak.$n"; done
+  if ! { cp -p "$f" "$bak" && chmod 600 "$bak"; }; then
+    rm -f "$bak"
+    printf 'unmacos-settings: could not keep a backup of %s, so it is not migrated\n' "${f/#$HOME/~}" >&2
+    return 1
+  fi
+  if ! write_file "$f"; then
+    printf 'unmacos-settings: could not rewrite %s; the original is still there\n' "${f/#$HOME/~}" >&2
+    return 1
+  fi
+  printf 'unmacos-settings: migrated %s to the new format; the original is kept as %s\n' \
+    "${f/#$HOME/~}" "${bak/#$HOME/~}" >&2
+}
+
+# auto_migrate: the first read of the real Answers file upgrades an old one, so nobody has to run
+# migrate. Anything wrong (a bad value, a folder that can't be written) leaves the file as it is
+# and the command carries on with it; the command's own checks report a bad value.
+auto_migrate() {
+  [[ "$from" == "$ANSWERS" && -f "$from" ]] && (( OLD_FORMAT )) || return 0
+  check_all 2>/dev/null || return 0
+  if ( migrate_file "$from" ); then load "$from" "$with_data" 0; fi
+}
+
 # --- Main -------------------------------------------------------------------------------
 
 cmd="${1:-}"; [[ $# -gt 0 ]] && shift
 case "$cmd" in
-  list|get|write|validate) ;;
+  list|get|write|validate|migrate) ;;
   ""|-h|--help|help) usage; [[ -n "$cmd" ]] || exit 2; exit 0 ;;
   *) usage >&2; exit 2 ;;
 esac
@@ -268,6 +328,9 @@ done
 npos=${#POS[@]}
 
 case "$cmd" in
+  migrate)
+    (( npos == 1 )) || { usage >&2; exit 2; }
+    migrate_file "${POS[0]}" || exit 1 ;;
   validate)
     (( npos == 1 )) || { usage >&2; exit 2; }
     load "${POS[0]}" 0 1
@@ -275,6 +338,7 @@ case "$cmd" in
   list)
     (( npos <= 1 )) || { usage >&2; exit 2; }
     load "$from" "$with_data" 0
+    auto_migrate
     check_all || exit 1
     for ((i = 0; i < N; i++)); do
       [[ $npos -eq 0 || "${K[i]%%.*}" == "${POS[0]}" ]] || continue
@@ -284,6 +348,7 @@ case "$cmd" in
   get)
     (( npos == 1 )) || { usage >&2; exit 2; }
     load "$from" "$with_data" 0
+    auto_migrate
     check_all || exit 1
     index_of "${POS[0]}"
     if [[ "${T[IDX]}" == list ]]; then
@@ -294,6 +359,7 @@ case "$cmd" in
   write)
     (( npos >= 1 )) || { usage >&2; exit 2; }
     load "$from" "$with_data" 0
+    auto_migrate
     for ((i = 1; i < npos; i++)); do
       [[ "${POS[i]}" == *=* ]] || die "'${POS[i]}' is not KEY=VALUE"
       assign "${POS[i]%%=*}" "${POS[i]#*=}"
@@ -302,11 +368,6 @@ case "$cmd" in
     if [[ "${POS[0]}" == - ]]; then
       emit_answers
     else
-      mkdir -p "$(dirname "${POS[0]}")"
-      tmp="${POS[0]}.tmp.$$"
-      trap 'rm -f "$tmp"' EXIT
-      emit_answers > "$tmp"
-      chmod 600 "$tmp"   # git name and email are in it
-      mv "$tmp" "${POS[0]}"
+      write_file "${POS[0]}"
     fi ;;
 esac
