@@ -12,6 +12,10 @@ _Avoid_: option, preference, knob, pref
 The single list of every Setting UnMacOS understands, grouped for the wizard.
 _Avoid_: config spec, settings registry
 
+**Settings reference**:
+The list of every Setting, generated from the Settings schema into `docs/settings.md` and the site's settings page. Never hand-edited.
+_Avoid_: settings docs, options page
+
 **Answers**:
 A user's chosen values for the Settings they changed, kept in their own file and portable to another Mac.
 _Avoid_: setup file, prefs, user config

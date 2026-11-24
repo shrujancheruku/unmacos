@@ -26,9 +26,20 @@ Commit messages and PR titles follow [Conventional Commits](https://www.conventi
 CI runs the tests on macOS for every push and pull request. To run them locally:
 
 ```sh
-brew install bats-core shellcheck chezmoi
+brew install bats-core shellcheck chezmoi python
 bats tests/
 ```
+
+The Settings reference is generated, not written by hand. After you change
+`home/.chezmoidata/settings.toml`, regenerate it with one command and commit the result:
+
+```sh
+python3 site/build.py --docs        # rewrites docs/settings.md
+python3 site/build.py --docs --check # what CI runs: fails if docs/settings.md is stale
+```
+
+The command needs Python 3.11 or later (`brew install python`; macOS's own `python3` is older). A
+Setting with no `label` or `help` fails the build, and so does a stale reference.
 
 The tests never touch your real home folder. Each test gets a temporary `$HOME` with the fixture
 answers in `tests/fixtures/setup.toml`, then runs `chezmoi apply --dry-run` against this checkout.

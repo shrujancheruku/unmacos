@@ -1,12 +1,14 @@
 #!/bin/bash
-# UnMacOS: macOS settings for a tiling desktop. Re-runs when this file changes.
+# UnMacOS: macOS settings for a tiling desktop. Re-runs when this file changes, which includes
+# the Dock Settings below (dock_autohide, dock_size): changing one in your Answers re-runs it.
+# Dock: autohide {{ .desktop.dock_autohide }}, size {{ .desktop.dock_size }}
 set -euo pipefail
 echo "==> macOS settings"
 
 # Dock: hidden, no recents; Spaces stay in order (Rift needs this)
-defaults write com.apple.dock autohide -bool true
+defaults write com.apple.dock autohide -bool {{ .desktop.dock_autohide }}
 defaults write com.apple.dock autohide-delay -float 0
-defaults write com.apple.dock tilesize -int 64
+defaults write com.apple.dock tilesize -int {{ .desktop.dock_size }}
 defaults write com.apple.dock show-recents -bool false
 defaults write com.apple.dock mru-spaces -bool false
 defaults write com.apple.dock expose-group-apps -bool true

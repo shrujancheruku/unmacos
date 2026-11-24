@@ -184,6 +184,30 @@ help = "Hide the pointer after that until you move the mouse."
 phase = "tune"
 takes_effect = "restart:rift"
 
+# --- Dock --------------------------------------------------------------------------------------
+
+[[settings]]
+group = "desktop"
+key = "dock_autohide"
+type = "bool"
+default = true
+label = "Hide the Dock"
+help = "The Dock slides away until you move the pointer to the screen edge."
+phase = "tune"
+takes_effect = "logout"
+
+[[settings]]
+group = "desktop"
+key = "dock_size"
+type = "int"
+default = 64
+min = 16
+max = 128
+label = "Dock size"
+help = "Size of the Dock's icons, in pixels (16 to 128)."
+phase = "tune"
+takes_effect = "logout"
+
 # --- What UnMacOS changes (true = leave it as it is) ---------------------------------------------
 
 [[settings]]

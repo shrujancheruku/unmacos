@@ -1,0 +1,9 @@
+# A one-Setting schema with no help: the generator must refuse it.
+[[settings]]
+group = "look"
+key = "theme"
+type = "string"
+default = "tokyo-night"
+label = "Theme"
+phase = "install"
+takes_effect = "live"
