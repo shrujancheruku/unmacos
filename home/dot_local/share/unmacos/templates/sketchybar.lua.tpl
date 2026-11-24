@@ -18,4 +18,7 @@ return {
 	bg2 = 0xff{{ .bare.lighter_background }},
 	-- Look Setting, not a colour: chips and popups round like the windows
 	corner_radius = {{ .look.corner_radius }},
+	bar_height = {{ .look.bar_height }},
+	chip_height = {{ sub (.look.bar_height | int) 14 }}, -- chips follow the bar
+	bar_position = "{{ .look.bar_position }}",
 }

@@ -18,7 +18,7 @@ setup() {
 # which win over the script's PATH (it puts /opt/homebrew/bin first).
 stubs() {
   export STUB_HIDDEN="$1" STUB_INSET="$2"
-  sketchybar() { [[ "$1" == --query ]] && echo "{\"hidden\":\"$STUB_HIDDEN\",\"height\":44,\"y_offset\":0}"; return 0; }
+  sketchybar() { [[ "$1" == --query ]] && echo "{\"hidden\":\"$STUB_HIDDEN\",\"height\":44,\"y_offset\":0,\"position\":\"${STUB_POS:-top}\"}"; return 0; }
   rift-cli() {
     if [[ "$2" == displays ]]; then echo "[{\"frame\":{\"origin\":{\"x\":0,\"y\":$STUB_INSET}}}]"
     else echo "$*" >> "$STUB_LOG"; fi
@@ -61,4 +61,15 @@ rendered_rift() {
   run bash "$TOGGLE" --sync
   [ "$status" -eq 0 ]
   [ "$(cat "$STUB_LOG")" = "execute config set-outer-gaps 10 10 10 10" ]
+}
+
+@test "toggle-bar --sync: a bottom bar on a notched display reserves the bottom gap and leaves the top at the side gap" {
+  stubs off 32
+  STUB_POS=bottom
+  export STUB_POS
+  rendered_rift 5
+  run bash "$TOGGLE" --sync
+  [ "$status" -eq 0 ]
+  # the notch inset only comes off a top bar's gap: Rift's area already starts below it
+  [ "$(cat "$STUB_LOG")" = "execute config set-outer-gaps 5 5 42 5" ]
 }

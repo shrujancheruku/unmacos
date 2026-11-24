@@ -18,4 +18,7 @@ return {
 	bg2 = 0xffe6e4d9,
 	-- Look Setting, not a colour: chips and popups round like the windows
 	corner_radius = 8,
+	bar_height = 44,
+	chip_height = 30, -- chips follow the bar
+	bar_position = "top",
 }
