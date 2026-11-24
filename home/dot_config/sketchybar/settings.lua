@@ -17,7 +17,14 @@ return {
   icons = "sf-symbols", -- alternatively available: NerdFont
 
   -- The default font: Geist Mono Nerd Font (helpers/default_font.lua), installed by the setup
-  font = require("helpers.default_font"),
+  -- A font from the Look (bar_font) replaces its family and the weight names that family has.
+  font = (function()
+    local font = require("helpers.default_font")
+    if look.font_text then
+      font = { text = look.font_text, numbers = look.font_text, style_map = look.font_styles or font.style_map }
+    end
+    return font
+  end)(),
 
   -- Alternatively, this is a font config for JetBrainsMono Nerd Font
   -- font = {

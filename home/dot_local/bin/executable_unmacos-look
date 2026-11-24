@@ -169,6 +169,13 @@ reload() {
   # state (toggle-bar --sync), as only that knows the display's notch inset.
   if pgrep -xq rift; then
     rift-cli execute config reload >/dev/null 2>&1 || true
+    # A reload doesn't apply the animation settings to windows already managed, so set them from
+    # the rendered config
+    local animate duration
+    animate="$(awk -F' = ' '$1 == "animate" {print $2; exit}' "$dir/rift.toml" 2>/dev/null)"
+    duration="$(awk -F' = ' '$1 == "animation_duration" {print $2; exit}' "$dir/rift.toml" 2>/dev/null)"
+    [[ -n "$animate" ]] && { rift-cli execute config set-animate "$animate" >/dev/null 2>&1 || true; }
+    [[ -n "$duration" ]] && { rift-cli execute config set-animation-duration "$duration" >/dev/null 2>&1 || true; }
     [[ -x "$HOME/.local/bin/unmacos-toggle-bar" ]] && "$HOME/.local/bin/unmacos-toggle-bar" --sync >/dev/null 2>&1 || true
   fi
   pgrep -xq borders && [[ -x "$HOME/.config/borders/bordersrc" ]] && "$HOME/.config/borders/bordersrc" >/dev/null 2>&1 &

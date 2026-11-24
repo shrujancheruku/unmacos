@@ -21,4 +21,13 @@ return {
 	bar_height = 44,
 	chip_height = 30, -- chips follow the bar
 	bar_position = "top",
+	-- The bar's font and the weights it has: each family spells (or lacks) them differently
+	font_text = "GeistMono Nerd Font",
+	font_styles = {
+		Regular = "Regular",
+		Semibold = "SemiBold",
+		Bold = "Bold",
+		Heavy = "ExtraBold",
+		Black = "Black",
+	},
 }

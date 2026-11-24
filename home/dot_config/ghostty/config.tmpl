@@ -1,4 +1,6 @@
 # UnMacOS: Ghostty
+# The font and size are Look Settings: the Look renders them into ghostty-font.conf (below), which
+# replaces these defaults, so a font change takes a config reload, not a chezmoi apply
 font-family = "Geist Mono Nerd Font Mono"
 font-size = 16
 background-opacity = 0.95
@@ -11,3 +13,4 @@ window-save-state = never
 
 # Colours from the active UnMacOS theme (unmacos-theme-render)
 config-file = ?{{ .chezmoi.homeDir }}/.local/state/unmacos/theme/ghostty.conf
+config-file = ?{{ .chezmoi.homeDir }}/.local/state/unmacos/theme/ghostty-font.conf

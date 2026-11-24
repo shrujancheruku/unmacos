@@ -58,13 +58,13 @@ golden() {
   golden fixed-light "$BATS_TEST_TMPDIR/out"
 }
 
-@test "render: every shipped Theme renders all 16 templates with no placeholder left" {
+@test "render: every shipped Theme renders all 17 templates with no placeholder left" {
   local theme name
   for theme in "$SHIPPED_SHARE"/themes/*/; do
     name="$(basename "$theme")"
     UNMACOS_THEME="$name" run look render "$BATS_TEST_TMPDIR/$name"
     [ "$status" -eq 0 ] || { echo "$name: $output"; false; }
-    [ "$(ls "$BATS_TEST_TMPDIR/$name"/*.* | grep -vc -e '/colors.toml$' -e '/theme.name$')" -eq 16 ]
+    [ "$(ls "$BATS_TEST_TMPDIR/$name"/*.* | grep -vc -e '/colors.toml$' -e '/theme.name$')" -eq 17 ]
     # colors.toml is the Theme's own file, copied, not rendered
     run grep -rl --exclude=colors.toml '{{' "$BATS_TEST_TMPDIR/$name"
     [ "$status" -eq 1 ] || { echo "$name: placeholders in $output"; false; }
@@ -291,6 +291,68 @@ render_gaps() {
   grep -q 'bar_position = "bottom",' "$BATS_TEST_TMPDIR/rift/sketchybar.lua"
 }
 
+# render_fonts: render with non-default font and animation Settings as a Draft Look
+render_fonts() {
+  mkdir -p "$UNMACOS_STATE"
+  printf '[look]\nterminal_font = "Hack Nerd Font Mono"\nterminal_font_size = 20\nbar_font = "VictorMono Nerd Font"\nanimation_duration = 300\n' > "$UNMACOS_STATE/draft.toml"
+  look render --draft "$BATS_TEST_TMPDIR/fonts"
+}
+
+@test "render: font and animation Settings default to today's values" {
+  look render "$BATS_TEST_TMPDIR/out"
+  # Ghostty: an empty font-family first, as a repeated one adds fallbacks instead of replacing
+  grep -qx 'font-family = ""' "$BATS_TEST_TMPDIR/out/ghostty-font.conf"
+  grep -qx 'font-family = "Geist Mono Nerd Font Mono"' "$BATS_TEST_TMPDIR/out/ghostty-font.conf"
+  grep -qx 'font-size = 16' "$BATS_TEST_TMPDIR/out/ghostty-font.conf"
+  grep -q 'font_text = "GeistMono Nerd Font",' "$BATS_TEST_TMPDIR/out/sketchybar.lua"
+  grep -q 'Semibold = "SemiBold",' "$BATS_TEST_TMPDIR/out/sketchybar.lua"
+  grep -q 'Heavy = "ExtraBold",' "$BATS_TEST_TMPDIR/out/sketchybar.lua"
+  grep -qx 'animation_duration = 0.15' "$BATS_TEST_TMPDIR/out/rift.toml"
+}
+
+@test "render: terminal font, size, bar font and animation duration reach Ghostty, the bar and Rift" {
+  render_fonts
+  grep -qx 'font-family = "Hack Nerd Font Mono"' "$BATS_TEST_TMPDIR/fonts/ghostty-font.conf"
+  grep -qx 'font-size = 20' "$BATS_TEST_TMPDIR/fonts/ghostty-font.conf"
+  grep -q 'font_text = "VictorMono Nerd Font",' "$BATS_TEST_TMPDIR/fonts/sketchybar.lua"
+  grep -qx 'animation_duration = 0.3' "$BATS_TEST_TMPDIR/fonts/rift.toml"
+}
+
+@test "render: non-default font and animation Settings render byte for byte to their golden" {
+  fixture_share
+  mkdir -p "$UNMACOS_STATE" && echo fixed-dark > "$UNMACOS_STATE/theme.name"
+  render_fonts
+  golden fixed-dark-fonts "$BATS_TEST_TMPDIR/fonts"
+}
+
+@test "font and animation Settings are tune-phase, live, and default to today's values" {
+  [ "$(bash "$UNMACOS_SETTINGS" get look.terminal_font 2>/dev/null)" = "Geist Mono Nerd Font Mono" ]
+  [ "$(bash "$UNMACOS_SETTINGS" get look.terminal_font_size 2>/dev/null)" = 16 ]
+  [ "$(bash "$UNMACOS_SETTINGS" get look.bar_font 2>/dev/null)" = "GeistMono Nerd Font" ]
+  [ "$(bash "$UNMACOS_SETTINGS" get look.animation_duration 2>/dev/null)" = 150 ]
+  for k in look.terminal_font look.terminal_font_size look.bar_font look.animation_duration; do
+    run python3 -c "
+import tomllib, sys
+for s in tomllib.load(open('$REPO_ROOT/home/.chezmoidata/settings.toml', 'rb'))['settings']:
+    if s['group'] + '.' + s['key'] == '$k':
+        print(s['phase'], s['takes_effect'])
+"
+    [ "$status" -eq 0 ]
+    [ "$output" = "tune live" ] || { echo "$k: $output"; false; }
+  done
+}
+
+@test "reload: Rift gets its animation Settings set live, from the rendered config" {
+  mkdir -p "$BATS_TEST_TMPDIR/bin" "$BATS_TEST_TMPDIR/dir"
+  look render "$BATS_TEST_TMPDIR/dir"
+  printf '#!/bin/sh\necho "$@" >> "%s/rift.log"\n' "$BATS_TEST_TMPDIR" > "$BATS_TEST_TMPDIR/bin/rift-cli"
+  printf '#!/bin/sh\nexit 0\n' > "$BATS_TEST_TMPDIR/bin/pgrep"
+  chmod +x "$BATS_TEST_TMPDIR/bin/"*
+  PATH="$BATS_TEST_TMPDIR/bin:$PATH" UNMACOS_NO_RELOAD=0 run look reload "$BATS_TEST_TMPDIR/dir"
+  grep -qx 'execute config set-animate true' "$BATS_TEST_TMPDIR/rift.log"
+  grep -qx 'execute config set-animation-duration 0.15' "$BATS_TEST_TMPDIR/rift.log"
+}
+
 @test "layout Settings are tune-phase, live, and default to today's layout" {
   [ "$(bash "$UNMACOS_SETTINGS" get look.window_gap 2>/dev/null)" = 4 ]
   [ "$(bash "$UNMACOS_SETTINGS" get look.border_width 2>/dev/null)" = 6 ]
@@ -366,7 +428,7 @@ reload_stubs() {
   run look reload
   [ "$status" -eq 0 ]
   # the default Look: side 10, top 47 (no notch, bar shown)
-  [ "$(cat "$STUB_LOG")" = "$(printf 'execute config reload\nexecute config set-outer-gaps 47 10 10 10')" ]
+  [ "$(cat "$STUB_LOG")" = "$(printf 'execute config reload\nexecute config set-animate true\nexecute config set-animation-duration 0.15\nexecute config set-outer-gaps 47 10 10 10')" ]
 }
 
 @test "reload: UNMACOS_NO_RELOAD=1 leaves Rift alone" {
