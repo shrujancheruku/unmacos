@@ -1,0 +1,26 @@
+name: Tests
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: tests-${{ github.ref }}
+  # Superseded PR runs are cancelled; a push to main always finishes.
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  bats:
+    # shellcheck runs inside the bats suite (tests/shellcheck.bats), so one job covers both.
+    runs-on: macos-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+      - name: Install bats-core, shellcheck and chezmoi
+        run: brew install bats-core shellcheck chezmoi
+      - name: Run the tests
+        run: bats --print-output-on-failure tests/
