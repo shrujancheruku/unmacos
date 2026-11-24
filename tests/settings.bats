@@ -98,11 +98,6 @@ animate = false
 mouse_hides_on_focus = false
 TOML
   unmacos_chezmoi_init
-  run unmacos_chezmoi cat "$HOME/.config/rift/config.toml"
-  [ "$status" -eq 0 ]
-  [[ "$output" == *"animate = false"* ]]
-  [[ "$output" == *"mouse_hides_on_focus = false"* ]]
-  [[ "$output" == *"focus_follows_mouse = true"* ]]
   run unmacos_chezmoi cat "$HOME/.config/sketchybar/settings.lua"
   [[ "$output" == *"corner_radius = 4,"* ]]
 }

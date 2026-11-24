@@ -2,9 +2,12 @@
 # UnMacOS: show/hide SketchyBar and move Rift's tiling area with it.
 #   unmacos-toggle-bar          toggle the bar
 #   unmacos-toggle-bar --sync   only fix the gaps for the bar's current state
-# Gaps are visible gaps: JankyBorders draws its border outside each window, so
-# the border width is added on top (see the gaps section in rift/config.toml).
-export PATH="/opt/homebrew/bin:$PATH"
+# Gaps are visible gaps: JankyBorders draws its border outside each window, so the
+# border width is added on top. unmacos-look derives that side gap (gap + border) when it
+# renders Rift's config (templates/rift.toml.tpl), so it is read back from there; with
+# nothing rendered yet UNMACOS_GAP + UNMACOS_BORDER (4 + 6) stand in.
+export PATH="$PATH:/opt/homebrew/bin"
+RENDERED="${UNMACOS_STATE:-$HOME/.local/state/unmacos}/theme/rift.toml"
 GAP="${UNMACOS_GAP:-4}"            # visible gap
 BORDER="${UNMACOS_BORDER:-6}"      # JankyBorders width
 ITEM_H="${UNMACOS_BAR_ITEM_HEIGHT:-30}"  # height of the bar's chips (chip_height in sketchybar settings.lua)
@@ -16,7 +19,8 @@ if [[ "${1:-}" != "--sync" ]]; then
   sketchybar --bar hidden="$hidden"
 fi
 
-side=$((GAP + BORDER))
+side="$(awk '$0 == "[settings.layout.gaps.outer]" {on=1; next} /^\[/ {on=0} on && $1 == "left" {print $3; exit}' "$RENDERED" 2>/dev/null)"
+[[ "$side" =~ ^[0-9]+$ ]] || side=$((GAP + BORDER))
 if [[ "$hidden" == "on" ]]; then
   want="$side"
 else
