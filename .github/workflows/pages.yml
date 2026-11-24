@@ -1,0 +1,70 @@
+name: Website
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "site/**"
+      - "home/dot_local/share/unmacos/themes/**"
+      - ".github/workflows/pages.yml"
+  pull_request:
+    paths:
+      - "site/**"
+      - "home/dot_local/share/unmacos/themes/**"
+      - ".github/workflows/pages.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pages-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # tags, for the version shown in the footer
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Build
+        run: python3 site/build.py
+        env:
+          GOATCOUNTER_CODE: ${{ vars.GOATCOUNTER_CODE }}
+          GOOGLE_VERIFICATION: ${{ vars.GOOGLE_VERIFICATION }}
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  lighthouse:
+    if: github.event_name == 'pull_request'
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python3 site/build.py
+      - uses: treosh/lighthouse-ci-action@v12
+        with:
+          configPath: site/lighthouserc.json
+          uploadArtifacts: true
+
+  deploy:
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
