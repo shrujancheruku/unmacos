@@ -219,3 +219,195 @@ TOML
   ! grep -nE 'a_(keep|desktop)_|KEEP_KEYS|DESKTOP_KEYS|keep_label|desktop_label|write_answers|^load\(\)' \
     "$REPO_ROOT/home/dot_local/bin/executable_unmacos-setup"
 }
+
+# --- Install phase: the questions come from the Settings schema ----------------------------------
+
+# source_with_fixture: a copy of the source whose schema has one more install-phase Setting
+# (and one tune-phase one the wizard must not ask), placed in its own group between the others.
+source_with_fixture() {
+  local src="$BATS_TEST_TMPDIR/source"
+  mkdir -p "$src"
+  (cd "$REPO_ROOT" && git ls-files -co --exclude-standard | tar -cf - -T - ) | tar -xf - -C "$src"
+  cat >> "$src/home/.chezmoidata/settings.toml" <<'TOML'
+
+[[settings]]
+group = "fixture"
+key = "volume"
+type = "int"
+default = 5
+min = 1
+max = 11
+label = "Fixture volume"
+help = "A Setting only the test knows."
+phase = "install"
+takes_effect = "apply"
+
+[[settings]]
+group = "fixture"
+key = "tuned"
+type = "string"
+default = "x"
+label = "Fixture tuned later"
+help = "Tune phase: not asked at install."
+phase = "tune"
+takes_effect = "live"
+TOML
+  use_source "$src"
+  chezmoi --source "$src" --destination "$HOME" --no-tty --no-pager init
+}
+
+@test "--questions lists the install-phase questions in schema order with the gum input for each type" {
+  use_source "$REPO_ROOT"
+  answers_without_apps
+  unmacos_chezmoi_init
+  run wizard --questions
+  echo "$output"
+  [ "$status" -eq 0 ]
+  expected="git	git.name	gum input	Your name, for git commits
+git	git.email	gum input	Your email, for git commits
+look	look.theme	gum choose	Theme
+bar	bar.weather	gum input	Weather place
+apps	apps.groups	gum choose --no-limit	Extra apps to install
+apps	apps.skip	gum choose --no-limit	Apps to leave out
+onepassword	onepassword.enabled	gum confirm	Read secrets from 1Password
+desktop	desktop.animate	gum choose --no-limit	Animate windows into place
+desktop	desktop.focus_follows_mouse	gum choose --no-limit	Focus follows the mouse
+desktop	desktop.mouse_follows_focus	gum choose --no-limit	Pointer follows keyboard focus
+desktop	desktop.mouse_hides_on_focus	gum choose --no-limit	Hide the pointer after a keyboard focus
+keep	keep.ai	gum choose --no-limit	Turn off Apple Intelligence (macOS 26+)
+keep	keep.glass	gum choose --no-limit	Turn off Liquid Glass (macOS 26+)
+keep	keep.wallpaper	gum choose --no-limit	Set the desktop wallpaper from the theme
+keep	keep.accent	gum choose --no-limit	Set macOS's accent and highlight colours from the theme
+keep	keep.firefox	gum choose --no-limit	Theme Firefox (Pywalfox and Dark Reader)
+keep	keep.firefox_wallpaper	gum choose --no-limit	Use the theme's wallpaper on Firefox's new tab page
+keep	keep.spotify	gum choose --no-limit	Theme the Spotify app with Spicetify (media apps)
+keep	keep.orca	gum choose --no-limit	Recolour Orca to match the theme (if you use it)"
+  [ "$output" = "$expected" ]
+}
+
+@test "a new install-phase Setting in the schema appears in the question list with no wizard edit" {
+  answers_without_apps
+  source_with_fixture
+  run wizard --questions
+  echo "$output"
+  [ "$status" -eq 0 ]
+  [[ "$output" == *$'\nfixture\tfixture.volume\tgum input\tFixture volume' ]]
+  # the tune-phase one is not asked
+  [[ "$output" != *"fixture.tuned"* ]]
+  # groups stay in schema order: the new group comes after keep, the last one before it
+  [[ "$output" == *$'keep.orca\tgum choose --no-limit\tRecolour Orca to match the theme (if you use it)\nfixture\t'* ]]
+}
+
+# stub_gum: a fake gum. `gum style` echoes its arguments; every other command logs its arguments
+# to $GUM_LOG and takes its next scripted reply from $GUM_REPLIES: one "STATUS|OUTPUT" per line
+# (OUTPUT may contain \n). A missing reply is a test failure (status 99).
+stub_gum() {
+  # the wizard puts ~/.local/bin first on PATH, so that is where the fake goes
+  mkdir -p "$HOME/.local/bin"
+  cat > "$HOME/.local/bin/gum" <<'STUB'
+#!/bin/bash
+cmd="$1"; shift
+if [[ "$cmd" == style ]]; then
+  # the flags with a value come first; print the rest
+  while [[ $# -gt 0 ]]; do
+    case "$1" in --border|--border-foreground|--padding|--margin|--foreground) shift 2 ;; --faint|--bold) shift ;; *) echo "$1"; shift ;; esac
+  done
+  exit 0
+fi
+echo "gum $cmd $*" >> "$GUM_LOG"
+line="$(head -n 1 "$GUM_REPLIES")"
+sed -i '' 1d "$GUM_REPLIES"
+[[ -n "$line" ]] || { echo "no scripted reply for: gum $cmd $*" >&2; exit 99; }
+printf '%b\n' "${line#*|}"
+exit "${line%%|*}"
+STUB
+  chmod +x "$HOME/.local/bin/gum"
+  export GUM_LOG="$BATS_TEST_TMPDIR/gum.log" GUM_REPLIES="$BATS_TEST_TMPDIR/replies"
+  : > "$GUM_LOG"
+  export UNMACOS_SETUP_UI=1
+}
+
+replies() { printf '%s\n' "$@" > "$GUM_REPLIES"; }
+
+@test "cancelling a question leaves the Answers untouched" {
+  use_source "$REPO_ROOT"
+  answers_without_apps
+  unmacos_chezmoi_init
+  before="$(cat "$HOME/.config/unmacos/setup.toml")"
+  stub_gum
+  # name, email, then Esc on the theme
+  replies '0|Ada' '0|ada@example.invalid' '130|'
+  run wizard --no-apply
+  echo "$output"
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"Nothing changed"* ]]
+  [ "$(cat "$HOME/.config/unmacos/setup.toml")" = "$before" ]
+  [ ! -e "$HOME/.config/unmacos/setup.toml.new" ]
+}
+
+@test "declining the final confirmation leaves the Answers untouched" {
+  use_source "$REPO_ROOT"
+  answers_without_apps
+  unmacos_chezmoi_init
+  before="$(cat "$HOME/.config/unmacos/setup.toml")"
+  stub_gum
+  replies '0|Ada' '0|ada@example.invalid' '0|nord' '0|' '0|' '1|' '0|' '0|' '1|'
+  run wizard --no-apply
+  echo "$output"
+  [ "$status" -eq 0 ]
+  [ "$(cat "$HOME/.config/unmacos/setup.toml")" = "$before" ]
+}
+
+@test "the wizard asks with the matching gum input, saves the answers and lists the changed Settings by label" {
+  use_source "$REPO_ROOT"
+  answers_without_apps
+  unmacos_chezmoi_init
+  stub_gum
+  # name, email, theme, weather (empty: the default), app groups (dev), skip some? no,
+  # 1Password? yes, desktop: all four stay ticked, change: everything but Firefox, save? yes
+  replies '0|Ada' '0|ada@example.invalid' '0|nord' '0|' '0|dev — Developer tools' '1|' '0|' \
+    '0|Animate windows into place\nFocus follows the mouse\nPointer follows keyboard focus\nHide the pointer after a keyboard focus' \
+    '0|Turn off Apple Intelligence (macOS 26+)\nTurn off Liquid Glass (macOS 26+)\nSet the desktop wallpaper from the theme\nSet macOS'"'"'s accent and highlight colours from the theme\nUse the theme'"'"'s wallpaper on Firefox'"'"'s new tab page\nTheme the Spotify app with Spicetify (media apps)\nRecolour Orca to match the theme (if you use it)' \
+    '0|'
+  run wizard --no-apply
+  echo "$output"
+  [ "$status" -eq 0 ]
+  [ "$(saved look.theme)" = "nord" ]
+  [ "$(saved apps.groups)" = "dev" ]
+  [ "$(saved onepassword.enabled)" = "true" ]
+  [ "$(saved keep.firefox)" = "true" ]
+  [ "$(saved keep.ai)" = "false" ]
+  [ "$(saved keep.spotify)" = "false" ]
+  [ "$(saved desktop.animate)" = "true" ]
+  [ "$(saved bar.weather)" = "auto" ]
+  # the summary names what changed by label, and not what did not
+  [[ "$output" == *"Theme: tokyo-night → nord"* ]]
+  [[ "$output" == *"Theme Firefox (Pywalfox and Dark Reader): yes → no"* ]]
+  [[ "$output" != *"Liquid Glass"*"→"* ]]
+  [[ "$output" != *"Weather place:"* ]]
+  run cat "$GUM_LOG"
+  echo "$output"
+  [[ "$output" == *"gum input --header Your name, for git commits"* ]]
+  [[ "$output" == *"gum choose --height 14 --header Theme"* ]]
+  [[ "$output" == *"gum confirm"*"Read secrets from 1Password"* ]]
+  [[ "$output" == *"gum input --header Weather place --value auto"* ]]
+  # everything UnMacOS changes starts ticked: a tick is a change, an untick leaves it alone
+  [[ "$output" == *"--header What should UnMacOS change? Untick to leave it as it is --selected=Turn off Apple Intelligence (macOS 26+),Turn off Liquid Glass (macOS 26+),Set the desktop wallpaper from the theme,"*"Recolour Orca to match the theme (if you use it)"* ]]
+  [[ "$output" == *"--header Windows and pointer --selected=Animate windows into place,"* ]]
+}
+
+@test "an install-phase int Setting from the schema is asked with gum input, in range" {
+  answers_without_apps
+  source_with_fixture
+  stub_gum
+  # name, email, theme, weather, groups (none), 1Password no, desktop and change: untick all,
+  # volume: 99 (too big), then 7; save
+  replies '0|Ada' '0|ada@example.invalid' '0|tokyo-night' '0|' '0|' '1|' '0|' '0|' '0|99' '0|7' '0|'
+  run wizard --no-apply
+  echo "$output"
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"Fixture volume: 5 → 7"* ]]
+  [ "$(saved fixture.volume)" = "7" ]
+  run cat "$GUM_LOG"
+  [[ "$output" == *"gum input --header Fixture volume (1 to 11)"* ]]
+}
