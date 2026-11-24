@@ -1,54 +1,33 @@
 {{- /*
-  UnMacOS settings. unmacos-setup writes your answers to ~/.config/unmacos/setup.toml;
-  anything it doesn't set falls back to a prompt (git name/email) or a default.
+  UnMacOS settings. The Settings schema (.chezmoidata/settings.toml) lists every Setting and its
+  default; your Answers (~/.config/unmacos/setup.toml, written by unmacos-setup) are merged over
+  those defaults the same way for every Setting, and templates read the result as .<group>.<key>.
   Copy setup.toml to a new Mac (or run unmacos-setup --import) to rebuild it the same way.
+
+  This template runs before chezmoi's data exists, so it reads the schema file itself.
+  Order for each Setting: the Answers' [group] table, then the flat key older Answers files use
+  (the schema's "legacy"), then, for Settings marked "ask", a prompt, then the default.
 */ -}}
+{{- $schema := include (joinPath .chezmoi.sourceDir ".chezmoidata/settings.toml") | fromToml -}}
 {{- $f := joinPath .chezmoi.homeDir ".config/unmacos/setup.toml" -}}
-{{- $s := dict -}}
-{{- if stat $f }}{{ $s = include $f | fromToml }}{{ end -}}
+{{- $answers := dict -}}
+{{- if stat $f }}{{ $answers = include $f | fromToml }}{{ end -}}
 
-{{- $name := "" -}}
-{{- if hasKey $s "name" }}{{ $name = $s.name }}{{ else }}{{ $name = promptStringOnce . "name" "Git user name" }}{{ end -}}
-{{- $email := "" -}}
-{{- if hasKey $s "email" }}{{ $email = $s.email }}{{ else }}{{ $email = promptStringOnce . "email" "Git email" }}{{ end -}}
-{{- $op := false -}}
-{{- if hasKey $s "use_1password" }}{{ $op = $s.use_1password }}{{ else }}{{ $op = promptBoolOnce . "use_1password" "Read secrets from 1Password (needs the 1Password app + CLI integration)" false }}{{ end -}}
-{{- $theme := "tokyo-night" -}}
-{{- if hasKey $s "theme" }}{{ $theme = $s.theme }}{{ else if hasKey . "theme" }}{{ $theme = .theme }}{{ end -}}
-
-{{- /* Optional app groups (brew/<group>.Brewfile). The old personal = true means all of them. */ -}}
-{{- $groups := list "dev" "apps" "media" "games" "appstore" -}}
-{{- $apps := list -}}
-{{- if hasKey $s "apps" }}{{ $apps = $s.apps }}{{ else if hasKey . "apps" }}{{ $apps = .apps }}{{ else if and (hasKey . "personal") .personal }}{{ $apps = $groups }}{{ end -}}
-{{- $skip := list -}}
-{{- if hasKey $s "apps_skip" }}{{ $skip = $s.apps_skip }}{{ else if hasKey . "apps_skip" }}{{ $skip = .apps_skip }}{{ end -}}
-
-{{- /* keep.<x> = true leaves that part of macOS or an app as it is (same as UNMACOS_KEEP_<X>=1) */ -}}
-{{- $keep := dict -}}
-{{- if hasKey $s "keep" }}{{ $keep = $s.keep }}{{ else if hasKey . "keep" }}{{ $keep = .keep }}{{ end -}}
-{{- $desktop := dict -}}
-{{- if hasKey $s "desktop" }}{{ $desktop = $s.desktop }}{{ else if hasKey . "desktop" }}{{ $desktop = .desktop }}{{ end -}}
-[data]
-  name = {{ $name | quote }}
-  email = {{ $email | quote }}
-  use_1password = {{ $op }}
-  # 1Password reference for spotify_player's client_id (only read when use_1password = true)
-  spotify_client_id_ref = "op://Private/spotify-player/client_id"
-  theme = {{ $theme | quote }}
-  apps = {{ $apps | toJson }}
-  apps_skip = {{ $skip | toJson }}
-{{- /* Corner radius in px (windows, bar chips, popups, Spotify). Only written when setup.toml
-       sets it, so the default in .chezmoidata.toml can change for everyone else. */}}
-{{- if hasKey $s "corner_radius" }}
-  corner_radius = {{ $s.corner_radius | int }}
-{{- end }}
-
-[data.keep]
-{{- range $k := list "ai" "glass" "firefox" "firefox_wallpaper" "spotify" "wallpaper" "accent" "orca" }}
-  {{ $k }} = {{ and (hasKey $keep $k) (index $keep $k) | default false }}
-{{- end }}
-
-[data.desktop]
-{{- range $k := list "animate" "focus_follows_mouse" "mouse_follows_focus" "mouse_hides_on_focus" }}
-  {{ $k }} = {{ if hasKey $desktop $k }}{{ index $desktop $k }}{{ else }}true{{ end }}
-{{- end }}
+{{- $merged := dict -}}
+{{- range $schema.settings -}}
+  {{- $group := index $answers .group -}}
+  {{- $value := .default -}}
+  {{- $legacy := get . "legacy" -}}
+  {{- if and (kindIs "map" $group) (hasKey $group .key) -}}
+    {{- $value = index $group .key -}}
+  {{- else if and $legacy (hasKey $answers $legacy) (not (kindIs "map" (index $answers $legacy))) -}}
+    {{- $value = index $answers $legacy -}}
+  {{- else if and (get . "ask") (eq .type "bool") -}}
+    {{- $value = promptBoolOnce $ (list .group .key) .label .default -}}
+  {{- else if get . "ask" -}}
+    {{- $value = promptStringOnce $ (list .group .key) .label -}}
+  {{- end -}}
+  {{- if not (hasKey $merged .group) }}{{ $_ := set $merged .group dict }}{{ end -}}
+  {{- $_ := set (index $merged .group) .key $value -}}
+{{- end -}}
+{{ dict "data" $merged | toToml }}

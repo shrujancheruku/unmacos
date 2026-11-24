@@ -1,0 +1,26 @@
+# Today's Answers format (flat keys, [keep], [desktop]) with every Setting moved off its
+# default, so the golden comparison notices when one stops reaching a rendered file.
+name = "Test User"
+email = "test@example.invalid"
+use_1password = true
+theme = "nord"
+weather = "Oslo"
+corner_radius = 4
+apps = ["dev", "media"]
+apps_skip = ["vlc"]
+
+[keep]
+ai = true
+glass = false
+wallpaper = true
+accent = false
+firefox = true
+firefox_wallpaper = false
+spotify = true
+orca = false
+
+[desktop]
+animate = false
+focus_follows_mouse = true
+mouse_follows_focus = false
+mouse_hides_on_focus = false
