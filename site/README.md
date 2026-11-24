@@ -5,6 +5,7 @@ The static site at <https://shrujancheruku.github.io/unmacos/>, deployed to GitH
 
 ```sh
 python3 site/build.py              # builds into _site/ (standard library only)
+python3 site/check.py              # checks every local link and asset
 python3 -m http.server -d _site    # http://localhost:8000/
 ```
 

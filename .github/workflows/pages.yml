@@ -19,16 +19,17 @@ permissions:
 
 concurrency:
   group: pages-${{ github.ref }}
-  cancel-in-progress: true
+  # Superseded PR runs are cancelled; a deploy to main always finishes.
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0 # tags, for the version shown in the footer
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
       - name: Build
@@ -36,7 +37,9 @@ jobs:
         env:
           GOATCOUNTER_CODE: ${{ vars.GOATCOUNTER_CODE }}
           GOOGLE_VERIFICATION: ${{ vars.GOOGLE_VERIFICATION }}
-      - uses: actions/upload-pages-artifact@v3
+      - name: Check links
+        run: python3 site/check.py
+      - uses: actions/upload-pages-artifact@v5
         with:
           path: _site
 
@@ -45,8 +48,8 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
       - run: python3 site/build.py
@@ -67,4 +70,17 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5
+      - name: Smoke test the live site
+        env:
+          SITE: ${{ steps.deployment.outputs.page_url }}
+        run: |
+          for path in "" themes/ keys/ install/ compare/ sitemap.xml robots.txt og.png style.css site.js themes.js; do
+            for try in 1 2 3 4 5 6; do
+              code=$(curl -s -o /dev/null -w '%{http_code}' "${SITE}${path}")
+              [ "$code" = 200 ] && break
+              sleep 10
+            done
+            echo "$code ${SITE}${path}"
+            [ "$code" = 200 ] || exit 1
+          done
