@@ -125,6 +125,7 @@ pick() {
 
 # The schema's install-phase Settings, in schema order, in parallel arrays (bash 3.2: no maps):
 #   Q_K key  Q_T type  Q_DEF default  Q_MIN Q_MAX  Q_CH choices (|)  Q_LB label  Q_HP help
+#   Q_PL the tick-box text (the schema's pick_label, else the label)
 read -r -d '' QUESTIONS_TEMPLATE <<'TPL' || true
 {{- $us := "\u001f" -}}{{- $rs := "\u001e" -}}
 {{- $schema := include (env "SCHEMA") | fromToml -}}
@@ -134,22 +135,22 @@ read -r -d '' QUESTIONS_TEMPLATE <<'TPL' || true
     {{- if kindIs "slice" $d }}{{ $d = join $rs $d }}{{ end -}}
     {{- $ch := get . "choices" -}}
     {{- if kindIs "slice" $ch }}{{ $ch = join $rs $ch }}{{ end -}}
-    {{- printf "%s\n" (join $us (list "Q" (printf "%s.%s" .group .key) .type $d (get . "min") (get . "max") $ch .label .help "E")) -}}
+    {{- printf "%s\n" (join $us (list "Q" (printf "%s.%s" .group .key) .type $d (get . "min") (get . "max") $ch .label .help (get . "pick_label" | default .label) "E")) -}}
   {{- end -}}
 {{- end -}}
 TPL
 
 Q_N=0; Q_GROUPS=""
 load_questions() {
-  local schema tag a b c d e f g h _end out
+  local schema tag a b c d e f g h p _end out
   schema="$(chezmoi source-path 2>/dev/null)/.chezmoidata/settings.toml"
   [[ -r "$schema" ]] || die "can't find the Settings schema (is the UnMacOS source set up for chezmoi?)"
   out="$(SCHEMA="$schema" chezmoi execute-template "$QUESTIONS_TEMPLATE" 2>&1)" || die "can't read the Settings schema: ${out##*: }"
   Q_N=0; Q_GROUPS=""
-  while IFS=$'\x1f' read -r tag a b c d e f g h _end; do
+  while IFS=$'\x1f' read -r tag a b c d e f g h p _end; do
     [[ "$tag" == Q ]] || continue
     Q_K[Q_N]="$a"; Q_T[Q_N]="$b"; Q_DEF[Q_N]="$c"; Q_MIN[Q_N]="$d"; Q_MAX[Q_N]="$e"
-    Q_CH[Q_N]="${f//$'\x1e'/|}"; Q_LB[Q_N]="$g"; Q_HP[Q_N]="$h"
+    Q_CH[Q_N]="${f//$'\x1e'/|}"; Q_LB[Q_N]="$g"; Q_HP[Q_N]="$h"; Q_PL[Q_N]="$p"
     [[ " $Q_GROUPS " == *" ${a%%.*} "* ]] || Q_GROUPS="$Q_GROUPS${Q_GROUPS:+ }${a%%.*}"
     Q_N=$((Q_N + 1))
   done <<< "$out"
@@ -172,15 +173,15 @@ group_is_ticks() {
 # group_polarity GROUP: how a list of true/false Settings reads, decided here and nowhere else.
 #   GP_HEADER   the question above the list
 #   GP_INVERT   0: a ticked box is a Setting set to true;  1: a ticked box is one set to false
-# The keep.* Settings are "Keep X on" (true = leave it alone): ticking one leaves it alone and
-# nothing starts ticked. To ask it the other way round ("What should UnMacOS change? Untick to
-# leave it as it is", everything starting ticked), set GP_INVERT=1 and reword the header here,
-# and reword the keep labels in the schema (then run: python3 site/build.py --docs).
+# The keep.* Settings are "Keep X on" (true = leave it alone), but the wizard asks what UnMacOS
+# should change: every box starts ticked, a tick is a change (keep.X = false) and an untick
+# leaves it alone (keep.X = true). The boxes read as the schema's pick_label ("Turn off X").
 group_polarity() {
   GP_INVERT=0
   case "$1" in
-    keep) GP_HEADER="What should UnMacOS leave as it is? Tick to keep" ;;
-    *)    GP_HEADER="Tick what you want on" ;;
+    keep)    GP_INVERT=1; GP_HEADER="What should UnMacOS change? Untick to leave it as it is" ;;
+    desktop) GP_HEADER="Windows and pointer" ;;
+    *)       GP_HEADER="Tick what you want on" ;;
   esac
 }
 
@@ -197,11 +198,12 @@ gum_kind() {
 
 # unmacos-setup --questions: the questions the wizard would ask, one per line, without asking
 print_questions() {
-  local g i
+  local g i l
   load_questions
   for g in $Q_GROUPS; do
     for i in $(group_rows "$g"); do
-      printf '%s\t%s\t%s\t%s\n' "$g" "${Q_K[i]}" "$(gum_kind "$i")" "${Q_LB[i]}"
+      if group_is_ticks "$g"; then l="${Q_PL[i]}"; else l="${Q_LB[i]}"; fi
+      printf '%s\t%s\t%s\t%s\n' "$g" "${Q_K[i]}" "$(gum_kind "$i")" "$l"
     done
   done
 }
@@ -227,27 +229,29 @@ answer() {
   local i="$1" old
   old="$(cur "${Q_K[i]}")"
   put "${Q_K[i]}" "$2"
-  [[ "$old" == "$2" ]] || CHANGES[${#CHANGES[@]}]="${Q_LB[i]}: $(show "$i" "$old") → $(show "$i" "$2")"
+  [[ "$old" == "$2" ]] || note "${Q_LB[i]}" "$(show "$i" "$old")" "$(show "$i" "$2")"
   return 0
 }
+note() { CHANGES[${#CHANGES[@]}]="$1: $2 → $3"; }   # LABEL OLD NEW: a line of the summary
 help_line() { [[ -z "${Q_HP[$1]}" ]] || gum style --faint "${Q_HP[$1]}"; }
 
 # ask_ticks GROUP: tick the true/false Settings of one group, labelled as the schema labels them
+# (the summary names a box by its text: "yes" is ticked)
 ask_ticks() {
-  local g="$1" i chosen sel="" v ticked
+  local g="$1" i chosen sel="" v was ticked
   local rows=() labels=()
   group_polarity "$g"
   for i in $(group_rows "$g"); do
-    rows[${#rows[@]}]="$i"; labels[${#labels[@]}]="${Q_LB[i]}"
-    v="$(cur "${Q_K[i]}")"
-    if { [[ "$v" == true ]] && (( ! GP_INVERT )); } || { [[ "$v" != true ]] && (( GP_INVERT )); }; then
-      sel="$sel|${Q_LB[i]}"
-    fi
+    rows[${#rows[@]}]="$i"; labels[${#labels[@]}]="${Q_PL[i]}"
+    if [[ "$(cur "${Q_K[i]}")" == true ]]; then v=1; else v=0; fi
+    (( v == GP_INVERT )) || sel="$sel|${Q_PL[i]}"
   done
   chosen="$(pick "$GP_HEADER" "$sel" "${labels[@]}")" || cancel
   for i in "${rows[@]}"; do
-    ticked=0; ! printf '%s\n' "$chosen" | grep -qxF -- "${Q_LB[i]}" || ticked=1
-    if (( ticked != GP_INVERT )); then answer "$i" true; else answer "$i" false; fi
+    was=0; ! in_list "${Q_PL[i]}" "$sel" || was=1
+    ticked=0; ! printf '%s\n' "$chosen" | grep -qxF -- "${Q_PL[i]}" || ticked=1
+    if (( ticked != GP_INVERT )); then put "${Q_K[i]}" true; else put "${Q_K[i]}" false; fi
+    (( was == ticked )) || note "${Q_PL[i]}" "$( ((was)) && echo yes || echo no)" "$( ((ticked)) && echo yes || echo no)"
   done
 }
 

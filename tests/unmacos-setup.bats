@@ -266,17 +266,22 @@ TOML
   expected="git	git.name	gum input	Your name, for git commits
 git	git.email	gum input	Your email, for git commits
 look	look.theme	gum choose	Theme
+bar	bar.weather	gum input	Weather place
 apps	apps.groups	gum choose --no-limit	Extra apps to install
 apps	apps.skip	gum choose --no-limit	Apps to leave out
 onepassword	onepassword.enabled	gum confirm	Read secrets from 1Password
-keep	keep.ai	gum choose --no-limit	Keep Apple Intelligence on
-keep	keep.glass	gum choose --no-limit	Keep Liquid Glass on
-keep	keep.wallpaper	gum choose --no-limit	Keep my wallpaper
-keep	keep.accent	gum choose --no-limit	Keep macOS's accent colours
-keep	keep.firefox	gum choose --no-limit	Keep Firefox as it is
-keep	keep.firefox_wallpaper	gum choose --no-limit	Keep Firefox's new tab page
-keep	keep.spotify	gum choose --no-limit	Keep Spotify as it is
-keep	keep.orca	gum choose --no-limit	Keep Orca's colours"
+desktop	desktop.animate	gum choose --no-limit	Animate windows into place
+desktop	desktop.focus_follows_mouse	gum choose --no-limit	Focus follows the mouse
+desktop	desktop.mouse_follows_focus	gum choose --no-limit	Pointer follows keyboard focus
+desktop	desktop.mouse_hides_on_focus	gum choose --no-limit	Hide the pointer after a keyboard focus
+keep	keep.ai	gum choose --no-limit	Turn off Apple Intelligence (macOS 26+)
+keep	keep.glass	gum choose --no-limit	Turn off Liquid Glass (macOS 26+)
+keep	keep.wallpaper	gum choose --no-limit	Set the desktop wallpaper from the theme
+keep	keep.accent	gum choose --no-limit	Set macOS's accent and highlight colours from the theme
+keep	keep.firefox	gum choose --no-limit	Theme Firefox (Pywalfox and Dark Reader)
+keep	keep.firefox_wallpaper	gum choose --no-limit	Use the theme's wallpaper on Firefox's new tab page
+keep	keep.spotify	gum choose --no-limit	Theme the Spotify app with Spicetify (media apps)
+keep	keep.orca	gum choose --no-limit	Recolour Orca to match the theme (if you use it)"
   [ "$output" = "$expected" ]
 }
 
@@ -290,7 +295,7 @@ keep	keep.orca	gum choose --no-limit	Keep Orca's colours"
   # the tune-phase one is not asked
   [[ "$output" != *"fixture.tuned"* ]]
   # groups stay in schema order: the new group comes after keep, the last one before it
-  [[ "$output" == *$'keep.orca\tgum choose --no-limit\tKeep Orca\'s colours\nfixture\t'* ]]
+  [[ "$output" == *$'keep.orca\tgum choose --no-limit\tRecolour Orca to match the theme (if you use it)\nfixture\t'* ]]
 }
 
 # stub_gum: a fake gum. `gum style` echoes its arguments; every other command logs its arguments
@@ -346,7 +351,7 @@ replies() { printf '%s\n' "$@" > "$GUM_REPLIES"; }
   unmacos_chezmoi_init
   before="$(cat "$HOME/.config/unmacos/setup.toml")"
   stub_gum
-  replies '0|Ada' '0|ada@example.invalid' '0|nord' '0|' '1|' '0|' '1|'
+  replies '0|Ada' '0|ada@example.invalid' '0|nord' '0|' '0|' '1|' '0|' '0|' '1|'
   run wizard --no-apply
   echo "$output"
   [ "$status" -eq 0 ]
@@ -358,9 +363,12 @@ replies() { printf '%s\n' "$@" > "$GUM_REPLIES"; }
   answers_without_apps
   unmacos_chezmoi_init
   stub_gum
-  # name, email, theme, app groups (dev), skip some? no, 1Password? yes, keep: Firefox, save? yes
-  replies '0|Ada' '0|ada@example.invalid' '0|nord' '0|dev — Developer tools' '1|' '0|' \
-    "0|Keep Firefox as it is" '0|'
+  # name, email, theme, weather (empty: the default), app groups (dev), skip some? no,
+  # 1Password? yes, desktop: all four stay ticked, change: everything but Firefox, save? yes
+  replies '0|Ada' '0|ada@example.invalid' '0|nord' '0|' '0|dev — Developer tools' '1|' '0|' \
+    '0|Animate windows into place\nFocus follows the mouse\nPointer follows keyboard focus\nHide the pointer after a keyboard focus' \
+    '0|Turn off Apple Intelligence (macOS 26+)\nTurn off Liquid Glass (macOS 26+)\nSet the desktop wallpaper from the theme\nSet macOS'"'"'s accent and highlight colours from the theme\nUse the theme'"'"'s wallpaper on Firefox'"'"'s new tab page\nTheme the Spotify app with Spicetify (media apps)\nRecolour Orca to match the theme (if you use it)' \
+    '0|'
   run wizard --no-apply
   echo "$output"
   [ "$status" -eq 0 ]
@@ -369,24 +377,32 @@ replies() { printf '%s\n' "$@" > "$GUM_REPLIES"; }
   [ "$(saved onepassword.enabled)" = "true" ]
   [ "$(saved keep.firefox)" = "true" ]
   [ "$(saved keep.ai)" = "false" ]
+  [ "$(saved keep.spotify)" = "false" ]
+  [ "$(saved desktop.animate)" = "true" ]
+  [ "$(saved bar.weather)" = "auto" ]
   # the summary names what changed by label, and not what did not
   [[ "$output" == *"Theme: tokyo-night → nord"* ]]
-  [[ "$output" == *"Keep Firefox as it is: no → yes"* ]]
-  [[ "$output" != *"Keep Liquid Glass on:"* ]]
+  [[ "$output" == *"Theme Firefox (Pywalfox and Dark Reader): yes → no"* ]]
+  [[ "$output" != *"Liquid Glass"*"→"* ]]
+  [[ "$output" != *"Weather place:"* ]]
   run cat "$GUM_LOG"
   echo "$output"
   [[ "$output" == *"gum input --header Your name, for git commits"* ]]
   [[ "$output" == *"gum choose --height 14 --header Theme"* ]]
   [[ "$output" == *"gum confirm"*"Read secrets from 1Password"* ]]
-  [[ "$output" == *"gum choose --no-limit"*"Tick to keep"* ]]
+  [[ "$output" == *"gum input --header Weather place --value auto"* ]]
+  # everything UnMacOS changes starts ticked: a tick is a change, an untick leaves it alone
+  [[ "$output" == *"--header What should UnMacOS change? Untick to leave it as it is --selected=Turn off Apple Intelligence (macOS 26+),Turn off Liquid Glass (macOS 26+),Set the desktop wallpaper from the theme,"*"Recolour Orca to match the theme (if you use it)"* ]]
+  [[ "$output" == *"--header Windows and pointer --selected=Animate windows into place,"* ]]
 }
 
 @test "an install-phase int Setting from the schema is asked with gum input, in range" {
   answers_without_apps
   source_with_fixture
   stub_gum
-  # name, email, theme, groups (none), 1Password no, keep nothing, volume: 99 (too big), then 7; save
-  replies '0|Ada' '0|ada@example.invalid' '0|tokyo-night' '0|' '1|' '0|' '0|99' '0|7' '0|'
+  # name, email, theme, weather, groups (none), 1Password no, desktop and change: untick all,
+  # volume: 99 (too big), then 7; save
+  replies '0|Ada' '0|ada@example.invalid' '0|tokyo-night' '0|' '0|' '1|' '0|' '0|' '0|99' '0|7' '0|'
   run wizard --no-apply
   echo "$output"
   [ "$status" -eq 0 ]

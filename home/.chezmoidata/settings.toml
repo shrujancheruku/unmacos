@@ -11,6 +11,9 @@
 #   min, max      int only: the allowed range
 #   choices       enum: the allowed values; list: the allowed items
 #   label, help   plain English for the wizard and the generated docs
+#   pick_label    optional: the wizard's tick-box text, when its group is asked the other way round
+#                 from the label (keep.*: ticked means UnMacOS changes it, so the box reads "Turn off
+#                 X" where the label reads "Keep X on")
 #   phase         install (asked before anything installs) | tune (changed on the installed desktop)
 #   takes_effect  live | apply | restart:<app> | logout
 #   env           optional: prefs.sh exports it as this environment variable; a value already in
@@ -89,7 +92,7 @@ type = "string"
 default = "auto"
 label = "Weather place"
 help = "A city, airport code or zip for the bar's weather, or auto to use your IP address."
-phase = "tune"
+phase = "install"   # asked by the wizard until M2's Tune phase, which moves it back to tune
 takes_effect = "live"
 legacy = "weather"
 
@@ -151,7 +154,7 @@ type = "bool"
 default = true
 label = "Animate windows into place"
 help = "Windows glide to their new spot instead of jumping."
-phase = "tune"
+phase = "install"   # asked by the wizard until M2's Tune phase, which moves it back to tune
 takes_effect = "restart:rift"
 
 [[settings]]
@@ -161,7 +164,7 @@ type = "bool"
 default = true
 label = "Focus follows the mouse"
 help = "The window under the pointer takes focus without a click."
-phase = "tune"
+phase = "install"   # asked by the wizard until M2's Tune phase, which moves it back to tune
 takes_effect = "restart:rift"
 
 [[settings]]
@@ -171,7 +174,7 @@ type = "bool"
 default = true
 label = "Pointer follows keyboard focus"
 help = "Move the pointer to the window you focus with the keyboard."
-phase = "tune"
+phase = "install"   # asked by the wizard until M2's Tune phase, which moves it back to tune
 takes_effect = "restart:rift"
 
 [[settings]]
@@ -181,7 +184,7 @@ type = "bool"
 default = true
 label = "Hide the pointer after a keyboard focus"
 help = "Hide the pointer after that until you move the mouse."
-phase = "tune"
+phase = "install"   # asked by the wizard until M2's Tune phase, which moves it back to tune
 takes_effect = "restart:rift"
 
 # --- Dock --------------------------------------------------------------------------------------
@@ -216,6 +219,7 @@ key = "ai"
 type = "bool"
 default = false
 label = "Keep Apple Intelligence on"
+pick_label = "Turn off Apple Intelligence (macOS 26+)"
 help = "UnMacOS turns Apple Intelligence off (macOS 26+). Set to true to leave it as it is."
 phase = "install"
 takes_effect = "apply"
@@ -227,6 +231,7 @@ key = "glass"
 type = "bool"
 default = false
 label = "Keep Liquid Glass on"
+pick_label = "Turn off Liquid Glass (macOS 26+)"
 help = "UnMacOS turns Liquid Glass off (macOS 26+). Set to true to leave it as it is."
 phase = "install"
 takes_effect = "logout"
@@ -238,6 +243,7 @@ key = "wallpaper"
 type = "bool"
 default = false
 label = "Keep my wallpaper"
+pick_label = "Set the desktop wallpaper from the theme"
 help = "UnMacOS sets the desktop wallpaper from the theme. Set to true to leave it as it is."
 phase = "install"
 takes_effect = "live"
@@ -249,6 +255,7 @@ key = "accent"
 type = "bool"
 default = false
 label = "Keep macOS's accent colours"
+pick_label = "Set macOS's accent and highlight colours from the theme"
 help = "UnMacOS sets macOS's accent and highlight colours from the theme. Set to true to leave them."
 phase = "install"
 takes_effect = "live"
@@ -260,6 +267,7 @@ key = "firefox"
 type = "bool"
 default = false
 label = "Keep Firefox as it is"
+pick_label = "Theme Firefox (Pywalfox and Dark Reader)"
 help = "UnMacOS themes Firefox with Pywalfox and Dark Reader. Set to true to leave it alone."
 phase = "install"
 takes_effect = "apply"
@@ -271,6 +279,7 @@ key = "firefox_wallpaper"
 type = "bool"
 default = false
 label = "Keep Firefox's new tab page"
+pick_label = "Use the theme's wallpaper on Firefox's new tab page"
 help = "UnMacOS shows the theme's wallpaper on Firefox's new tab page. Set to true to leave it alone."
 phase = "install"
 takes_effect = "apply"
@@ -282,6 +291,7 @@ key = "spotify"
 type = "bool"
 default = false
 label = "Keep Spotify as it is"
+pick_label = "Theme the Spotify app with Spicetify (media apps)"
 help = "UnMacOS themes the Spotify app with Spicetify (media apps). Set to true to leave it alone."
 phase = "install"
 takes_effect = "apply"
@@ -293,6 +303,7 @@ key = "orca"
 type = "bool"
 default = false
 label = "Keep Orca's colours"
+pick_label = "Recolour Orca to match the theme (if you use it)"
 help = "UnMacOS recolours Orca to match the theme, if you use it. Set to true to leave it alone."
 phase = "install"
 takes_effect = "live"
