@@ -16,6 +16,7 @@ Your answers live in `~/.config/unmacos/setup.toml`; any Setting you leave out k
 | look | `terminal_font` | Terminal font | enum | `Geist Mono Nerd Font Mono` | Geist Mono Nerd Font Mono, Hack Nerd Font Mono, VictorMono Nerd Font Mono | The font Ghostty draws text in. These are the Nerd Fonts UnMacOS installs, so icons keep working. | live | tune |
 | look | `terminal_font_size` | Terminal font size | int | `16` | 8 to 32 | Ghostty's text size, in points. | live | tune |
 | look | `bar_font` | Bar font | enum | `GeistMono Nerd Font` | GeistMono Nerd Font, Hack Nerd Font, VictorMono Nerd Font | The font of the top bar's text. These are the Nerd Fonts UnMacOS installs. Hack has no semibold or heavy weight, so its bar text uses bold. | live | tune |
+| look | `animate` | Animate windows into place | bool | `true` | on or off | Windows glide to their new spot instead of jumping. | live | tune |
 | look | `animation_duration` | Animation duration | int | `150` | 50 to 500 | How long a window takes to glide into place, in milliseconds. Only matters while window animation is on. | live | tune |
 | look | `window_gap` | Window gap | int | `4` | 0 to 24 | Visible space between tiled windows and the screen edge, in pixels. Rift adds the border width on top so the gap stays even. | live | tune |
 | look | `border_width` | Border width | int | `6` | 0 to 12 | Width of the focused-window border, in pixels. Rift's gaps grow with it so borders never overlap. | live | tune |
@@ -26,7 +27,6 @@ Your answers live in `~/.config/unmacos/setup.toml`; any Setting you leave out k
 | apps | `skip` | Apps to leave out | list | `(none)` | any names | Apps in the chosen groups that should not be installed, by name. | apply | install |
 | onepassword | `enabled` | Read secrets from 1Password | bool | `false` | on or off | For spotify_player's client ID. Needs the 1Password app and its CLI integration. | apply | install |
 | onepassword | `spotify_client_id_ref` | Spotify client ID in 1Password | string | `op://Private/spotify-player/client_id` | any text | The 1Password reference spotify_player reads its client ID from. Only used when 1Password is on. | apply | tune |
-| desktop | `animate` | Animate windows into place | bool | `true` | on or off | Windows glide to their new spot instead of jumping. | live | tune |
 | desktop | `focus_follows_mouse` | Focus follows the mouse | bool | `true` | on or off | The window under the pointer takes focus without a click. | restart:rift | install |
 | desktop | `mouse_follows_focus` | Pointer follows keyboard focus | bool | `true` | on or off | Move the pointer to the window you focus with the keyboard. | restart:rift | install |
 | desktop | `mouse_hides_on_focus` | Hide the pointer after a keyboard focus | bool | `true` | on or off | Hide the pointer after that until you move the mouse. | restart:rift | install |

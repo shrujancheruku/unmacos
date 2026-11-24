@@ -11,7 +11,8 @@
 #                                            the rest are commented lines with default and help.
 #                                            KEY=VALUE changes a Setting first (a list: a,b,c).
 #   unmacos-settings migrate FILE            move an Answers file from the old format (flat keys,
-#                                            personal = true) to the grouped one, keeping the
+#                                            personal = true, a Setting under the group it moved
+#                                            from) to the current one, keeping the
 #                                            original beside it as FILE.bak. Does nothing to a file
 #                                            that is already migrated.
 # list, get and write read the Answers from --from FILE (default ~/.config/unmacos/setup.toml).
@@ -28,7 +29,7 @@ ANSWERS="${UNMACOS_SETUP_FILE:-$HOME/.config/unmacos/setup.toml}"
 US=$'\x1f'   # between the fields of a row
 RS=$'\x1e'   # between the items of a list
 
-usage() { sed -n '2,20s/^# \{0,1\}//p' "$0"; }
+usage() { sed -n '2,21s/^# \{0,1\}//p' "$0"; }
 die() { printf 'unmacos-settings: %s\n' "$*" >&2; exit 1; }
 
 # --- Reading ------------------------------------------------------------------------
@@ -45,11 +46,12 @@ read -r -d '' ROWS_TEMPLATE <<'TPL' || true
 {{- if and (env "ANSWERS_FILE") (stat (env "ANSWERS_FILE")) }}{{ $answers = include (env "ANSWERS_FILE") | fromToml }}{{ end -}}
 {{- $data := dict -}}
 {{- if env "WITH_DATA" }}{{ $data = omit . "chezmoi" "settings" }}{{ end -}}
-{{- $groups := dict -}}{{- $legacies := dict -}}{{- $known := dict -}}
+{{- $groups := dict -}}{{- $legacies := dict -}}{{- $known := dict -}}{{- $moved := dict -}}
 {{- range $schema.settings -}}
   {{- $_ := set $groups .group true -}}
   {{- $_ = set $known (printf "%s.%s" .group .key) true -}}
   {{- if get . "legacy" }}{{ $_ = set $legacies .legacy true }}{{ end -}}
+  {{- with get . "moved_from" }}{{ $_ = set $moved . true }}{{ $_ = set $groups (splitList "." . | first) true }}{{ end -}}
 {{- end -}}
 {{- range $name, $v := $answers -}}
   {{- if kindIs "map" $v -}}
@@ -57,7 +59,10 @@ read -r -d '' ROWS_TEMPLATE <<'TPL' || true
       {{- printf "U%s[%s] is not a table UnMacOS knows\n" $us $name -}}
     {{- else -}}
       {{- range $key, $_ := $v -}}
-        {{- if not (hasKey $known (printf "%s.%s" $name $key)) -}}
+        {{- if hasKey $moved (printf "%s.%s" $name $key) -}}
+          {{- /* a Setting that has since moved group: the file needs migrating */ -}}
+          {{- printf "M%s%s.%s\n" $us $name $key -}}
+        {{- else if not (hasKey $known (printf "%s.%s" $name $key)) -}}
           {{- printf "U%s%s.%s is not a Setting UnMacOS knows\n" $us $name $key -}}
         {{- end -}}
       {{- end -}}
@@ -72,11 +77,15 @@ read -r -d '' ROWS_TEMPLATE <<'TPL' || true
 {{- end -}}
 {{- range $schema.settings -}}
   {{- $legacy := get . "legacy" -}}
+  {{- $mg := dict -}}{{- $mk := "" -}}
+  {{- with get . "moved_from" }}{{ $mg = get $answers (splitList "." . | first) }}{{ $mk = splitList "." . | last }}{{ end -}}
   {{- $ag := get $answers .group -}}
   {{- $dg := get $data .group -}}
   {{- $v := "" -}}{{- $src := "default" -}}{{- $kind := "" -}}
   {{- if and (kindIs "map" $ag) (hasKey $ag .key) -}}
     {{- $v = index $ag .key -}}{{- $src = "answers" -}}
+  {{- else if and $mk (kindIs "map" $mg) (hasKey $mg $mk) -}}
+    {{- $v = index $mg $mk -}}{{- $src = "answers" -}}
   {{- else if and $legacy (hasKey $answers $legacy) (not (kindIs "map" (index $answers $legacy))) -}}
     {{- $v = index $answers $legacy -}}{{- $src = "answers" -}}
   {{- else if and (eq .group "apps") (eq .key "groups") (kindIs "bool" (get $answers "personal")) (get $answers "personal") -}}

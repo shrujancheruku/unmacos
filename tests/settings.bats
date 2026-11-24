@@ -44,7 +44,7 @@ TOML
   unmacos_chezmoi_init
   [ "$(value .look.corner_radius)" = "8" ]
   [ "$(value .look.theme)" = "tokyo-night" ]
-  [ "$(value .desktop.animate)" = "true" ]
+  [ "$(value .look.animate)" = "true" ]
   [ "$(value .keep.ai)" = "false" ]
   [ "$(value '.apps.groups | len')" = "0" ]
 }
@@ -68,7 +68,7 @@ TOML
   [ "$(value .look.corner_radius)" = "4" ]
   [ "$(value '.apps.groups | join ","')" = "dev" ]
   [ "$(value .keep.ai)" = "true" ]
-  [ "$(value .desktop.animate)" = "false" ]
+  [ "$(value .look.animate)" = "false" ]
   # a Setting left out of a table that is there still gets its default
   [ "$(value .desktop.focus_follows_mouse)" = "true" ]
   [ "$(value .keep.glass)" = "false" ]

@@ -173,7 +173,7 @@ TOML
   [ "$(saved look.theme)" = "gruvbox" ]
   [ "$(saved look.corner_radius)" = "12" ]
   [ "$(saved apps.groups)" = "media" ]
-  [ "$(saved desktop.animate)" = "false" ]
+  [ "$(saved look.animate)" = "false" ]
   [ "$(saved onepassword.enabled)" = "false" ]
 }
 
@@ -390,7 +390,7 @@ replies() { printf '%s\n' "$@" > "$GUM_REPLIES"; }
   [ "$(saved keep.firefox)" = "true" ]
   [ "$(saved keep.ai)" = "false" ]
   [ "$(saved keep.spotify)" = "false" ]
-  [ "$(saved desktop.animate)" = "true" ]
+  [ "$(saved look.animate)" = "true" ]
   [ "$(saved bar.weather)" = "auto" ]
   # the summary names what changed by label, and not what did not
   [[ "$output" == *"Theme: tokyo-night → nord"* ]]

@@ -13,6 +13,8 @@
 #   .rgb.KEY     the same colour as r,g,b
 #   .dark        true unless the Theme's mode is "light"
 #   .look.KEY    a Look Setting from the Answers (unmacos-settings list look)
+#   .desktop.KEY a desktop Setting from the Answers (focus and mouse, for Rift's config). Not
+#                part of the Look: it can't be drafted, and only a render shows a change to it
 # A missing key is an error, so nothing renders with a placeholder left in. Files the
 # Theme ships beside its colors.toml (e.g. ghostty.conf) win over the rendered template.
 # OUT_DIR also gets the Theme's colors.toml and theme.name (which Theme was rendered).
@@ -33,13 +35,14 @@ SETTINGS="${UNMACOS_SETTINGS:-$HOME/.local/bin/unmacos-settings}"
 DRAFT="$STATE/draft.toml"
 ANSWERS="${UNMACOS_SETUP_FILE:-$HOME/.config/unmacos/setup.toml}"
 
-usage() { sed -n '2,23s/^# \{0,1\}//p' "$0"; }
+usage() { sed -n '2,25s/^# \{0,1\}//p' "$0"; }
 die() { printf 'unmacos-look: %s\n' "$*" >&2; exit 1; }
 
 # The first part of the template: work out the Theme and Look, put them in the data, and
 # print the Theme's name. Each template then follows behind a \034NAME line.
 read -r -d '' PRELUDE <<'TPL' || true
-{{- $saved := (include (env "LOOK_SAVED") | fromToml).look | default dict -}}
+{{- $answers := include (env "LOOK_SAVED") | fromToml -}}
+{{- $saved := $answers.look | default dict -}}
 {{- $draft := dict -}}
 {{- if and (env "LOOK_DRAFT") (stat (env "LOOK_DRAFT")) -}}
   {{- $draft = (include (env "LOOK_DRAFT") | fromToml).look | default dict -}}
@@ -68,6 +71,7 @@ read -r -d '' PRELUDE <<'TPL' || true
 {{- $_ = set . "rgb" $rgb -}}
 {{- $_ = set . "dark" (ne (get $theme "mode") "light") -}}
 {{- $_ = set . "look" $look -}}
+{{- $_ = set . "desktop" ($answers.desktop | default dict) -}}
 {{- $name -}}
 TPL
 
@@ -89,7 +93,8 @@ render() {
   trap "rm -rf '$tmp'" EXIT
 
   [[ -r "$SETTINGS" ]] || die "can't find unmacos-settings at $SETTINGS"
-  /bin/bash "$SETTINGS" list look > "$tmp/look.toml"
+  # the Look Settings and the desktop ones Rift's config reads, as [look] and [desktop] tables
+  /bin/bash "$SETTINGS" list | grep -E '^(look|desktop)\.' > "$tmp/look.toml"
 
   {
     printf '%s' "$PRELUDE"

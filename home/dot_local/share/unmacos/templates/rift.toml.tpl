@@ -1,18 +1,15 @@
 {{/* Rift has no include directive, so unmacos-look renders the whole config (ADR-0003).
   chezmoi only symlinks ~/.config/rift/config.toml to the rendered file, so apply never overwrites it.
-  Look values: window_gap, border_width (JankyBorders), bar_height and bar_position
-  (SketchyBar's bar; its chips are bar_height - 14 tall), bar_y_offset (optional). The desktop Settings come from
-  unmacos-settings, which is not part of the Look data. */ -}}
-{{- $settings := env "UNMACOS_SETTINGS" | default (joinPath (env "HOME") ".local/bin/unmacos-settings") -}}
-{{- $desktop := (output "/usr/bin/env" "-u" "CHEZMOI_SOURCE_DIR" "/bin/bash" $settings "list" "desktop" | fromToml).desktop -}}
+  Look values: animate, animation_duration, window_gap, border_width (JankyBorders), bar_height
+  and bar_position (SketchyBar's bar; its chips are bar_height - 14 tall). The focus and mouse
+  Settings are .desktop, which unmacos-look passes in beside the Look. */ -}}
 {{- $gap := .look.window_gap | int -}}
 {{- $border := .look.border_width | int -}}
 {{- $bar := .look.bar_height | int -}}
 {{- $chip := sub $bar 14 -}}
-{{- $yoff := 0 -}}{{- if hasKey .look "bar_y_offset" }}{{ $yoff = .look.bar_y_offset | int }}{{ end -}}
 {{- $side := add $gap $border -}}
-{{- /* the bar's chips are centred in it: their far edge is y_offset + (bar + chip) / 2 from the bar's screen edge */ -}}
-{{- $reserve := add $yoff (div (add $bar $chip) 2) $side -}}
+{{- /* the bar's chips are centred in it: their far edge is (bar + chip) / 2 from the bar's screen edge */ -}}
+{{- $reserve := add (div (add $bar $chip) 2) $side -}}
 {{- $top := $side -}}{{- $bottom := $side -}}
 {{- if eq .look.bar_position "bottom" }}{{ $bottom = $reserve }}{{ else }}{{ $top = $reserve }}{{ end -}}
 # Rift config: Omarchy/Hyprland-style binary splitting on macOS
@@ -23,7 +20,7 @@
 
 [settings]
 # Window animations, like Omarchy (Hyprland). Turn off live: rift-cli execute config set-animate false
-animate = {{ $desktop.animate }}
+animate = {{ .look.animate }}
 animation_duration = {{ divf (.look.animation_duration | int) 1000 }}
 # Fast start, soft landing: new windows spend less time sliding into place
 animation_easing = "ease_out_cubic"
@@ -38,9 +35,9 @@ default_disable = false
 # AeroSpace's `move-mouse window-lazy-center` (so a stray click or Alt + W can't
 # hit the wrong window). Hiding is set up only when the service starts, so
 # changing mouse_hides_on_focus needs `rift service restart`, not a reload.
-focus_follows_mouse = {{ $desktop.focus_follows_mouse }}
-mouse_follows_focus = {{ $desktop.mouse_follows_focus }}
-mouse_hides_on_focus = {{ $desktop.mouse_hides_on_focus }}
+focus_follows_mouse = {{ .desktop.focus_follows_mouse }}
+mouse_follows_focus = {{ .desktop.mouse_follows_focus }}
+mouse_hides_on_focus = {{ .desktop.mouse_hides_on_focus }}
 
 auto_focus_blacklist = ["com.apple.Spotlight", "com.raycast.macos"]
 

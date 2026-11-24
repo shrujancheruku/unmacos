@@ -27,6 +27,9 @@
 #                 template runs before the migrate script, and a plain chezmoi init on an old Mac
 #                 skips the wizard). Dropped in the release that stops upgrading from the old
 #                 format, with the migration itself.
+#   moved_from    optional: the group.key it had before it moved group (look.animate was
+#                 desktop.animate). Still read while the new key is unset, and unmacos-settings
+#                 migrate moves the value across. Dropped with the legacy keys.
 #   feature       optional: the Feature that owns it (filled in by the Features milestone)
 
 # --- Git ---------------------------------------------------------------------------------------
@@ -122,6 +125,17 @@ label = "Bar font"
 help = "The font of the top bar's text. These are the Nerd Fonts UnMacOS installs. Hack has no semibold or heavy weight, so its bar text uses bold."
 phase = "tune"
 takes_effect = "live"
+
+[[settings]]
+group = "look"
+key = "animate"
+type = "bool"
+default = true
+label = "Animate windows into place"
+help = "Windows glide to their new spot instead of jumping."
+phase = "tune"
+takes_effect = "live"
+moved_from = "desktop.animate"
 
 [[settings]]
 group = "look"
@@ -245,16 +259,6 @@ phase = "tune"
 takes_effect = "apply"
 
 # --- Windows and pointer (Rift) ------------------------------------------------------------------
-
-[[settings]]
-group = "desktop"
-key = "animate"
-type = "bool"
-default = true
-label = "Animate windows into place"
-help = "Windows glide to their new spot instead of jumping."
-phase = "tune"
-takes_effect = "live"
 
 [[settings]]
 group = "desktop"

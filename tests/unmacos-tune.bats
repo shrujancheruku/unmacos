@@ -156,6 +156,7 @@ snapshot() { (cd "$UNMACOS_STATE/theme" && find . -type f | sort | xargs shasum)
   [ "$status" -eq 0 ]
   # the real ones and the fixtures, from the schema alone
   grep -q 'look · Corner radius: 8$' "$GUM_LOG"
+  grep -q 'look · Animate windows into place: true$' "$GUM_LOG"
   grep -q 'look · Fixture shadow: 2  \[after restart\]' "$GUM_LOG"
   grep -q 'look · Fixture glow: 4$' "$GUM_LOG"
   grep -q 'look · Fixture frame: thin$' "$GUM_LOG"

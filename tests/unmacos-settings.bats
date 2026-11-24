@@ -38,13 +38,13 @@ TOML
 
 @test "validate rejects a wrong type, naming the Setting" {
   answers <<'TOML'
-[desktop]
+[look]
 animate = "yes"
 TOML
   run settings validate "$BATS_TEST_TMPDIR/a.toml"
   echo "$output"
   [ "$status" -ne 0 ]
-  [[ "$output" == *"desktop.animate"* ]]
+  [[ "$output" == *"look.animate"* ]]
   [[ "$output" == *"true or false"* ]]
 }
 
@@ -131,7 +131,7 @@ theme = "nord"
 TOML
   [ "$(settings get --from "$BATS_TEST_TMPDIR/a.toml" look.theme)" = "nord" ]
   [ "$(settings get --from "$BATS_TEST_TMPDIR/a.toml" look.corner_radius)" = "8" ]
-  [ "$(settings get --from "$BATS_TEST_TMPDIR/a.toml" desktop.animate)" = "true" ]
+  [ "$(settings get --from "$BATS_TEST_TMPDIR/a.toml" look.animate)" = "true" ]
 }
 
 @test "get reads today's flat Answers keys" {
@@ -199,7 +199,7 @@ TOML
   settings write "$BATS_TEST_TMPDIR/out.toml" --from "$BATS_TEST_TMPDIR/none.toml" \
     git.name='Ada "the Countess" Lovelace' git.email=ada@example.invalid \
     onepassword.enabled=true look.theme=nord look.corner_radius=0 \
-    apps.groups=dev,media apps.skip='some-app,other-app' desktop.animate=false
+    apps.groups=dev,media apps.skip='some-app,other-app' look.animate=false
   cat "$BATS_TEST_TMPDIR/out.toml"
   settings validate "$BATS_TEST_TMPDIR/out.toml"
   get() { settings get --from "$BATS_TEST_TMPDIR/out.toml" "$1"; }
@@ -210,7 +210,7 @@ TOML
   [ "$(get look.corner_radius)" = "0" ]                        # int (0 is not the default)
   [ "$(get apps.groups)" = $'dev\nmedia' ]                     # list
   [ "$(get apps.skip)" = $'some-app\nother-app' ]
-  [ "$(get desktop.animate)" = "false" ]
+  [ "$(get look.animate)" = "false" ]
   # what was not changed stays default
   [ "$(get keep.ai)" = "false" ]
   [ "$(get desktop.focus_follows_mouse)" = "true" ]
@@ -230,7 +230,7 @@ TOML
   [[ "$output" == *"look.corner_radius"* ]]
   run settings write "$BATS_TEST_TMPDIR/out.toml" --from "$BATS_TEST_TMPDIR/none.toml" look.corner_radius=wide
   [ "$status" -ne 0 ]
-  run settings write "$BATS_TEST_TMPDIR/out.toml" --from "$BATS_TEST_TMPDIR/none.toml" desktop.animate=maybe
+  run settings write "$BATS_TEST_TMPDIR/out.toml" --from "$BATS_TEST_TMPDIR/none.toml" look.animate=maybe
   [ "$status" -ne 0 ]
   run settings write "$BATS_TEST_TMPDIR/out.toml" --from "$BATS_TEST_TMPDIR/none.toml" no.such=1
   [ "$status" -ne 0 ]

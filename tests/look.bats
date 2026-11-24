@@ -188,6 +188,14 @@ snapshot() { (cd "$1" && find . -type f | sort | xargs shasum) ; }
   [ ! -e "$UNMACOS_STATE/draft.toml" ]
 }
 
+@test "draft set: window animation on/off is a Draft Look like any other" {
+  run look draft set look.animate=false
+  [ "$status" -eq 0 ]
+  grep -qx 'animate = false' "$UNMACOS_STATE/theme/rift.toml"
+  run look draft discard
+  grep -qx 'animate = true' "$UNMACOS_STATE/theme/rift.toml"
+}
+
 @test "draft set accumulates drafted keys across calls" {
   run look draft set look.theme=nord
   [ "$status" -eq 0 ]
@@ -326,12 +334,11 @@ render_fonts() {
 }
 
 # The other branches: the VictorMono terminal font, the Hack bar font (bold for every heavier
-# weight) and window animation off (desktop.animate is in the Answers: only look.* can be drafted)
+# weight) and window animation off, all as a Draft Look
 @test "render: the other font branches and animation off render byte for byte to their golden" {
   fixture_share
   mkdir -p "$UNMACOS_STATE" && echo fixed-dark > "$UNMACOS_STATE/theme.name"
-  printf '[desktop]\nanimate = false\n' >> "$HOME/.config/unmacos/setup.toml"
-  printf '[look]\nterminal_font = "VictorMono Nerd Font Mono"\nbar_font = "Hack Nerd Font"\n' > "$UNMACOS_STATE/draft.toml"
+  printf '[look]\nterminal_font = "VictorMono Nerd Font Mono"\nbar_font = "Hack Nerd Font"\nanimate = false\n' > "$UNMACOS_STATE/draft.toml"
   look render --draft "$BATS_TEST_TMPDIR/fonts-alt"
   grep -qx 'font-family = "VictorMono Nerd Font Mono"' "$BATS_TEST_TMPDIR/fonts-alt/ghostty-font.conf"
   grep -q 'font_text = "Hack Nerd Font",' "$BATS_TEST_TMPDIR/fonts-alt/sketchybar.lua"
@@ -345,7 +352,8 @@ render_fonts() {
   [ "$(bash "$UNMACOS_SETTINGS" get look.terminal_font_size 2>/dev/null)" = 16 ]
   [ "$(bash "$UNMACOS_SETTINGS" get look.bar_font 2>/dev/null)" = "GeistMono Nerd Font" ]
   [ "$(bash "$UNMACOS_SETTINGS" get look.animation_duration 2>/dev/null)" = 150 ]
-  for k in look.terminal_font look.terminal_font_size look.bar_font look.animation_duration; do
+  [ "$(bash "$UNMACOS_SETTINGS" get look.animate 2>/dev/null)" = true ]
+  for k in look.terminal_font look.terminal_font_size look.bar_font look.animate look.animation_duration; do
     run python3 -c "
 import tomllib, sys
 for s in tomllib.load(open('$REPO_ROOT/home/.chezmoidata/settings.toml', 'rb'))['settings']:
@@ -393,7 +401,7 @@ assert s['phase']=='tune' and s['takes_effect']=='live' and s['group']=='look'"
 }
 
 @test "render: the animation and focus Settings flow into Rift's config" {
-  printf '[desktop]\nanimate = false\nmouse_hides_on_focus = false\n' >> "$HOME/.config/unmacos/setup.toml"
+  printf '[look]\nanimate = false\n[desktop]\nmouse_hides_on_focus = false\n' >> "$HOME/.config/unmacos/setup.toml"
   run look render "$BATS_TEST_TMPDIR/out"
   [ "$status" -eq 0 ]
   grep -q '^animate = false$' "$BATS_TEST_TMPDIR/out/rift.toml"
@@ -412,7 +420,7 @@ theme_script() {
   before="$(theme_script)"
   [[ "$before" == *unmacos-theme-render* ]]
   # run_onchange reruns the theme script only when its rendered content changes
-  printf '[desktop]\nanimate = false\n' >> "$HOME/.config/unmacos/setup.toml"
+  printf '[desktop]\nmouse_hides_on_focus = false\n' >> "$HOME/.config/unmacos/setup.toml"
   [ "$(theme_script)" != "$before" ]
   # and again for a [look] Setting
   before="$(theme_script)"

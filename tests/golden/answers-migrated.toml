@@ -13,6 +13,7 @@ corner_radius = 4   # Roundness of bar chips, popups and Spotify (shown at once)
 # terminal_font = "Geist Mono Nerd Font Mono"   # The font Ghostty draws text in. These are the Nerd Fonts UnMacOS installs, so icons keep working.
 # terminal_font_size = 16   # Ghostty's text size, in points.
 # bar_font = "GeistMono Nerd Font"   # The font of the top bar's text. These are the Nerd Fonts UnMacOS installs. Hack has no semibold or heavy weight, so its bar text uses bold.
+animate = false   # Windows glide to their new spot instead of jumping.
 # animation_duration = 150   # How long a window takes to glide into place, in milliseconds. Only matters while window animation is on.
 # window_gap = 4   # Visible space between tiled windows and the screen edge, in pixels. Rift adds the border width on top so the gap stays even.
 # border_width = 6   # Width of the focused-window border, in pixels. Rift's gaps grow with it so borders never overlap.
@@ -31,7 +32,6 @@ enabled = true   # For spotify_player's client ID. Needs the 1Password app and i
 # spotify_client_id_ref = "op://Private/spotify-player/client_id"   # The 1Password reference spotify_player reads its client ID from. Only used when 1Password is on.
 
 [desktop]
-animate = false   # Windows glide to their new spot instead of jumping.
 # focus_follows_mouse = true   # The window under the pointer takes focus without a click.
 mouse_follows_focus = false   # Move the pointer to the window you focus with the keyboard.
 mouse_hides_on_focus = false   # Hide the pointer after that until you move the mouse.
