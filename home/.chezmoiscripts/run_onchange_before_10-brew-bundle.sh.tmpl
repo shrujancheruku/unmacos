@@ -1,8 +1,8 @@
 #!/bin/bash
 # UnMacOS: install Homebrew packages. Re-runs when a Brewfile or your app choices change.
 # Brewfile hash: {{ include "../Brewfile" | sha256sum }}
-# App groups: {{ .apps | join " " }}; skipped: {{ .apps_skip | join ", " }}
-{{- range .apps }}
+# App groups: {{ .apps.groups | join " " }}; skipped: {{ .apps.skip | join ", " }}
+{{- range .apps.groups }}
 # {{ . }} hash: {{ include (printf "../brew/%s.Brewfile" .) | sha256sum }}
 {{- end }}
 set -euo pipefail
@@ -12,17 +12,17 @@ fi
 eval "$(/opt/homebrew/bin/brew shellenv)"
 echo "==> brew bundle (core)"
 brew bundle --file="{{ .chezmoi.workingTree }}/Brewfile"
-{{- if .apps }}
+{{- if .apps.groups }}
 
 # The chosen groups in one Brewfile, without the apps you unticked
 picked="$(mktemp -t unmacos-brewfile)"
 trap 'rm -f "$picked"' EXIT
-for g in{{ range .apps }} {{ . | quote }}{{ end }}; do
+for g in{{ range .apps.groups }} {{ . | quote }}{{ end }}; do
   cat "{{ .chezmoi.workingTree }}/brew/$g.Brewfile"
-done | awk -v skip={{ .apps_skip | join "|" | quote }} '
+done | awk -v skip={{ .apps.skip | join "|" | quote }} '
   BEGIN { n = split(skip, s, "|"); for (i = 1; i <= n; i++) drop[s[i]] = 1 }
   /^(brew|cask|mas) "/ { split($0, q, "\""); id = q[2]; sub(/.*\//, "", id); if (id in drop) next }
   { print }' > "$picked"
-echo "==> brew bundle ({{ .apps | join ", " }})"
+echo "==> brew bundle ({{ .apps.groups | join ", " }})"
 brew bundle --file="$picked" || echo "Some optional apps failed; continuing."
 {{- end }}

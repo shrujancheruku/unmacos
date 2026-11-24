@@ -1,7 +1,7 @@
 # UnMacOS: spotify_player. client_id is read from 1Password on `chezmoi apply`
 # (use_1password = true); otherwise spotify_player uses its built-in client.
-{{- if .use_1password }}
-client_id = {{ onepasswordRead .spotify_client_id_ref | trim | quote }}
+{{- if .onepassword.enabled }}
+client_id = {{ onepasswordRead .onepassword.spotify_client_id_ref | trim | quote }}
 {{- end }}
 theme = "UnMacOS"
 client_port = 8080
