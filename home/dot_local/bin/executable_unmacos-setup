@@ -51,47 +51,45 @@ desktop_label() {
   esac
 }
 
-# load FILE [nodata]: answers from FILE, then chezmoi's current data (unless nodata), then defaults.
+# load FILE [nodata]: answers from FILE, then chezmoi's current data (unless nodata), then the
+# Settings schema's defaults. Each Setting becomes a_<legacy key> (a_theme, a_apps, ...) or, for
+# the [keep] and [desktop] tables, a_<group>_<key>; a_<name>_default holds its default.
 load() {
   local out k v
   out="$(F="$1" NODATA="${2:-}" chezmoi execute-template "$(cat <<'TPL'
 {{- $s := dict -}}
 {{- if stat (env "F") }}{{ $s = include (env "F") | fromToml }}{{ end -}}
-{{- $d := omit . "chezmoi" -}}{{ if env "NODATA" }}{{ $d = dict }}{{ end -}}
-{{- range $k := list "name" "email" "theme" "weather" }}
-{{ $k }}	{{ if hasKey $s $k }}{{ index $s $k }}{{ else }}{{ get $d $k }}{{ end }}
-{{- end }}
-corner_radius	{{ if hasKey $s "corner_radius" }}{{ $s.corner_radius }}{{ end }}
-use_1password	{{ if hasKey $s "use_1password" }}{{ $s.use_1password }}{{ else }}{{ get $d "use_1password" | default false }}{{ end }}
-{{- range $k := list "apps" "apps_skip" }}
-{{ $k }}	{{ if hasKey $s $k }}{{ index $s $k | join "|" }}{{ else if hasKey $d $k }}{{ index $d $k | join "|" }}{{ else if and (eq $k "apps") (get $d "personal") }}dev|apps|media|games|appstore{{ end }}
-{{- end }}
-{{- range $t := list "keep" "desktop" }}
-{{- $st := dict }}{{ if hasKey $s $t }}{{ $st = index $s $t }}{{ end }}
-{{- $dt := dict }}{{ if hasKey $d $t }}{{ $dt = index $d $t }}{{ end }}
-{{- range $k, $v := $dt }}{{ if not (hasKey $st $k) }}
-{{ $t }}_{{ $k }}	{{ $v }}{{ end }}{{ end }}
-{{- range $k, $v := $st }}
-{{ $t }}_{{ $k }}	{{ $v }}{{ end }}
+{{- $d := omit . "chezmoi" "settings" -}}{{ if env "NODATA" }}{{ $d = dict }}{{ end -}}
+{{- range .settings -}}
+  {{- $legacy := get . "legacy" -}}
+  {{- $name := $legacy | default (printf "%s_%s" .group .key) -}}
+  {{- $v := .default -}}
+  {{- $dg := get $d .group }}{{ if and (kindIs "map" $dg) (hasKey $dg .key) }}{{ $v = index $dg .key }}{{ end -}}
+  {{- $sg := get $s .group -}}
+  {{- if and (kindIs "map" $sg) (hasKey $sg .key) }}{{ $v = index $sg .key -}}
+  {{- else if and $legacy (hasKey $s $legacy) (not (kindIs "map" (index $s $legacy))) }}{{ $v = index $s $legacy }}{{ end }}
+{{ $name }}	{{ if kindIs "slice" $v }}{{ $v | join "|" }}{{ else }}{{ $v }}{{ end }}
+{{ $name }}_default	{{ if kindIs "slice" .default }}{{ .default | join "|" }}{{ else }}{{ .default }}{{ end }}
 {{- end }}
 TPL
 )")" || die "can't read ${1/#$HOME/~} (is it valid TOML?)"
 
-  a_name=""; a_email=""; a_theme=""; a_weather=""; a_corner_radius=""; a_use_1password=false; a_apps=""; a_apps_skip=""
-  for k in $KEEP_KEYS; do eval "a_keep_$k=false"; done
-  for k in $DESKTOP_KEYS; do eval "a_desktop_$k=true"; done
+  a_name=""; a_email=""; a_theme=""; a_weather=""; a_corner_radius=""; a_use_1password=""; a_apps=""; a_apps_skip=""
+  a_corner_radius_default=""
+  for k in $KEEP_KEYS; do eval "a_keep_$k="; done
+  for k in $DESKTOP_KEYS; do eval "a_desktop_$k="; done
   while IFS=$'\t' read -r k v; do
     [[ "$k" =~ ^[a-z_0-9]+$ ]] || continue
     case "$k" in
+      *_default) ;;
       keep_*|desktop_*|use_1password) [[ "$v" == true ]] && v=true || v=false ;;
     esac
     printf -v "a_$k" '%s' "$v"
   done <<< "$out"
   [[ -n "$a_name" ]] || a_name="$(git config --global user.name 2>/dev/null || true)"
   [[ -n "$a_email" ]] || a_email="$(git config --global user.email 2>/dev/null || true)"
-  [[ -n "$a_theme" ]] || a_theme=tokyo-night
-  [[ -n "$a_weather" ]] || a_weather=auto
-  [[ "${a_corner_radius:-}" =~ ^[0-9]+$ ]] || a_corner_radius=""   # unset: UnMacOS's default
+  # corner_radius is only written when it differs from the default, so a new default reaches you
+  [[ "${a_corner_radius:-}" =~ ^[0-9]+$ && "$a_corner_radius" != "$a_corner_radius_default" ]] || a_corner_radius=""
   return 0
 }
 
@@ -127,7 +125,7 @@ write_answers() {
   if [[ -n "$a_corner_radius" ]]; then
     printf 'corner_radius = %s   # px, for windows, bar chips, popups and Spotify\n' "$a_corner_radius"
   else
-    printf '# corner_radius = 8   # px, for windows, bar chips, popups and Spotify (8 is the default)\n'
+    printf '# corner_radius = %s   # px, for windows, bar chips, popups and Spotify (%s is the default)\n' "$a_corner_radius_default" "$a_corner_radius_default"
   fi
   printf '\n# Optional app groups (brew/<group>.Brewfile) and apps in them to leave out\n'
   printf 'apps = %s\n' "$(tl "$a_apps")"
