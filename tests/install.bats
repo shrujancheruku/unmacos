@@ -106,7 +106,7 @@ tune_recorder() {
   GUM_REPLY="Install with defaults" UNMACOS_SETUP_UI=1 run install
   echo "$output"
   [ "$status" -eq 0 ]
-  grep -q 'gum confirm Tune the look' "$GUM_LOG"
+  grep -q 'gum confirm Tune the Look' "$GUM_LOG"
   grep -qx 'tune' "$CHEZMOI_LOG"
 }
 
@@ -114,10 +114,13 @@ tune_recorder() {
   tune_recorder
   run install < /dev/null
   [ "$status" -eq 0 ]
+  # it says how to tune later instead
+  [[ "$output" == *"Tune the Look any time: unmacos-tune"* ]]
   printf '[look]\ntheme = "nord"\n' > "$BATS_TEST_TMPDIR/in.toml"
   UNMACOS_SETUP="$BATS_TEST_TMPDIR/in.toml" UNMACOS_SETUP_UI=1 run install
   [ "$status" -eq 0 ]
-  ! grep -q 'Tune the look' "$GUM_LOG"
+  [[ "$output" == *"Tune the Look any time: unmacos-tune"* ]]
+  ! grep -qi 'gum confirm Tune the look' "$GUM_LOG"
   ! grep -qx 'tune' "$CHEZMOI_LOG"
 }
 
