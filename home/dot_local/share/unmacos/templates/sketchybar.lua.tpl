@@ -21,4 +21,16 @@ return {
 	bar_height = {{ .look.bar_height }},
 	chip_height = {{ sub (.look.bar_height | int) 14 }}, -- chips follow the bar
 	bar_position = "{{ .look.bar_position }}",
+	-- The bar's font and the weights it has: each family spells (or lacks) them differently
+	font_text = "{{ .look.bar_font }}",
+{{- $semibold := "SemiBold" }}{{ $heavy := "ExtraBold" }}{{ $black := "Black" }}
+{{- if eq .look.bar_font "Hack Nerd Font" }}{{ $semibold = "Bold" }}{{ $heavy = "Bold" }}{{ $black = "Bold" }}{{ end }}
+{{- if eq .look.bar_font "VictorMono Nerd Font" }}{{ $heavy = "Bold" }}{{ $black = "Bold" }}{{ end }}
+	font_styles = {
+		Regular = "Regular",
+		Semibold = "{{ $semibold }}",
+		Bold = "Bold",
+		Heavy = "{{ $heavy }}",
+		Black = "{{ $black }}",
+	},
 }

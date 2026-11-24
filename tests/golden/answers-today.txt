@@ -123,7 +123,7 @@ echo "Log out and back in to finish (Liquid Glass changes and Writing Tools need
 === .chezmoiscripts/50-theme.sh
 #!/bin/bash
 # UnMacOS: render the active theme. Re-runs when themes, templates or the Look's Settings change.
-# <hash> <hash> <hash> <hash> <hash> <hash> <hash> <hash> <hash> <hash> <hash> <hash> <hash> <hash> <hash> <hash> 
+# <hash> <hash> <hash> <hash> <hash> <hash> <hash> <hash> <hash> <hash> <hash> <hash> <hash> <hash> <hash> <hash> <hash> 
 # <hash> <hash> <hash> <hash> <hash> <hash> <hash> <hash> <hash> <hash> <hash> <hash> <hash> <hash> <hash> <hash> <hash> <hash> <hash> <hash> <hash> <hash> <hash> <hash> <hash> <hash> <hash> 
 # The Setting groups the Look templates read (whole groups, so a new key needs no edit here):
 # <hash>
@@ -257,6 +257,8 @@ brew bundle --file="$picked" || echo "Some optional apps failed; continuing."
 
 === .config/ghostty/config
 # UnMacOS: Ghostty
+# The font and size are Look Settings: the Look renders them into ghostty-font.conf (below), which
+# replaces these defaults, so a font change takes a config reload, not a chezmoi apply
 font-family = "Geist Mono Nerd Font Mono"
 font-size = 16
 background-opacity = 0.95
@@ -269,6 +271,7 @@ window-save-state = never
 
 # Colours from the active UnMacOS theme (unmacos-theme-render)
 config-file = ?<home>/.local/state/unmacos/theme/ghostty.conf
+config-file = ?<home>/.local/state/unmacos/theme/ghostty-font.conf
 
 === .config/rift/config.toml
 <home>/.local/state/unmacos/theme/rift.toml

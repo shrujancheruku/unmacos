@@ -88,6 +88,52 @@ legacy = "corner_radius"
 
 [[settings]]
 group = "look"
+key = "terminal_font"
+type = "enum"
+default = "Geist Mono Nerd Font Mono"
+choices = ["Geist Mono Nerd Font Mono", "Hack Nerd Font Mono", "VictorMono Nerd Font Mono"]
+label = "Terminal font"
+help = "The font Ghostty draws text in. These are the Nerd Fonts UnMacOS installs, so icons keep working."
+phase = "tune"
+takes_effect = "live"
+
+[[settings]]
+group = "look"
+key = "terminal_font_size"
+type = "int"
+default = 16
+min = 8
+max = 32
+label = "Terminal font size"
+help = "Ghostty's text size, in points."
+phase = "tune"
+takes_effect = "live"
+
+[[settings]]
+group = "look"
+key = "bar_font"
+type = "enum"
+default = "GeistMono Nerd Font"
+choices = ["GeistMono Nerd Font", "Hack Nerd Font", "VictorMono Nerd Font"]
+label = "Bar font"
+help = "The font of the top bar's text. These are the Nerd Fonts UnMacOS installs. Hack has no semibold or heavy weight, so its bar text uses bold."
+phase = "tune"
+takes_effect = "live"
+
+[[settings]]
+group = "look"
+key = "animation_duration"
+type = "int"
+default = 150
+min = 50
+max = 500
+label = "Animation duration"
+help = "How long a window takes to glide into place, in milliseconds. Only matters while window animation is on."
+phase = "tune"
+takes_effect = "live"
+
+[[settings]]
+group = "look"
 key = "window_gap"
 type = "int"
 default = 4
@@ -204,8 +250,8 @@ type = "bool"
 default = true
 label = "Animate windows into place"
 help = "Windows glide to their new spot instead of jumping."
-phase = "install"   # asked by the wizard until M2's Tune phase, which moves it back to tune
-takes_effect = "restart:rift"
+phase = "tune"
+takes_effect = "live"
 
 [[settings]]
 group = "desktop"

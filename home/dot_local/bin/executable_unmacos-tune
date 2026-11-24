@@ -5,9 +5,10 @@
 # Tune edits the Look, so it lists every Setting in the group "look" (the Theme included, whatever
 # its phase) and every other Setting the schema marks phase = tune, by group. Pick one, then a
 # preset, "custom…" or a choice. A Look Setting that takes effect live is applied at once as a
-# Draft Look (keep it, try another value, or go back). Any other Setting shows a badge ("after
-# restart", "after logout", "on save") and is not previewed: it applies when you save. Save writes
-# what you picked into your Answers; Discard, Esc and Ctrl-C leave the saved Look exactly as it was.
+# Draft Look (keep it, try another value, or go back). Any other Setting, a live one outside the
+# Look included, shows a badge ("after restart", "after logout", "on save") and is not previewed:
+# it applies when you save. Save writes what you picked into your Answers; Discard, Esc and Ctrl-C
+# leave the saved Look exactly as it was.
 # The Settings come from the schema (home/.chezmoidata/settings.toml): a new look or tune-phase
 # Setting shows up here with no change to this script.
 # Runs on macOS's own bash 3.2, with gum.
@@ -17,7 +18,7 @@ export PATH="$HOME/.local/bin:/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin"
 SETUP="${UNMACOS_SETUP_FILE:-$HOME/.config/unmacos/setup.toml}"
 STATE="${UNMACOS_STATE:-$HOME/.local/state/unmacos}"
 
-usage() { sed -n '2,12s/^# \{0,1\}//p' "$0"; }
+usage() { sed -n '2,13s/^# \{0,1\}//p' "$0"; }
 die() { printf 'unmacos-tune: %s\n' "$*" >&2; exit 1; }
 
 # unmacos-settings and unmacos-look sit next to this script in the source, or on PATH once applied
@@ -115,17 +116,24 @@ load_settings() {
 
 value_of() { if [[ "${Q_SET[$1]}" == 1 ]]; then printf '%s' "${Q_NEW[$1]}"; else printf '%s' "${Q_SAVED[$1]}"; fi; }
 
-# badge ROW: when a change shows up, if not at once
+# Only a Look Setting that takes effect live can be a Draft Look
+previewable() { [[ "${Q_TE[$1]}" == live && "${Q_K[$1]}" == look.* ]]; }
+# badge ROW: when a change shows up, for any Setting that can't be a Draft Look ("on save" for a
+# live one outside the Look: it applies once Save has written it)
 badge() {
+  previewable "$1" && return 0
   case "${Q_TE[$1]}" in
-    live) ;;
     logout) printf 'after logout' ;;
     restart:*) printf 'after restart' ;;
     *) printf 'on save' ;;
   esac
 }
-# Only a Look Setting that takes effect live can be a Draft Look
-previewable() { [[ "${Q_TE[$1]}" == live && "${Q_K[$1]}" == look.* ]]; }
+# saved_when ROW: how a Setting that isn't previewed takes effect, for the line after it is picked
+saved_when() {
+  local b
+  b="$(badge "$1")"
+  if [[ "$b" == "on save" ]]; then printf 'applies when you save'; else printf 'applies when you save (%s)' "$b"; fi
+}
 
 # item ROW: the line in the Settings list
 item() {
@@ -216,7 +224,7 @@ tune() {
     ask_value "$i" || return 0
     if ! previewable "$i"; then
       Q_NEW[i]="$ASKED"; Q_SET[i]=1
-      echo "${Q_LB[i]} = $ASKED: applies when you save ($(badge "$i"))."
+      echo "${Q_LB[i]} = $ASKED: $(saved_when "$i")."
       return 0
     fi
     prev_set="${Q_SET[i]}"; prev_new="${Q_NEW[i]}"

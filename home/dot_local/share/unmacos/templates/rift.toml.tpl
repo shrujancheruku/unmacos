@@ -24,7 +24,7 @@
 [settings]
 # Window animations, like Omarchy (Hyprland). Turn off live: rift-cli execute config set-animate false
 animate = {{ $desktop.animate }}
-animation_duration = 0.15
+animation_duration = {{ divf (.look.animation_duration | int) 1000 }}
 # Fast start, soft landing: new windows spend less time sliding into place
 animation_easing = "ease_out_cubic"
 animation_fps = 120.0 # ProMotion rate; must be > 0 (Rift 0.8.x crashes on 0 despite its docs)
