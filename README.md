@@ -300,6 +300,8 @@ everything back. A Setting marked *after restart*, *after logout* or *on save* c
 it is applied when you save. The installer offers Tune once the desktop is up. Every Setting is
 listed in [docs/settings.md](docs/settings.md).
 
+<p align="center"><img src="docs/tune.gif" alt="The Tune phase: previewing the Kanagawa theme, then Rosé Pine and keeping it, square corners, a wider window gap, the bar moved to the bottom and back, then saving" width="100%"></p>
+
 **Themes.** Each theme is a single `colors.toml` in `~/.local/share/unmacos/themes/<name>/`, in
 Omarchy's format, so any Omarchy theme drops straight in. Copy one, change the colours, and pick it
 from the menu or run `unmacos-theme-render <name>`. A theme can also ship its own app config (say, a
