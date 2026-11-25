@@ -7,8 +7,8 @@ nav: Themes
   <div class="wrap">
     <p class="eyebrow">{{THEME_COUNT}} themes · dark and light</p>
     <h1>One theme across your whole Mac</h1>
-    <p class="lede">Pick a theme and SketchyBar, the window borders, Ghostty, tmux, btop, Neovim, Firefox, Spotify and Orca change together, along with the wallpaper and macOS's accent colour. Apps that are already open switch too. Press <kbd>Alt</kbd> + <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>Space</kbd> to open the picker.</p>
-    <p class="lede">Every card below has a button that themes this page, so you can try a palette before you install anything.</p>
+    <p class="lede">Pick a theme and SketchyBar, the window borders, Ghostty, tmux, btop, Neovim, Firefox, Spotify and Orca change together, wallpaper and macOS accent colour included. Open apps switch too. <span class="combo"><kbd>Alt</kbd> + <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>Space</kbd></span> opens the picker.</p>
+    <p class="lede">Try before you install: every card below can theme this page.</p>
   </div>
 </section>
 <section>
@@ -23,9 +23,9 @@ nav: Themes
   <div class="wrap grid-2">
     <div>
       <h2>Make your own</h2>
-      <p>Each theme is one <code>colors.toml</code> in <code>~/.local/share/unmacos/themes/&lt;name&gt;/</code>, in Omarchy's format, so Omarchy themes drop straight in. Copy one, change the colours, and pick it from the menu or run <code>unmacos-theme-render &lt;name&gt;</code>.</p>
+      <p>A theme is one <code>colors.toml</code> in <code>~/.local/share/unmacos/themes/&lt;name&gt;/</code>, in Omarchy's format, so Omarchy themes drop straight in. Copy one, change the colours, then pick it from the menu or run <code>unmacos-theme-render &lt;name&gt;</code>.</p>
       <p>A theme can also ship its own app config, such as a hand-tuned <code>ghostty.conf</code>, to replace the generated one. Wallpapers go in <code>~/.config/unmacos/backgrounds/&lt;theme&gt;/</code>.</p>
-      <p>Tokyo Night is UnMacOS's own hand-tuned palette; the others come from <a href="https://omarchy.org">Omarchy</a> (MIT), whose wallpapers each theme downloads on first use.</p>
+      <p>Tokyo Night is UnMacOS's own hand-tuned palette. The rest come from <a href="https://omarchy.org">Omarchy</a> (MIT), and each downloads Omarchy's wallpapers on first use.</p>
     </div>
     <pre class="block">mode = "dark"
 accent = "#7aa2f7"

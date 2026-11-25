@@ -1,20 +1,20 @@
 <!--
 title: UnMacOS: a keyboard-first tiling desktop for macOS
-description: Tiling windows, fuzzy menus, terminal apps and one theme across every app, switched live. A free, open-source Mac desktop installed with one command.
+description: Tiling windows, fuzzy menus, terminal apps and one theme across every app, switched live. A free, open-source Mac desktop, installed with one command.
 schema: home
 -->
 <section class="hero">
   <div class="wrap">
     <p class="eyebrow">Free and open source · macOS 15 to 27 · Apple silicon</p>
-    <h1>macOS is built for a trackpad.<br><span>This is the desktop for the keyboard.</span></h1>
-    <p class="lede">UnMacOS keeps macOS and replaces the desktop: windows that tile themselves, every app one keystroke away, fuzzy menus for everything, and one theme across the whole screen, switched live. Set up with one command.</p>
+    <h1>macOS is built for the trackpad.<br><span>UnMacOS is built for the keyboard.</span></h1>
+    <p class="lede">Keep macOS. Replace the desktop. Windows tile themselves, every app is one keystroke away, and one theme recolours the whole screen, live. One command installs it all.</p>
     <div class="install">
       <pre id="install-cmd">{{INSTALL_CMD}}</pre>
       <button class="copy" type="button" data-copy="install-cmd">Copy</button>
     </div>
     <p class="meta-line"><span>Rift tiling</span><span>SketchyBar</span><span>{{THEME_COUNT}} themes</span><span>No SIP changes</span><span>Inspired by Omarchy</span></p>
     <div class="cta">
-      <a class="btn primary" href="install/">How install works</a>
+      <a class="btn primary" href="install/">See how it installs</a>
       <a class="btn" href="{{REPO_URL}}">View on GitHub</a>
     </div>
     <div class="media hero-media">
@@ -27,31 +27,12 @@ schema: home
 </section>
 
 <section>
-  <div class="wrap">
-    <h2>Stock macOS vs UnMacOS</h2>
-    <p class="lede">macOS is a great operating system under a desktop designed for dragging. UnMacOS swaps the desktop for one you drive from the keyboard.</p>
-    <div class="table-wrap">
-      <table>
-        <thead><tr><th><span class="visually-hidden">Area</span></th><th>Stock macOS</th><th>UnMacOS</th></tr></thead>
-        <tbody>
-          <tr><td><strong>Windows</strong></td><td>Drag and resize each one</td><td>They tile themselves; move them with <kbd>Alt</kbd> + <kbd>H</kbd><kbd>J</kbd><kbd>K</kbd><kbd>L</kbd></td></tr>
-          <tr><td><strong>Apps</strong></td><td>Dock, Launchpad, Spotlight</td><td><kbd>Alt</kbd> + <kbd>Space</kbd>, type a few letters, Enter</td></tr>
-          <tr><td><strong>Settings</strong></td><td>System Settings panes</td><td>A fuzzy menu for Wi-Fi, Bluetooth, sound, power and themes</td></tr>
-          <tr><td><strong>Look</strong></td><td>Each app has its own</td><td>One theme for everything on screen, switched in a second</td></tr>
-          <tr><td><strong>A new Mac</strong></td><td>Set it all up again</td><td>One command and a few questions</td></tr>
-        </tbody>
-      </table>
-    </div>
-  </div>
-</section>
-
-<section>
   <div class="wrap grid-2">
     <div>
-      <p class="eyebrow">Tiling window manager</p>
+      <p class="eyebrow">Tiling</p>
       <h2>Windows that tile themselves</h2>
-      <p>Open a window and it takes its place next to the others, with even 4px gaps and a highlighted border on the one you're using. Nothing overlaps and nothing needs dragging.</p>
-      <p>Five workspaces per display and four layouts: split, stacked, main-and-side and scrolling. Focus follows the mouse, and when you switch from the keyboard the pointer jumps to the new window and hides. Powered by <a href="https://github.com/acsandmann/rift">Rift</a>.</p>
+      <p>Open a window and it slots in beside the others: even 4px gaps, a highlighted border on the one in focus. Nothing overlaps. Nothing needs dragging.</p>
+      <p>Five workspaces per display. Four layouts: split, stacked, main-and-side, scrolling. Focus follows the mouse, and when you switch by keyboard the pointer jumps to the new window and hides. Powered by <a href="https://github.com/acsandmann/rift">Rift</a>.</p>
     </div>
     <div class="media">
       <video class="lazy" muted loop playsinline width="1000" height="648" poster="media/tiling-poster.webp" aria-label="Rift tiling windows as they open, then moving and resizing them from the keyboard">
@@ -66,9 +47,9 @@ schema: home
   <div class="wrap grid-2 flip">
     <div>
       <p class="eyebrow">Launcher and menus</p>
-      <h2>Everything is one keystroke away</h2>
-      <p><kbd>Alt</kbd> + <kbd>Space</kbd> launches apps. <kbd>Alt</kbd> + <kbd>Ctrl</kbd> + <kbd>V</kbd> brings back anything you've copied. <kbd>Alt</kbd> + <kbd>Ctrl</kbd> + <kbd>.</kbd> finds an emoji. <kbd>Alt</kbd> + <kbd>Esc</kbd> locks, sleeps or restarts.</p>
-      <p>Every menu is a fuzzy finder (<a href="https://github.com/alexpasmantier/television">television</a>): type a few letters, press Enter, and the result is pasted straight into the app you came from.</p>
+      <h2>Everything, one keystroke away</h2>
+      <p><span class="combo"><kbd>Alt</kbd> + <kbd>Space</kbd></span> launches apps. <span class="combo"><kbd>Alt</kbd> + <kbd>Ctrl</kbd> + <kbd>V</kbd></span> recalls anything you've copied. <span class="combo"><kbd>Alt</kbd> + <kbd>Ctrl</kbd> + <kbd>.</kbd></span> finds an emoji. <span class="combo"><kbd>Alt</kbd> + <kbd>Esc</kbd></span> locks, sleeps or restarts.</p>
+      <p>Every menu is a fuzzy finder, built on <a href="https://github.com/alexpasmantier/television">television</a>. Type a few letters, press Enter, and the result lands in the app you came from.</p>
       <p><a href="keys/">See every shortcut →</a></p>
     </div>
     <div class="media"><img src="media/menu-apps.webp" width="1200" height="780" loading="lazy" alt="The UnMacOS app launcher, a fuzzy finder over every installed app"></div>
@@ -78,10 +59,10 @@ schema: home
 <section>
   <div class="wrap grid-2">
     <div>
-      <p class="eyebrow">Live theme switching</p>
-      <h2>One theme, everywhere, instantly</h2>
-      <p>Pick a theme and the bar, window borders, terminal, tmux, btop, Neovim, Firefox, Spotify and Orca all change at once, including editors that are already open. Each theme brings its own wallpapers and sets the macOS accent colour to match.</p>
-      <p>{{THEME_COUNT}} themes, from Tokyo Night and Catppuccin to Gruvbox, Nord, Rosé Pine and Kanagawa, light ones included. Try them on this page with the picker at the top.</p>
+      <p class="eyebrow">Live themes</p>
+      <h2>One theme. Every app. Instantly.</h2>
+      <p>Pick a theme and the bar, window borders, terminal, tmux, btop, Neovim, Firefox, Spotify and Orca change together, open editors included. Each theme brings its own wallpapers and sets the macOS accent colour to match.</p>
+      <p>{{THEME_COUNT}} themes, dark and light: Tokyo Night, Catppuccin, Gruvbox, Nord, Rosé Pine, Kanagawa and more. Try one now with the picker at the top of this page.</p>
       <p><a href="themes/">Browse all {{THEME_COUNT}} themes →</a></p>
     </div>
     <div class="media"><img src="media/menu-theme.webp" width="1200" height="780" loading="lazy" alt="The UnMacOS theme picker previewing the Ristretto palette before applying it"></div>
@@ -90,31 +71,31 @@ schema: home
 
 <section>
   <div class="wrap">
-    <h2>And the rest of the desktop</h2>
+    <h2>The rest of the desktop</h2>
     <div class="grid-3">
       <div class="panel card" data-title="terminal apps">
-        <h3>Apps that feel like apps</h3>
-        <p>Music, files, Git, Docker, system monitor, editor and Claude each have their own key. Press it again to jump to the window that's already open. They all run in <a href="https://ghostty.org">Ghostty</a> and share the theme.</p>
+        <h3>Terminal apps that feel like apps</h3>
+        <p>Music, files, Git, Docker, system monitor, editor and Claude each get their own key. Press it again to jump back to the open window. All run in <a href="https://ghostty.org">Ghostty</a>. All share the theme.</p>
       </div>
       <div class="panel card" data-title="sketchybar">
         <h3>A status bar worth looking at</h3>
-        <p><a href="https://github.com/FelixKratz/SketchyBar">SketchyBar</a> replaces the menu bar with workspaces, now playing, volume, Wi-Fi, CPU, battery and weather. <kbd>Alt</kbd> + <kbd>Shift</kbd> + <kbd>Space</kbd> hides it and windows grow to fill the space.</p>
+        <p><a href="https://github.com/FelixKratz/SketchyBar">SketchyBar</a> replaces the menu bar: workspaces, now playing, volume, Wi-Fi, CPU, battery, weather. <span class="combo"><kbd>Alt</kbd> + <kbd>Shift</kbd> + <kbd>Space</kbd></span> hides it and windows fill the space.</p>
       </div>
       <div class="panel card" data-title="macos 26+">
         <h3>A calmer macOS</h3>
         <p>Optionally switches off Apple Intelligence and turns Liquid Glass down as far as it goes, with 8px window corners to match the bar. Reapplied after macOS upgrades.</p>
       </div>
       <div class="panel card" data-title="unmacos-setup">
-        <h3>A setup wizard, not a script dump</h3>
-        <p>Asks what you want before anything changes: theme, optional app groups, what UnMacOS may touch. Press Enter all the way through for sensible defaults.</p>
+        <h3>A wizard, not a script dump</h3>
+        <p>Asks before it changes anything: your theme, which apps to install, what UnMacOS may touch. Press Enter all the way through for sensible defaults.</p>
       </div>
       <div class="panel card" data-title="unmacos-doctor">
         <h3>Tells you what's wrong</h3>
-        <p>Checks services, permissions, theme, fonts and menus, and says exactly what to fix.</p>
+        <p>Checks services, permissions, theme, fonts and menus, then says exactly what to fix.</p>
       </div>
       <div class="panel card" data-title="chezmoi">
         <h3>Plain dotfiles underneath</h3>
-        <p>A <a href="https://www.chezmoi.io/">chezmoi</a> repo you can read, fork and change. Export your answers and the next Mac sets itself up with no questions.</p>
+        <p>A <a href="https://www.chezmoi.io/">chezmoi</a> repo you can read, fork and change. Export your answers and your next Mac sets itself up, no questions asked.</p>
       </div>
     </div>
   </div>
@@ -122,8 +103,27 @@ schema: home
 
 <section>
   <div class="wrap">
+    <h2>Stock macOS vs UnMacOS</h2>
+    <p class="lede">A great operating system, under a desktop designed for dragging. UnMacOS swaps in one you drive from the keyboard.</p>
+    <div class="table-wrap">
+      <table class="stack">
+        <thead><tr><th><span class="visually-hidden">Area</span></th><th>Stock macOS</th><th>UnMacOS</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Windows</strong></td><td data-label="Stock macOS">Drag and resize each one</td><td data-label="UnMacOS">They tile themselves. Move them with <span class="combo"><kbd>Alt</kbd> + <kbd>H</kbd><kbd>J</kbd><kbd>K</kbd><kbd>L</kbd></span></td></tr>
+          <tr><td><strong>Apps</strong></td><td data-label="Stock macOS">Dock, Launchpad, Spotlight</td><td data-label="UnMacOS"><span class="combo"><kbd>Alt</kbd> + <kbd>Space</kbd></span>, a few letters, Enter</td></tr>
+          <tr><td><strong>Settings</strong></td><td data-label="Stock macOS">System Settings panes</td><td data-label="UnMacOS">One fuzzy menu for Wi-Fi, Bluetooth, sound, power and themes</td></tr>
+          <tr><td><strong>Look</strong></td><td data-label="Stock macOS">Every app has its own</td><td data-label="UnMacOS">One theme for everything on screen, switched in a second</td></tr>
+          <tr><td><strong>A new Mac</strong></td><td data-label="Stock macOS">Set it all up again</td><td data-label="UnMacOS">One command and a few questions</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
     <h2>Coming from Omarchy?</h2>
-    <p class="lede">UnMacOS is inspired by <a href="https://omarchy.org">Omarchy</a>, the keyboard-first Linux setup, and keeps its keys. <kbd>Alt</kbd> does what <kbd>SUPER</kbd> does there, Omarchy's <kbd>ALT</kbd> is <kbd>Ctrl</kbd>, and its <kbd>CTRL</kbd> is <kbd>Cmd</kbd>, so your muscle memory works. Omarchy's theme format drops straight in.</p>
+    <p class="lede">UnMacOS is inspired by <a href="https://omarchy.org">Omarchy</a>, the keyboard-first Linux setup, and keeps its keys. <kbd>Alt</kbd> stands in for <kbd>SUPER</kbd>, <kbd>Ctrl</kbd> for Omarchy's <kbd>ALT</kbd> and <kbd>Cmd</kbd> for its <kbd>CTRL</kbd>, so your muscle memory carries over. Omarchy themes drop straight in.</p>
   </div>
 </section>
 
@@ -132,39 +132,39 @@ schema: home
     <h2>Questions</h2>
     <details class="faq">
       <summary>Is UnMacOS free?</summary>
-      <div>Yes. It's free and open source under the GPL-3.0 licence. Everything it installs comes from Homebrew.</div>
+      <div>Yes. It's free and open source under the GPL-3.0 licence, and everything it installs comes from Homebrew.</div>
     </details>
     <details class="faq">
       <summary>Do I need to disable System Integrity Protection (SIP)?</summary>
-      <div>No. The window manager only needs the Accessibility permission, which you grant once in System Settings. The installer prints a checklist of the few clicks macOS won't let a script make.</div>
+      <div>No. The window manager only needs the Accessibility permission, granted once in System Settings. The installer ends with a checklist of the few clicks macOS won't let a script make.</div>
     </details>
     <details class="faq">
       <summary>Which Macs and macOS versions does it support?</summary>
-      <div>Macs with Apple silicon on macOS 15 Sequoia or later, including macOS 26 Tahoe and macOS 27.</div>
+      <div>Apple silicon Macs on macOS 15 Sequoia or later, including macOS 26 Tahoe and macOS 27.</div>
     </details>
     <details class="faq">
       <summary>Does it replace macOS?</summary>
-      <div>No. UnMacOS is a set of apps and configuration files on top of macOS. Your apps, files and the rest of macOS stay as they are; the window management, menu bar, launcher and colours change.</div>
+      <div>No. UnMacOS is apps and configuration files on top of macOS. Your apps, your files and the rest of macOS stay as they are. The window management, menu bar, launcher and colours change.</div>
     </details>
     <details class="faq">
       <summary>Will it overwrite my existing dotfiles?</summary>
-      <div>It writes the configuration files it manages, such as those for Rift, SketchyBar, Ghostty, tmux and Neovim, so back up ~/.config first if you have your own. Changes outside its own apps (Apple Intelligence, Liquid Glass, wallpaper, Firefox, Spotify) are optional and each one documents how to undo it.</div>
+      <div>It writes the configuration files it manages, such as those for Rift, SketchyBar, Ghostty, tmux and Neovim, so back up ~/.config first if you have your own. Changes outside its own apps (Apple Intelligence, Liquid Glass, wallpaper, Firefox, Spotify) are optional, and each one documents how to undo it.</div>
     </details>
     <details class="faq">
       <summary>How is it different from AeroSpace, yabai or Amethyst?</summary>
-      <div>Those are window managers. UnMacOS is a whole desktop: a window manager (Rift) plus a status bar, launcher, fuzzy menus, terminal apps and one theme across all of them, set up together. See the full comparison on the compare page.</div>
+      <div>Those are window managers. UnMacOS is a whole desktop: a window manager (Rift) plus a status bar, launcher, fuzzy menus, terminal apps and one theme across all of them, set up to work together from day one.</div>
     </details>
     <details class="faq">
       <summary>How do I update it?</summary>
-      <div>Pick Update in the menu, or run chezmoi git pull -- --ff-only &amp;&amp; unmacos-setup --yes. Run unmacos-setup again any time to change your choices; it starts from your saved answers.</div>
+      <div>Pick Update in the menu, or run chezmoi git pull -- --ff-only &amp;&amp; unmacos-setup --yes. Run unmacos-setup again any time to change your choices. It starts from your saved answers.</div>
     </details>
   </div>
 </section>
 
 <section class="center">
   <div class="wrap">
-    <h2>Try it</h2>
-    <p class="lede">Open Terminal on a Mac with Apple silicon and run one command. It asks before it changes anything.</p>
+    <h2>One command to a new desktop</h2>
+    <p class="lede">Open Terminal on an Apple silicon Mac and paste this. It asks before it changes anything.</p>
     <div class="install" style="margin-left:auto;margin-right:auto">
       <pre id="install-cmd-2">{{INSTALL_CMD}}</pre>
       <button class="copy" type="button" data-copy="install-cmd-2">Copy</button>

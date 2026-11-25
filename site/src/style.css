@@ -49,7 +49,7 @@ a:hover { color: var(--accent); }
 code, kbd, pre { font-family: var(--mono); font-size: .88em; }
 code { background: var(--bg2); padding: .1em .35em; border-radius: 4px; }
 h1, h2, h3 { font-family: var(--mono); line-height: 1.2; letter-spacing: -.01em; text-wrap: balance; }
-h1 { font-size: clamp(2rem, 5.2vw, 3.4rem); margin: 0 0 .4em; }
+h1 { font-size: clamp(2rem, 4.6vw, 3.2rem); margin: 0 0 .4em; }
 h2 { font-size: clamp(1.45rem, 3vw, 2rem); margin: 0 0 .6em; }
 h3 { font-size: 1.1rem; margin: 0 0 .4em; }
 p { margin: 0 0 1em; }
@@ -76,10 +76,15 @@ p { margin: 0 0 1em; }
   border-radius: var(--radius); padding: 4px 8px; max-width: 160px;
 }
 .gh { display: flex; align-items: center; gap: 6px; font: .85rem var(--mono); text-decoration: none; padding: 4px 10px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--bg2); }
+/* Phones: brand, theme picker and GitHub on the first row; the nav becomes a full-width tab row
+   with finger-sized targets. */
 @media (max-width: 760px) {
-  .topbar { flex-wrap: wrap; }
-  .nav { order: 3; width: 100%; }
+  .topbar { flex-wrap: wrap; gap: 8px; }
+  .nav { order: 3; width: 100%; gap: 6px; }
+  .nav a { flex: 1; text-align: center; padding: 8px 10px; }
+  .theme-pick select, .gh { padding: 8px 10px; }
   .gh span { display: none; }
+  html { scroll-padding-top: 112px; }
 }
 
 /* layout */
@@ -89,8 +94,8 @@ section + section { border-top: 1px solid var(--line); }
 .lede { font-size: 1.15rem; color: var(--fg2); max-width: 60ch; }
 .eyebrow { font: 600 .8rem var(--mono); color: var(--accent); text-transform: uppercase; letter-spacing: .08em; margin-bottom: .6em; }
 .grid-2 { display: grid; gap: 40px; grid-template-columns: 1fr 1fr; align-items: center; }
-.grid-3 { display: grid; gap: 20px; grid-template-columns: repeat(3, 1fr); }
-@media (max-width: 860px) { .grid-2, .grid-3 { grid-template-columns: 1fr; gap: 24px; } }
+.grid-3 { display: grid; gap: 20px; grid-template-columns: repeat(auto-fit, minmax(min(280px, 100%), 1fr)); }
+@media (max-width: 860px) { .grid-2 { grid-template-columns: 1fr; gap: 24px; } }
 .flip > :first-child { order: 2; }
 @media (max-width: 860px) { .flip > :first-child { order: 0; } }
 
@@ -111,6 +116,7 @@ section + section { border-top: 1px solid var(--line); }
   flex: 1; margin: 0; padding: 14px 16px; overflow-x: auto; background: var(--bg3); border: 1px solid var(--border);
   border-right: 0; border-radius: var(--radius) 0 0 var(--radius); font-size: .82rem; white-space: pre;
 }
+.install pre { text-align: left; }
 .install pre::before { content: "$ "; color: var(--green); }
 .copy {
   font: 600 .85rem var(--mono); border: 1px solid var(--accent); background: var(--accent); color: var(--bg);
@@ -143,11 +149,12 @@ th, td { text-align: left; padding: 10px 14px; border-bottom: 1px solid var(--li
 tr:last-child td { border-bottom: 0; }
 th { font: 600 .8rem var(--mono); color: var(--accent); background: var(--bg3); text-transform: uppercase; letter-spacing: .05em; }
 td:first-child { white-space: nowrap; }
-.yes { color: var(--green); font-weight: 600; }
-.no { color: var(--red); font-weight: 600; }
-.part { color: var(--yellow); font-weight: 600; }
-.compare td:first-child { white-space: normal; font-weight: 600; }
-.compare th:nth-child(2), .compare td:nth-child(2) { background: color-mix(in srgb, var(--accent) 9%, transparent); }
+.combo { white-space: nowrap; }
+/* A table too wide for any phone (the settings reference) keeps its columns and scrolls sideways. */
+.table-wrap.scroll { -webkit-overflow-scrolling: touch; overscroll-behavior-x: contain; }
+.table-wrap.scroll table { min-width: 1320px; }
+.table-wrap.scroll td:first-child { white-space: normal; }
+.scroll-hint { display: none; font: .8rem var(--mono); color: var(--fg2); margin: 0 0 8px; }
 
 /* feature cards */
 .card h3 { display: flex; gap: 10px; align-items: baseline; }
@@ -204,3 +211,38 @@ pre.block { background: var(--bg3); border: 1px solid var(--border); border-radi
 pre, kbd, th, td { overflow-wrap: normal; }
 .media.narrow { max-width: 720px; }
 .media video { width: 100%; }
+
+/* Phones */
+@media (max-width: 640px) {
+  body { font-size: 16px; }
+  section { padding: 40px 0; }
+  .hero { padding: 36px 0 32px; }
+  h1 { font-size: 1.8rem; }
+  .hero-media { margin-top: 28px; }
+  .lede { font-size: 1.05rem; }
+  .scroll-hint { display: block; }
+  /* The whole install command, wrapped, with the copy button underneath. */
+  .install { flex-direction: column; }
+  .install pre {
+    white-space: pre-wrap; overflow-wrap: anywhere; border-right: 1px solid var(--border); border-bottom: 0;
+    border-radius: var(--radius) var(--radius) 0 0;
+  }
+  .copy { padding: 12px 16px; border-radius: 0 0 var(--radius) var(--radius); }
+  .cta .btn { flex: 1 1 auto; text-align: center; }
+  .steps > li { padding: 16px; }
+  .steps > li::before { position: static; float: left; margin-right: 12px; }
+  .steps > li > h3 { min-height: 30px; display: flex; align-items: center; margin-bottom: 12px; }
+  .steps > li > h3 ~ * { clear: both; }
+  .steps ul { padding-left: 1.2em; }
+  /* Tables with class "stack" turn each row into a block: no sideways scrolling, no squeezed columns. */
+  table.stack thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+  table.stack, table.stack tbody { display: block; }
+  table.stack tr { display: block; padding: 12px 14px; border-bottom: 1px solid var(--line); }
+  table.stack tr:last-child { border-bottom: 0; }
+  table.stack td { display: block; padding: 0; border: 0; white-space: normal; }
+  table.stack td + td { margin-top: 6px; color: var(--fg2); }
+  table.stack td[data-label]::before {
+    content: attr(data-label); display: block; font: 600 .7rem var(--mono); color: var(--accent);
+    text-transform: uppercase; letter-spacing: .05em;
+  }
+}

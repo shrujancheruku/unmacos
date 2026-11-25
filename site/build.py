@@ -49,7 +49,7 @@ SCHEMA = REPO / "home/.chezmoidata/settings.toml"
 SETTINGS_MD = REPO / "docs/settings.md"
 DEFAULT_DARK, DEFAULT_LIGHT = "tokyo-night", "catppuccin-latte"
 
-NAV = [("", "Home"), ("themes/", "Themes"), ("keys/", "Keys"), ("install/", "Install"), ("compare/", "Compare")]
+NAV = [("themes/", "Themes"), ("keys/", "Keys"), ("install/", "Install")]  # the brand links home
 
 
 def git_version() -> str:
