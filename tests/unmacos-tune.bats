@@ -131,6 +131,9 @@ if [[ "$*" == *"is on your desktop"* ]]; then
   cp "$UNMACOS_STATE/draft.toml" "$GUM_LOG.draft" 2>/dev/null || true
   # Ctrl-C at that prompt: the script and gum both get SIGINT
   if [[ -n "${GUM_INT:-}" ]]; then pkill -INT -f "$REPO_ROOT/home/dot_local/bin/executable_unmacos-tune"; sleep 1; exit 130; fi
+  # GUM_HANG=<file>: gum ignores SIGHUP, as the real one does on a dead terminal; it writes its pid
+  # to <file> and waits on this prompt
+  if [[ -n "${GUM_HANG:-}" ]]; then trap '' HUP; echo $$ > "$GUM_HANG"; exec sleep 300; fi
 fi
 [[ "$cmd" == choose ]] && sed 's/^/  | /' >> "$GUM_LOG"
 line="$(head -n 1 "$GUM_REPLIES")"
@@ -207,6 +210,37 @@ snapshot() { (cd "$UNMACOS_STATE/theme" && find . -type f | sort | xargs shasum)
   # a real Ctrl-C ends it as cancelled (0) or interrupted (130); either way nothing is kept
   [ "$status" -eq 0 ] || [ "$status" -eq 130 ]
   grep -q 'fixture_glow = 10' "$GUM_LOG.draft"
+  [ ! -e "$(draft_file)" ]
+  [ "$(snapshot)" = "$before" ]
+  [ "$(saved look.fixture_glow)" = 4 ]
+}
+
+# alive PID: running, not a zombie waiting for bats to reap it
+alive() { local s; s="$(ps -o stat= -p "$1" 2>/dev/null)"; [[ -n "$s" && "$s" != Z* ]]; }
+
+@test "a hangup while a preview is showing discards the Draft Look and leaves no Tune or gum running" {
+  before="$(snapshot)"
+  export GUM_HANG="$BATS_TEST_TMPDIR/gum.pid"
+  replies '0|look · Fixture glow: 4' '0|10'
+  # Tune in its own process group, as in a terminal: the hangup goes to the whole group
+  set -m
+  tune >/dev/null 2>&1 &
+  pid=$!
+  set +m
+  for _ in $(seq 1 100); do [[ -s "$GUM_HANG" ]] && break; sleep 0.1; done
+  [ -s "$GUM_HANG" ]
+  gpid="$(cat "$GUM_HANG")"
+  [ -e "$(draft_file)" ]
+  # the terminal closes (tmux kill-session sends SIGHUP to the pane's process group)
+  kill -HUP -- -"$pid"
+  gone=0
+  for _ in $(seq 1 100); do
+    if ! alive "$pid" && ! alive "$gpid"; then gone=1; break; fi
+    sleep 0.1
+  done
+  # never leave a stray gum behind, even when the check above fails
+  alive "$gpid" && kill -KILL "$gpid" 2>/dev/null || true
+  [ "$gone" = 1 ]
   [ ! -e "$(draft_file)" ]
   [ "$(snapshot)" = "$before" ]
   [ "$(saved look.fixture_glow)" = 4 ]
