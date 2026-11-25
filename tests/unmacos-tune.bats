@@ -232,6 +232,41 @@ snapshot() { (cd "$UNMACOS_STATE/theme" && find . -type f | sort | xargs shasum)
   [[ "$output" == *"Enter a whole number from 0 to 20"* ]]
 }
 
+@test "Back after Try another returns to the value from before the Setting was opened, not the tried one" {
+  # Fixture glow is 4; pick 10, try 7, Back: the desktop and the Setting go back to 4, so Save writes nothing
+  replies '0|look · Fixture glow: 4' '0|10' '0|Try another' '0|7' '0|Back' '0|Save'
+  run tune
+  echo "$output"
+  [ "$status" -eq 0 ]
+  [ "$(saved look.fixture_glow)" = 4 ]
+  [[ "$output" == *"Nothing changed"* ]]
+}
+
+@test "← back from the value list after Try another returns to the value from before, and Save writes nothing" {
+  replies '0|look · Fixture glow: 4' '0|10' '0|Try another' '0|← back' '0|Save'
+  run tune
+  echo "$output"
+  [ "$status" -eq 0 ]
+  [ "$(saved look.fixture_glow)" = 4 ]
+  [ ! -e "$(draft_file)" ]
+}
+
+@test "Keep after several tries keeps the last value" {
+  replies '0|look · Fixture glow: 4' '0|10' '0|Try another' '0|7' '0|Try another' '0|15' '0|Keep' '0|Save'
+  run tune
+  echo "$output"
+  [ "$status" -eq 0 ]
+  [ "$(saved look.fixture_glow)" = 15 ]
+}
+
+@test "Back after Try another, on a Setting kept earlier in the session, returns to the kept value" {
+  replies '0|look · Fixture glow: 4' '0|10' '0|Keep' '0|look · Fixture glow: 10' '0|7' '0|Try another' '0|15' '0|Back' '0|Save'
+  run tune
+  echo "$output"
+  [ "$status" -eq 0 ]
+  [ "$(saved look.fixture_glow)" = 10 ]
+}
+
 @test "the Theme is listed with its choices; picking one drafts look.theme, and Esc restores the Look" {
   before="$(snapshot)"
   current="$(saved look.theme)"
