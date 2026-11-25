@@ -148,6 +148,14 @@ item() {
 
 in_list() { [[ "|$2|" == *"|$1|"* ]]; }
 err() { gum style --foreground 1 "$*"; }
+# gum_prompt ARGS: a gum prompt, its answer on stdout, for a command substitution. gum runs in the
+# background of that subshell, so a hangup (the terminal closing) is trapped here and kills gum
+# at once. The main script's HUP trap would wait for a foreground gum, which ignores the hangup.
+gum_prompt() {
+  trap 'kill -KILL $! 2>/dev/null; exit 129' HUP
+  gum "$@" 0<&0 &
+  wait $!
+}
 
 # presets ROW: ready-made values, one per line. An int gets its range's ends, quarters and default;
 # an enum its choices; a true/false on and off. Nothing here names a Setting.
@@ -184,12 +192,12 @@ ask_value() {
         [[ "$v" == "$def" ]] && printf '%s (default)\n' "$v" || printf '%s\n' "$v"
       done)"
       [[ "${Q_T[i]}" == int ]] && list="$list"$'\n'"$CUSTOM"
-      choice="$(printf '%s\n%s\n' "$list" "$BACK" | gum choose --height 14 --header "${Q_LB[i]} (now $cur)")" || cancel
+      choice="$(printf '%s\n%s\n' "$list" "$BACK" | gum_prompt choose --height 14 --header "${Q_LB[i]} (now $cur)")" || cancel
       [[ "$choice" != "$BACK" ]] || return 1
       choice="${choice% (default)}"
       if [[ "$choice" == "$CUSTOM" ]]; then
         while :; do
-          choice="$(gum input --header "${Q_LB[i]} (${lo:-any} to ${hi:-any})" --value "$cur")" || cancel
+          choice="$(gum_prompt input --header "${Q_LB[i]} (${lo:-any} to ${hi:-any})" --value "$cur")" || cancel
           if [[ "$choice" =~ ^-?[0-9]+$ ]] && { [[ -z "$lo" ]] || (( choice >= lo )); } && { [[ -z "$hi" ]] || (( choice <= hi )); }; then
             break
           fi
@@ -200,13 +208,13 @@ ask_value() {
       ASKED="$choice" ;;
     list)
       if [[ -n "${Q_CH[i]}" ]]; then
-        choice="$(printf '%s\n' "${Q_CH[i]//|/$'\n'}" | gum choose --no-limit --height 14 --header "${Q_LB[i]}")" || cancel
+        choice="$(printf '%s\n' "${Q_CH[i]//|/$'\n'}" | gum_prompt choose --no-limit --height 14 --header "${Q_LB[i]}")" || cancel
         ASKED="$(printf '%s\n' "$choice" | paste -s -d',' -)"
       else
-        ASKED="$(gum input --header "${Q_LB[i]} (a, b, c)" --value "$cur")" || cancel
+        ASKED="$(gum_prompt input --header "${Q_LB[i]} (a, b, c)" --value "$cur")" || cancel
       fi ;;
     *)
-      ASKED="$(gum input --header "${Q_LB[i]}" --value "$cur")" || cancel ;;
+      ASKED="$(gum_prompt input --header "${Q_LB[i]}" --value "$cur")" || cancel ;;
   esac
 }
 
@@ -234,7 +242,7 @@ tune() {
     prev_set="${Q_SET[i]}"; prev_new="${Q_NEW[i]}"
     draft "$i" "$ASKED" || continue
     Q_NEW[i]="$ASKED"; Q_SET[i]=1
-    choice="$(printf '%s\n' "Keep" "Try another" "Back" | gum choose --header "${Q_LB[i]} = $ASKED is on your desktop")" || cancel
+    choice="$(printf '%s\n' "Keep" "Try another" "Back" | gum_prompt choose --header "${Q_LB[i]} = $ASKED is on your desktop")" || cancel
     case "$choice" in
       Keep) return 0 ;;
       "Try another") ;;
@@ -299,7 +307,7 @@ main() {
   while :; do
     items=""
     for i in $Q_ORDER; do items="$items$(item "$i")"$'\n'; done
-    choice="$(printf '%s%s\n%s\n' "$items" "$SAVE_ITEM" "$DISCARD_ITEM" | gum choose --height 14 --header "Settings")" || cancel
+    choice="$(printf '%s%s\n%s\n' "$items" "$SAVE_ITEM" "$DISCARD_ITEM" | gum_prompt choose --height 14 --header "Settings")" || cancel
     case "$choice" in
       "$SAVE_ITEM") save; return 0 ;;
       "$DISCARD_ITEM") cancel ;;
