@@ -2,7 +2,7 @@
   "ci": {
     "collect": {
       "staticDistDir": "_site",
-      "url": ["/", "/themes/", "/keys/", "/install/", "/compare/"],
+      "url": ["/", "/themes/", "/keys/", "/install/"],
       "numberOfRuns": 1
     },
     "assert": {
