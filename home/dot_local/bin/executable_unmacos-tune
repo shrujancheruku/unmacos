@@ -221,28 +221,37 @@ draft() {
   fi
 }
 
+# unpick ROW SET NEW: the Setting and its desktop go back to SET and NEW as they were before this visit
+# (SET 0: the saved value, which the desktop shows when nothing was picked)
+unpick() {
+  local i="$1"
+  if [[ "$2" == 1 ]]; then draft "$i" "$3" || true; else draft "$i" "${Q_SAVED[i]}" || true; fi
+  Q_NEW[i]="$3"; Q_SET[i]="$2"
+}
+
 # tune ROW: pick a value; a previewable one is on the desktop at once, to keep, replace or leave
 tune() {
-  local i="$1" prev_set prev_new choice
+  local i="$1" prev_set prev_new choice shown=0
+  # the state before this visit, taken once: every way out but Keep goes back to it
+  prev_set="${Q_SET[i]}"; prev_new="${Q_NEW[i]}"
   while :; do
-    ask_value "$i" || return 0
+    if ! ask_value "$i"; then
+      (( shown )) && unpick "$i" "$prev_set" "$prev_new"
+      return 0
+    fi
     if ! previewable "$i"; then
       Q_NEW[i]="$ASKED"; Q_SET[i]=1
       echo "${Q_LB[i]} = $ASKED: $(saved_when "$i")."
       return 0
     fi
-    prev_set="${Q_SET[i]}"; prev_new="${Q_NEW[i]}"
     draft "$i" "$ASKED" || continue
+    shown=1
     Q_NEW[i]="$ASKED"; Q_SET[i]=1
     choice="$(printf '%s\n' "Keep" "Try another" "Back" | gum choose --header "${Q_LB[i]} = $ASKED is on your desktop")" || cancel
     case "$choice" in
       Keep) return 0 ;;
       "Try another") ;;
-      *)
-        # back: the desktop shows what it showed before this pick
-        if [[ "$prev_set" == 1 ]]; then draft "$i" "$prev_new" || true; else draft "$i" "${Q_SAVED[i]}" || true; fi
-        Q_NEW[i]="$prev_new"; Q_SET[i]="$prev_set"
-        return 0 ;;
+      *) unpick "$i" "$prev_set" "$prev_new"; return 0 ;;
     esac
   done
 }
