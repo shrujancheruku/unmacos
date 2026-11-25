@@ -170,11 +170,14 @@ presets() {
 CUSTOM="custom…"
 BACK="← back"
 
+# hdr TEXT HELP: a picker's header, with the Setting's help as its second line, so the help shows
+# only while that Setting is open and never stacks up above the list
+hdr() { if [[ -n "$2" ]]; then printf '%s\n%s' "$1" "$2"; else printf '%s' "$1"; fi; }
+
 # ask_value ROW: the value picked for that Setting in ASKED; fails when the user goes back
 ask_value() {
   local i="$1" cur choice v lo hi
   cur="$(value_of "$i")"; lo="${Q_MIN[i]}"; hi="${Q_MAX[i]}"
-  gum style --faint "${Q_HP[i]}"
   case "${Q_T[i]}" in
     int|enum|bool)
       local list def="${Q_DEF[i]}"
@@ -184,12 +187,12 @@ ask_value() {
         [[ "$v" == "$def" ]] && printf '%s (default)\n' "$v" || printf '%s\n' "$v"
       done)"
       [[ "${Q_T[i]}" == int ]] && list="$list"$'\n'"$CUSTOM"
-      choice="$(printf '%s\n%s\n' "$list" "$BACK" | gum choose --height 14 --header "${Q_LB[i]} (now $cur)")" || cancel
+      choice="$(printf '%s\n%s\n' "$list" "$BACK" | gum choose --height 14 --header "$(hdr "${Q_LB[i]} (now $cur)" "${Q_HP[i]}")")" || cancel
       [[ "$choice" != "$BACK" ]] || return 1
       choice="${choice% (default)}"
       if [[ "$choice" == "$CUSTOM" ]]; then
         while :; do
-          choice="$(gum input --header "${Q_LB[i]} (${lo:-any} to ${hi:-any})" --value "$cur")" || cancel
+          choice="$(gum input --header "$(hdr "${Q_LB[i]} (${lo:-any} to ${hi:-any})" "${Q_HP[i]}")" --value "$cur")" || cancel
           if [[ "$choice" =~ ^-?[0-9]+$ ]] && { [[ -z "$lo" ]] || (( choice >= lo )); } && { [[ -z "$hi" ]] || (( choice <= hi )); }; then
             break
           fi
@@ -200,13 +203,13 @@ ask_value() {
       ASKED="$choice" ;;
     list)
       if [[ -n "${Q_CH[i]}" ]]; then
-        choice="$(printf '%s\n' "${Q_CH[i]//|/$'\n'}" | gum choose --no-limit --height 14 --header "${Q_LB[i]}")" || cancel
+        choice="$(printf '%s\n' "${Q_CH[i]//|/$'\n'}" | gum choose --no-limit --height 14 --header "$(hdr "${Q_LB[i]}" "${Q_HP[i]}")")" || cancel
         ASKED="$(printf '%s\n' "$choice" | paste -s -d',' -)"
       else
-        ASKED="$(gum input --header "${Q_LB[i]} (a, b, c)" --value "$cur")" || cancel
+        ASKED="$(gum input --header "$(hdr "${Q_LB[i]} (a, b, c)" "${Q_HP[i]}")" --value "$cur")" || cancel
       fi ;;
     *)
-      ASKED="$(gum input --header "${Q_LB[i]}" --value "$cur")" || cancel ;;
+      ASKED="$(gum input --header "$(hdr "${Q_LB[i]}" "${Q_HP[i]}")" --value "$cur")" || cancel ;;
   esac
 }
 

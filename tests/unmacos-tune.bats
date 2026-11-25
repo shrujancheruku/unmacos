@@ -394,3 +394,19 @@ stub_chezmoi() {
   grep -qE '^    tune\)' "$BIN/executable_unmacos-menu"
   sed -n '/^    tune)/,/;;/p' "$BIN/executable_unmacos-menu" | grep -q 'unmacos-tune'
 }
+
+@test "a Setting's help is in its own picker's header; opening several Settings leaves none above the list" {
+  replies '0|look · Fixture glow: 4' '0|10' '0|Keep' '0|look · Fixture frame: thin' '0|thick' '0|Keep' '0|Save'
+  run tune
+  echo "$output"
+  [ "$status" -eq 0 ]
+  # no help printed above the list, from any Setting opened
+  [[ "$output" != *"only the test knows"* ]]
+  # each Setting's help is the second header line of its own picker
+  grep -A1 -- '--header Fixture glow (now 4)' "$GUM_LOG" | grep -q 'A live Look Setting only the test knows'
+  grep -A1 -- '--header Fixture frame (now thin)' "$GUM_LOG" | grep -q 'A live enum only the test knows'
+  # the main list's header carries no help, even after a Setting was opened
+  ! grep -A1 -- '--header Settings' "$GUM_LOG" | grep -q 'only the test knows'
+  [ "$(saved look.fixture_glow)" = 10 ]
+  [ "$(saved look.fixture_frame)" = thick ]
+}
