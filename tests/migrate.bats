@@ -219,3 +219,39 @@ setup() {
   [ "$status" -eq 0 ]
   [ ! -e "$HOME/.config/unmacos/setup.toml" ]
 }
+
+# --- Settings that moved group (the schema's moved_from) ------------------------------------------
+
+@test "desktop.animate in older Answers moves to look.animate on migrate, keeping a backup" {
+  printf '[look]\ntheme = "nord"\n\n[desktop]\nanimate = false\nfocus_follows_mouse = false\n' > "$OLD"
+  run settings migrate "$OLD"
+  echo "$output"
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"setup.toml.bak"* ]]
+  [ "$(settings get --from "$OLD" look.animate)" = false ]
+  [ "$(settings get --from "$OLD" desktop.focus_follows_mouse)" = false ]
+  # the old key is gone from [desktop], and nothing warns about it any more
+  ! sed -n '/^\[desktop\]/,/^\[/p' "$OLD" | grep -q '^animate'
+  run settings list --from "$OLD"
+  [[ "$output" != *"warning"* ]]
+}
+
+@test "an un-migrated desktop.animate is read as look.animate, with no unknown-key warning" {
+  printf '[desktop]\nanimate = false\n' > "$OLD"
+  run settings get --from "$OLD" look.animate
+  echo "$output"
+  [ "$status" -eq 0 ]
+  [ "$output" = false ]
+}
+
+@test "look.animate wins over a leftover desktop.animate" {
+  printf '[look]\nanimate = true\n\n[desktop]\nanimate = false\n' > "$OLD"
+  [ "$(settings get --from "$OLD" look.animate 2>/dev/null)" = true ]
+}
+
+@test "chezmoi reads an un-migrated desktop.animate as .look.animate" {
+  mkdir -p "$HOME/.config/unmacos"
+  printf 'name = "T"\nemail = "t@example.invalid"\nuse_1password = false\n[desktop]\nanimate = false\n' > "$HOME/.config/unmacos/setup.toml"
+  unmacos_chezmoi_init
+  [ "$(unmacos_chezmoi execute-template '{{ .look.animate }}')" = false ]
+}

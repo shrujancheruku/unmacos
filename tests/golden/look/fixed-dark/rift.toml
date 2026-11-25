@@ -1,12 +1,12 @@
 # Rift config: Omarchy/Hyprland-style binary splitting on macOS
-# chezmoi template: animate and the focus/mouse settings come from unmacos-setup.
+# Rendered by unmacos-look from templates/rift.toml.tpl. Do not edit; Rift reloads it live.
 #
 # Modifier: Alt (Option) stands in for Omarchy's SUPER.
 # Reference: https://acsandmann.github.io/rift-docs/ (built against rift.default.toml, v0.8.x)
 
 [settings]
 # Window animations, like Omarchy (Hyprland). Turn off live: rift-cli execute config set-animate false
-animate = {{ .desktop.animate }}
+animate = true
 animation_duration = 0.15
 # Fast start, soft landing: new windows spend less time sliding into place
 animation_easing = "ease_out_cubic"
@@ -21,9 +21,9 @@ default_disable = false
 # AeroSpace's `move-mouse window-lazy-center` (so a stray click or Alt + W can't
 # hit the wrong window). Hiding is set up only when the service starts, so
 # changing mouse_hides_on_focus needs `rift service restart`, not a reload.
-focus_follows_mouse = {{ .desktop.focus_follows_mouse }}
-mouse_follows_focus = {{ .desktop.mouse_follows_focus }}
-mouse_hides_on_focus = {{ .desktop.mouse_hides_on_focus }}
+focus_follows_mouse = true
+mouse_follows_focus = true
+mouse_hides_on_focus = true
 
 auto_focus_blacklist = ["com.apple.Spotlight", "com.raycast.macos"]
 
@@ -49,8 +49,9 @@ stack_offset = 40.0
 default_orientation = "perpendicular"
 
 # A visible 4px gap on every side. Rift measures gaps between window frames,
-# but JankyBorders draws its 6px border outside the frame, so:
-#   inner = 4 + 6 + 6, sides and bottom = 4 + 6, top = 37 (bottom of the bar's chips) + 4 + 6
+# but JankyBorders draws its 6px border outside the frame, so the gaps are
+# derived from the Look: sides = gap + border, inner = gap + 2 * border, and the edge the
+# bar sits on (bar_position) = far edge of the bar's chips + gap + border, the other = sides.
 # top below is for screens without a notch. At start, and whenever the bar is
 # hidden or shown, unmacos-toggle-bar recomputes it for the actual display.
 [settings.layout.gaps.outer]

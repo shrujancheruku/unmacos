@@ -5,7 +5,8 @@
   Copy setup.toml to a new Mac (or run unmacos-setup --import) to rebuild it the same way.
 
   This template runs before chezmoi's data exists, so it reads the schema file itself.
-  Order for each Setting: the Answers' [group] table, then the flat key older Answers files use
+  Order for each Setting: the Answers' [group] table, then the group.key it moved from (the
+  schema's "moved_from"), then the flat key older Answers files use
   (the schema's "legacy"; personal = true stands for every app group), then, for Settings marked
   "ask", a prompt (its default is the schema's; chezmoi init --promptDefaults takes it without
   asking), then the default. unmacos-settings migrate (run by chezmoi apply, and on the
@@ -21,8 +22,13 @@
   {{- $group := index $answers .group -}}
   {{- $value := .default -}}
   {{- $legacy := get . "legacy" -}}
+  {{- $mg := dict -}}{{- $mk := "" -}}
+  {{- with get . "moved_from" }}{{ $mg = index $answers (splitList "." . | first) }}{{ $mk = splitList "." . | last }}{{ end -}}
   {{- if and (kindIs "map" $group) (hasKey $group .key) -}}
     {{- $value = index $group .key -}}
+  {{- else if and $mk (kindIs "map" $mg) (hasKey $mg $mk) -}}
+    {{- /* a Setting that moved group (the schema's moved_from), until the file is migrated */ -}}
+    {{- $value = index $mg $mk -}}
   {{- else if and $legacy (hasKey $answers $legacy) (not (kindIs "map" (index $answers $legacy))) -}}
     {{- $value = index $answers $legacy -}}
   {{- else if and (eq .group "apps") (eq .key "groups") (kindIs "bool" (get $answers "personal")) (get $answers "personal") -}}

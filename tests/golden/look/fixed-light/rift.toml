@@ -1,0 +1,235 @@
+# Rift config: Omarchy/Hyprland-style binary splitting on macOS
+# Rendered by unmacos-look from templates/rift.toml.tpl. Do not edit; Rift reloads it live.
+#
+# Modifier: Alt (Option) stands in for Omarchy's SUPER.
+# Reference: https://acsandmann.github.io/rift-docs/ (built against rift.default.toml, v0.8.x)
+
+[settings]
+# Window animations, like Omarchy (Hyprland). Turn off live: rift-cli execute config set-animate false
+animate = true
+animation_duration = 0.15
+# Fast start, soft landing: new windows spend less time sliding into place
+animation_easing = "ease_out_cubic"
+animation_fps = 120.0 # ProMotion rate; must be > 0 (Rift 0.8.x crashes on 0 despite its docs)
+
+# Tile every Space by default, like Hyprland (Rift's default is opt-in per Space).
+default_disable = false
+
+# Focus follows mouse: the tile under the pointer is the focused one.
+# Mouse follows focus: keyboard focus changes warp the pointer to the centre of
+# the newly focused window and hide it until the mouse is physically moved, like
+# AeroSpace's `move-mouse window-lazy-center` (so a stray click or Alt + W can't
+# hit the wrong window). Hiding is set up only when the service starts, so
+# changing mouse_hides_on_focus needs `rift service restart`, not a reload.
+focus_follows_mouse = true
+mouse_follows_focus = true
+mouse_hides_on_focus = true
+
+auto_focus_blacklist = ["com.apple.Spotlight", "com.raycast.macos"]
+
+hot_reload = true
+
+# Runs once at service start. Config reload does NOT rerun these: `rift service restart`.
+run_on_start = [
+  "/opt/homebrew/bin/brew services restart sketchybar",
+  "/bin/bash -c '$HOME/.config/borders/bordersrc'",
+  # Fit the top gap to this display and the bar (notched MacBooks reserve 32px)
+  "/bin/bash -c 'sleep 3; $HOME/.local/bin/unmacos-toggle-bar --sync'",
+  "/opt/homebrew/bin/rift-cli subscribe cli --event workspace_changed --command sh --args -c --args '/opt/homebrew/bin/sketchybar --trigger rift_workspace_changed RIFT_WORKSPACE_NAME=\"$RIFT_WORKSPACE_NAME\" RIFT_WORKSPACE_ID=\"$RIFT_WORKSPACE_ID\"'",
+  "/opt/homebrew/bin/rift-cli subscribe cli --event windows_changed --command sh --args -c --args '/opt/homebrew/bin/sketchybar --trigger rift_windows_changed RIFT_WORKSPACE_NAME=\"$RIFT_WORKSPACE_NAME\" RIFT_WINDOW_COUNT=\"$RIFT_WINDOW_COUNT\"'",
+]
+
+[settings.layout]
+# Binary space partitioning: each new window splits the focused one (Hyprland dwindle).
+mode = "bsp"
+window_insertion_point = "next_to_selection"
+
+[settings.layout.stack]
+stack_offset = 40.0
+default_orientation = "perpendicular"
+
+# A visible 4px gap on every side. Rift measures gaps between window frames,
+# but JankyBorders draws its 6px border outside the frame, so the gaps are
+# derived from the Look: sides = gap + border, inner = gap + 2 * border, and the edge the
+# bar sits on (bar_position) = far edge of the bar's chips + gap + border, the other = sides.
+# top below is for screens without a notch. At start, and whenever the bar is
+# hidden or shown, unmacos-toggle-bar recomputes it for the actual display.
+[settings.layout.gaps.outer]
+top = 47
+left = 10
+bottom = 10
+right = 10
+
+[settings.layout.gaps.inner]
+horizontal = 16
+vertical = 16
+
+[settings.ui.menu_bar]
+enabled = false # SketchyBar draws the workspaces
+
+[settings.ui.stack_line]
+enabled = true
+
+[settings.gestures]
+enabled = false
+
+[settings.drag_drop]
+enabled = true
+modifier = "alt"
+action1 = "move"
+drop_action = "swap"
+
+[virtual_workspaces]
+mode = "per_display"
+enabled = true
+default_workspace_count = 5
+default_workspace = 0
+auto_assign_windows = true
+preserve_focus_per_workspace = true
+workspace_auto_back_and_forth = false
+prevent_wrapping = false
+# Names match the SketchyBar chip labels (items/rift_workspaces.lua)
+workspace_names = ["1", "2", "3", "4", "5"]
+workspace_rules = []
+
+app_rules = [
+  { title_substring = "Preferences", floating = true },
+  { title_substring = "Settings", ax_subrole = "AXDialog", floating = true },
+  { app_id = "com.apple.systempreferences", floating = true },
+  { app_id = "com.apple.ActivityMonitor", floating = true },
+  # Mullvad VPN's window is the dropdown under its menu bar icon: when Rift
+  # moved or focused it, it lost focus and closed. Leave it alone entirely.
+  { app_id = "net.mullvad.vpn", manage = false },
+  # unmacos-popup windows (menus, pickers): floating, centred (position is a
+  # fraction of the free space; size is in points)
+  # The cheatsheet (title "float:keys") gets a bigger window; listed first.
+  { app_id = "com.mitchellh.ghostty", title_substring = "float:keys", floating = true, position = { x = 0.5, y = 0.5 }, size = { w = 1440, h = 860 } },
+  { app_id = "com.mitchellh.ghostty", title_substring = "float:", floating = true, position = { x = 0.5, y = 0.4 }, size = { w = 1000, h = 600 } },
+]
+
+# [keys] replaces Rift's whole default keymap.
+# Omarchy key → Rift equivalent noted where they differ.
+[keys]
+# Every binding ends with "#: description" for the cheatsheet (unmacos-keys,
+# Alt + Ctrl + K), like Omarchy's bindd. "#: [label] text" shows one row for a
+# group of keys; "#:-" hides a binding that's covered by a group row.
+# Section titles come from the "# --- Title ---" lines.
+
+# --- Windows ---
+# Focus: Omarchy uses SUPER + arrows. hjkl only here, so Alt + arrows stay word-jumps in text.
+"Alt + H" = { move_focus = "left" }                          #: [Alt + H J K L] Focus left, down, up, right
+"Alt + J" = { move_focus = "down" }                          #:-
+"Alt + K" = { move_focus = "up" }                            #:-
+"Alt + L" = { move_focus = "right" }                         #:-
+# Omarchy: SUPER + SHIFT + arrows
+"Alt + Shift + H" = { move_node = "left" }                   #: [Alt + Shift + H J K L] Move window
+"Alt + Shift + J" = { move_node = "down" }                   #:-
+"Alt + Shift + K" = { move_node = "up" }                     #:-
+"Alt + Shift + L" = { move_node = "right" }                  #:-
+"Alt + W" = "close_window"                                   #: Close window
+"Alt + T" = { toggle_window_floating = { center = true } }   #: Float or tile window
+"Alt + Shift + T" = "toggle_focus_floating"                  #: Focus floating or tiled
+"Alt + F" = "toggle_fullscreen"                              #: Fullscreen
+# Omarchy: SUPER + CTRL + F
+"Alt + Cmd + F" = "toggle_fullscreen_within_gaps"            #: Fullscreen inside the gaps
+"Alt + Z" = "toggle_space_activated"                         #: Tiling on or off for this Space
+
+# --- Workspaces ---
+# Rift indices are 0-based
+"Alt + 1" = { switch_to_workspace = 0 }                      #: [Alt + 1–5] Go to workspace
+"Alt + 2" = { switch_to_workspace = 1 }                      #:-
+"Alt + 3" = { switch_to_workspace = 2 }                      #:-
+"Alt + 4" = { switch_to_workspace = 3 }                      #:-
+"Alt + 5" = { switch_to_workspace = 4 }                      #:-
+# Omarchy: SUPER + SHIFT + N moves the window and follows it
+"Alt + Shift + 1" = { move_window_to_workspace = { workspace = 0, follow = true } }   #: [Alt + Shift + 1–5] Move window there and follow
+"Alt + Shift + 2" = { move_window_to_workspace = { workspace = 1, follow = true } }   #:-
+"Alt + Shift + 3" = { move_window_to_workspace = { workspace = 2, follow = true } }   #:-
+"Alt + Shift + 4" = { move_window_to_workspace = { workspace = 3, follow = true } }   #:-
+"Alt + Shift + 5" = { move_window_to_workspace = { workspace = 4, follow = true } }   #:-
+# Omarchy: SUPER + SHIFT + ALT + N moves silently
+"Alt + Ctrl + 1" = { move_window_to_workspace = { workspace = 0, follow = false } }   #: [Alt + Ctrl + 1–5] Send window there
+"Alt + Ctrl + 2" = { move_window_to_workspace = { workspace = 1, follow = false } }   #:-
+"Alt + Ctrl + 3" = { move_window_to_workspace = { workspace = 2, follow = false } }   #:-
+"Alt + Ctrl + 4" = { move_window_to_workspace = { workspace = 3, follow = false } }   #:-
+"Alt + Ctrl + 5" = { move_window_to_workspace = { workspace = 4, follow = false } }   #:-
+# Omarchy: SUPER + TAB next, SUPER + SHIFT + TAB prev, SUPER + CTRL + TAB former
+"Alt + Tab" = "next_workspace"                               #: Next workspace
+"Alt + Shift + Tab" = "prev_workspace"                       #: Previous workspace
+"Alt + Ctrl + Tab" = "switch_to_last_workspace"              #: Last workspace
+
+# --- Layout ---
+# Omarchy: SUPER + J toggles split. Alt + J is focus-down here, so use Alt + Slash.
+"Alt + Slash" = "toggle_orientation"                         #: Flip the split
+"Alt + Ctrl + Equal" = "balance"                             #: Even out sizes
+# Omarchy: SUPER + G group ≈ Rift stack; SUPER + ALT + G ungroup
+"Alt + G" = "toggle_stack"                                   #: Stack windows
+"Alt + Ctrl + G" = "unjoin_windows"                          #: Unstack
+"Alt + Ctrl + Left" = { join_window = "left" }               #: [Alt + Ctrl + Arrows] Join with neighbour
+"Alt + Ctrl + Right" = { join_window = "right" }             #:-
+"Alt + Ctrl + Up" = { join_window = "up" }                   #:-
+"Alt + Ctrl + Down" = { join_window = "down" }               #:-
+# Per-workspace layout engine
+"Alt + Ctrl + B" = { set_workspace_layout = { mode = "bsp" } }            #: Layout: split
+"Alt + Ctrl + T" = { set_workspace_layout = { mode = "traditional" } }    #: Layout: traditional
+"Alt + Ctrl + M" = { set_workspace_layout = { mode = "master_stack" } }   #: Layout: main and side
+"Alt + Ctrl + S" = { set_workspace_layout = { mode = "scrolling" } }      #: Layout: scrolling
+
+# --- Resize ---
+# Omarchy: SUPER + minus/equal width, SUPER + SHIFT height
+"Alt + Minus" = { resize_window_shrink = "horizontal" }      #: Narrower
+"Alt + Equal" = { resize_window_grow = "horizontal" }        #: Wider
+"Alt + Shift + Minus" = { resize_window_shrink = "vertical" }  #: Shorter
+"Alt + Shift + Equal" = { resize_window_grow = "vertical" }  #: Taller
+"Alt + R" = { binding_mode = "resize" }                      #: Resize mode (H J K L, Esc to leave)
+
+# --- Apps ---
+# Omarchy SUPER + key → Alt + key. TUIs focus their window if it's already open.
+"Alt + Enter" = { exec = ["/bin/sh", "-c", "$HOME/.local/bin/unmacos-term"] }   #: Terminal
+"Alt + Ctrl + Enter" = { exec = ["/bin/sh", "-c", "$HOME/.local/bin/unmacos-term tmux new -A -s Work"] }   #: Terminal in tmux "Work"
+"Alt + Shift + Enter" = { exec = ["/usr/bin/open", "-a", "Firefox"] }   #:-
+"Alt + Shift + B" = { exec = ["/usr/bin/open", "-a", "Firefox"] }   #: Browser
+"Alt + Shift + Ctrl + B" = { exec = ["/usr/bin/open", "-na", "Firefox", "--args", "--private-window"] }   #: Private browser window
+"Alt + Shift + M" = { exec = ["/bin/sh", "-c", "$HOME/.local/bin/unmacos-tui music spotify_player"] }   #: Music
+"Alt + Ctrl + Shift + M" = { exec = ["/bin/sh", "-c", "$HOME/.local/bin/unmacos-spotify"] }   #: Spotify app
+"Alt + Shift + F" = { exec = ["/bin/sh", "-c", "$HOME/.local/bin/unmacos-tui files nnn -deH"] }   #: Files
+"Alt + Shift + N" = { exec = ["/bin/sh", "-c", "$HOME/.local/bin/unmacos-tui editor nvim"] }   #: Neovim
+"Alt + Shift + D" = { exec = ["/bin/sh", "-c", "$HOME/.local/bin/unmacos-tui docker lazydocker"] }   #: Docker
+"Alt + Shift + G" = { exec = ["/bin/sh", "-c", "$HOME/.local/bin/unmacos-tui git lazygit"] }   #: Git
+"Alt + Shift + A" = { exec = ["/bin/sh", "-c", "$HOME/.local/bin/unmacos-tui ai claude"] }   #: Claude
+"Alt + Cmd + T" = { exec = ["/bin/sh", "-c", "$HOME/.local/bin/unmacos-tui top btop"] }   #: System monitor
+"Alt + Shift + Slash" = { exec = ["/usr/bin/open", "-a", "1Password"] }   #: 1Password
+"Alt + Shift + Ctrl + G" = { exec = ["/usr/bin/open", "-a", "WhatsApp"] }   #: WhatsApp
+
+# --- Menus ---
+# television in a floating popup
+"Alt + Space" = { exec = ["/bin/sh", "-c", "$HOME/.local/bin/unmacos-popup apps unmacos-menu apps"] }   #: Apps
+"Alt + Ctrl + Space" = { exec = ["/bin/sh", "-c", "$HOME/.local/bin/unmacos-popup menu unmacos-menu"] }   #: UnMacOS menu
+"Alt + Ctrl + K" = { exec = ["/bin/sh", "-c", "UNMACOS_POPUP_SIZE=large $HOME/.local/bin/unmacos-popup keys unmacos-keys"] }   #: These shortcuts
+"Alt + Ctrl + V" = { exec = ["/bin/sh", "-c", "$HOME/.local/bin/unmacos-popup clipboard unmacos-menu clipboard"] }   #: Clipboard history
+"Alt + Ctrl + Period" = { exec = ["/bin/sh", "-c", "$HOME/.local/bin/unmacos-popup emoji unmacos-menu emoji"] }   #: Emoji
+"Alt + Ctrl + W" = { exec = ["/bin/sh", "-c", "$HOME/.local/bin/unmacos-popup windows unmacos-menu windows"] }   #: Windows
+"Alt + Cmd + A" = { exec = ["/bin/sh", "-c", "$HOME/.local/bin/unmacos-popup audio unmacos-menu audio"] }   #: Sound output
+"Alt + Cmd + B" = { exec = ["/bin/sh", "-c", "$HOME/.local/bin/unmacos-popup bluetooth unmacos-menu bluetooth"] }   #: Bluetooth
+"Alt + Cmd + W" = { exec = ["/bin/sh", "-c", "$HOME/.local/bin/unmacos-menu wifi"] }   #: Wi-Fi
+"Alt + Ctrl + Shift + Space" = { exec = ["/bin/sh", "-c", "$HOME/.local/bin/unmacos-popup theme unmacos-menu theme"] }   #: Themes
+"Alt + Escape" = { exec = ["/bin/sh", "-c", "$HOME/.local/bin/unmacos-popup system unmacos-menu system"] }   #: Lock, sleep, restart, shut down
+
+# --- System ---
+"Alt + Shift + Space" = { exec = ["/bin/sh", "-c", "$HOME/.local/bin/unmacos-toggle-bar"] }   #: Hide or show the bar
+"Alt + Shift + S" = { exec = ["/usr/sbin/screencapture", "-i", "-c"] }   #: Screenshot to clipboard
+"Alt + Cmd + Space" = { exec = ["/bin/sh", "-c", "$HOME/.local/bin/unmacos-wallpaper next"] }   #: Next wallpaper
+"Alt + Cmd + N" = { exec = ["/opt/homebrew/bin/nightlight", "toggle"] }   #: Night light
+"Alt + Cmd + L" = { exec = ["/usr/bin/pmset", "displaysleepnow"] }   #: Lock
+"Alt + Shift + R" = "reload_config"                          #: Reload Rift
+
+# Keep all [keys] entries above this line: binding mode tables scope what follows.
+# --- Resize mode (after Alt + R) ---
+[binding_modes.resize]
+"H" = { resize_window_shrink = "horizontal" }   #: Narrower
+"L" = { resize_window_grow = "horizontal" }     #: Wider
+"J" = { resize_window_grow = "vertical" }       #: Taller
+"K" = { resize_window_shrink = "vertical" }     #: Shorter
+"Equal" = "balance"                             #: Even out sizes
+"Escape" = { binding_mode = "default" }         #: [Esc / Enter] Leave resize mode
+"Enter" = { binding_mode = "default" }          #:-

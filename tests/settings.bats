@@ -44,7 +44,7 @@ TOML
   unmacos_chezmoi_init
   [ "$(value .look.corner_radius)" = "8" ]
   [ "$(value .look.theme)" = "tokyo-night" ]
-  [ "$(value .desktop.animate)" = "true" ]
+  [ "$(value .look.animate)" = "true" ]
   [ "$(value .keep.ai)" = "false" ]
   [ "$(value '.apps.groups | len')" = "0" ]
 }
@@ -68,7 +68,7 @@ TOML
   [ "$(value .look.corner_radius)" = "4" ]
   [ "$(value '.apps.groups | join ","')" = "dev" ]
   [ "$(value .keep.ai)" = "true" ]
-  [ "$(value .desktop.animate)" = "false" ]
+  [ "$(value .look.animate)" = "false" ]
   # a Setting left out of a table that is there still gets its default
   [ "$(value .desktop.focus_follows_mouse)" = "true" ]
   [ "$(value .keep.glass)" = "false" ]
@@ -98,13 +98,10 @@ animate = false
 mouse_hides_on_focus = false
 TOML
   unmacos_chezmoi_init
-  run unmacos_chezmoi cat "$HOME/.config/rift/config.toml"
-  [ "$status" -eq 0 ]
-  [[ "$output" == *"animate = false"* ]]
-  [[ "$output" == *"mouse_hides_on_focus = false"* ]]
-  [[ "$output" == *"focus_follows_mouse = true"* ]]
-  run unmacos_chezmoi cat "$HOME/.config/sketchybar/settings.lua"
-  [[ "$output" == *"corner_radius = 4,"* ]]
+  # corner_radius reaches macOS's window corners on apply; the bar and Spotify read the
+  # rendered Look instead (tests/look.bats)
+  run unmacos_chezmoi cat "$HOME/.chezmoiscripts/40-no-ai-no-glass.sh"
+  [[ "$output" == *"NSConvolutionOverride1 -float 4"* ]]
 }
 
 @test "a Setting marked ask is asked on init when the Answers omit it" {

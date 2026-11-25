@@ -2,13 +2,14 @@
 # UnMacOS: JankyBorders. Colours come from the active theme.
 active_color=0xff7aa2f7
 inactive_color=0xff3b4261
+width=6
 theme="$HOME/.local/state/unmacos/theme/borders.sh"
 # shellcheck source=/dev/null
 [[ -f "$theme" ]] && source "$theme"
 
 options=(
 	style=round
-	width=6.0
+	width="$width"
 	hidpi=off
 	active_color="$active_color"
 	inactive_color="$inactive_color"

@@ -16,6 +16,8 @@
 #                 X" where the label reads "Keep X on")
 #   phase         install (asked before anything installs) | tune (changed on the installed desktop)
 #   takes_effect  live | apply | restart:<app> | logout
+#   also_on_apply optional, true: a live Setting that chezmoi apply also writes somewhere outside the
+#                 Look (corner_radius: macOS's own window corners), so saving it from Tune runs apply
 #   env           optional: prefs.sh exports it as this environment variable; a value already in
 #                 the environment wins for one run (bool: only exported when true, as 1;
 #                 int and enum: always). Not for string or list Settings.
@@ -25,6 +27,9 @@
 #                 template runs before the migrate script, and a plain chezmoi init on an old Mac
 #                 skips the wizard). Dropped in the release that stops upgrading from the old
 #                 format, with the migration itself.
+#   moved_from    optional: the group.key it had before it moved group (look.animate was
+#                 desktop.animate). Still read while the new key is unset, and unmacos-settings
+#                 migrate moves the value across. Dropped with the legacy keys.
 #   feature       optional: the Feature that owns it (filled in by the Features milestone)
 
 # --- Git ---------------------------------------------------------------------------------------
@@ -80,11 +85,116 @@ default = 8
 min = 0
 max = 24
 label = "Corner radius"
-help = "Roundness of windows, bar chips, popups and Spotify, in pixels. Apps pick it up when they restart."
+help = "Roundness of bar chips, popups and Spotify (shown at once) and of windows (as each app relaunches), in pixels."
 phase = "tune"
-takes_effect = "apply"
+takes_effect = "live"
+also_on_apply = true
 env = "UNMACOS_CORNER_RADIUS"
 legacy = "corner_radius"
+
+[[settings]]
+group = "look"
+key = "terminal_font"
+type = "enum"
+default = "Geist Mono Nerd Font Mono"
+choices = ["Geist Mono Nerd Font Mono", "Hack Nerd Font Mono", "VictorMono Nerd Font Mono"]
+label = "Terminal font"
+help = "The font Ghostty draws text in. These are the Nerd Fonts UnMacOS installs, so icons keep working."
+phase = "tune"
+takes_effect = "live"
+
+[[settings]]
+group = "look"
+key = "terminal_font_size"
+type = "int"
+default = 16
+min = 8
+max = 32
+label = "Terminal font size"
+help = "Ghostty's text size, in points."
+phase = "tune"
+takes_effect = "live"
+
+[[settings]]
+group = "look"
+key = "bar_font"
+type = "enum"
+default = "GeistMono Nerd Font"
+choices = ["GeistMono Nerd Font", "Hack Nerd Font", "VictorMono Nerd Font"]
+label = "Bar font"
+help = "The font of the bar's text. These are the Nerd Fonts UnMacOS installs. Hack has no semibold or heavy weight, so its bar text uses bold."
+phase = "tune"
+takes_effect = "live"
+
+[[settings]]
+group = "look"
+key = "animate"
+type = "bool"
+default = true
+label = "Animate windows into place"
+help = "Windows glide to their new spot instead of jumping."
+phase = "tune"
+takes_effect = "live"
+moved_from = "desktop.animate"
+
+[[settings]]
+group = "look"
+key = "animation_duration"
+type = "int"
+default = 150
+min = 50
+max = 500
+label = "Animation duration"
+help = "How long a window takes to glide into place, in milliseconds. Only matters while window animation is on."
+phase = "tune"
+takes_effect = "live"
+
+[[settings]]
+group = "look"
+key = "window_gap"
+type = "int"
+default = 4
+min = 0
+max = 24
+label = "Window gap"
+help = "Visible space between tiled windows and the screen edge, in pixels. Rift adds the border width on top so the gap stays even."
+phase = "tune"
+takes_effect = "live"
+
+[[settings]]
+group = "look"
+key = "border_width"
+type = "int"
+default = 6
+min = 0
+max = 12
+label = "Border width"
+help = "Width of the focused-window border, in pixels. Rift's gaps grow with it so borders never overlap."
+phase = "tune"
+takes_effect = "live"
+
+[[settings]]
+group = "look"
+key = "bar_height"
+type = "int"
+default = 44
+min = 30
+max = 80
+label = "Bar height"
+help = "Height of the bar, in pixels. The chips inside follow it, and Rift reserves the room."
+phase = "tune"
+takes_effect = "live"
+
+[[settings]]
+group = "look"
+key = "bar_position"
+type = "enum"
+default = "top"
+choices = ["top", "bottom"]
+label = "Bar position"
+help = "Whether the bar sits at the top or the bottom of the screen. Rift reserves that edge for it."
+phase = "tune"
+takes_effect = "live"
 
 # --- Bar ---------------------------------------------------------------------------------------
 
@@ -149,16 +259,6 @@ phase = "tune"
 takes_effect = "apply"
 
 # --- Windows and pointer (Rift) ------------------------------------------------------------------
-
-[[settings]]
-group = "desktop"
-key = "animate"
-type = "bool"
-default = true
-label = "Animate windows into place"
-help = "Windows glide to their new spot instead of jumping."
-phase = "install"   # asked by the wizard until M2's Tune phase, which moves it back to tune
-takes_effect = "restart:rift"
 
 [[settings]]
 group = "desktop"

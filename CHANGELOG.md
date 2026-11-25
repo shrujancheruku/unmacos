@@ -5,11 +5,28 @@ full notes for each are on [GitHub Releases](https://github.com/shrujancheruku/u
 
 ## [Unreleased]
 
-### Changed
-- The bar's chips, popups and the clock's inner pill and the windows share 8px corners (bar chips were 9–10px, windows 4px).
-
 ### Added
-- `corner_radius` in `setup.toml` sets one corner radius for windows, bar chips, popups and Spotify.
+- The Tune phase, `unmacos-tune` (menu → Tune the Look): pick Look Settings on your own desktop
+  and see each one straight away as a Draft Look, then Save or Discard. Settings that can't be
+  shown live are badged (after restart, after logout, on save) and applied when you save. The
+  installer offers it once the desktop is up, or says how to run it later.
+- `unmacos-look`: renders the Look (every app's themed config) from chezmoi templates into any
+  folder, keeps a Draft Look (`draft set`, `save`, `discard`) and live-reloads apps (`reload`).
+- New Look Settings, all shown live in Tune: window gap, border width, bar height, bar position
+  (top or bottom), terminal font and size, bar font, window animation on/off and animation duration.
+- `corner_radius` sets one corner radius for windows, bar chips, popups and Spotify. The bar and
+  Spotify change at once; window corners change as each app relaunches.
+- The bar can sit at the bottom of the screen, with Rift's tiling area following it.
+
+### Changed
+- Rift's config is now rendered by the Look from `templates/rift.toml.tpl`, with its gaps worked out
+  from the window gap, border width and bar height. `~/.config/rift/config.toml` is a symlink to the
+  rendered file, so local edits to it are lost: move them into the template (or a Setting).
+- Window animation on/off moves from `[desktop] animate` to `[look] animate`, set in Tune, and the
+  setup wizard no longer asks it. Older Answers keep working, and the key moves across (with a `.bak`) the next time they are read.
+- The bar's chips, popups and the clock's inner pill and the windows share 8px corners (bar chips were 9–10px, windows 4px).
+- `unmacos-toggle-bar` fits Rift's gaps to the rendered config, so a bar that is still reloading can't
+  leave the wrong gap.
 
 ## [1.5.0] - 2026-11-23
 

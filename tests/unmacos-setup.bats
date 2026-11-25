@@ -173,7 +173,7 @@ TOML
   [ "$(saved look.theme)" = "gruvbox" ]
   [ "$(saved look.corner_radius)" = "12" ]
   [ "$(saved apps.groups)" = "media" ]
-  [ "$(saved desktop.animate)" = "false" ]
+  [ "$(saved look.animate)" = "false" ]
   [ "$(saved onepassword.enabled)" = "false" ]
 }
 
@@ -283,7 +283,6 @@ bar	bar.weather	gum input	Weather place
 apps	apps.groups	gum choose --no-limit	Extra apps to install
 apps	apps.skip	gum choose --no-limit	Apps to leave out
 onepassword	onepassword.enabled	gum confirm	Read secrets from 1Password
-desktop	desktop.animate	gum choose --no-limit	Animate windows into place
 desktop	desktop.focus_follows_mouse	gum choose --no-limit	Focus follows the mouse
 desktop	desktop.mouse_follows_focus	gum choose --no-limit	Pointer follows keyboard focus
 desktop	desktop.mouse_hides_on_focus	gum choose --no-limit	Hide the pointer after a keyboard focus
@@ -377,9 +376,9 @@ replies() { printf '%s\n' "$@" > "$GUM_REPLIES"; }
   unmacos_chezmoi_init
   stub_gum
   # name, email, theme, weather (empty: the default), app groups (dev), skip some? no,
-  # 1Password? yes, desktop: all four stay ticked, change: everything but Firefox, save? yes
+  # 1Password? yes, desktop: all three stay ticked, change: everything but Firefox, save? yes
   replies '0|Ada' '0|ada@example.invalid' '0|nord' '0|' '0|dev — Developer tools' '1|' '0|' \
-    '0|Animate windows into place\nFocus follows the mouse\nPointer follows keyboard focus\nHide the pointer after a keyboard focus' \
+    '0|Focus follows the mouse\nPointer follows keyboard focus\nHide the pointer after a keyboard focus' \
     '0|Turn off Apple Intelligence (macOS 26+)\nTurn off Liquid Glass (macOS 26+)\nSet the desktop wallpaper from the theme\nSet macOS'"'"'s accent and highlight colours from the theme\nUse the theme'"'"'s wallpaper on Firefox'"'"'s new tab page\nTheme the Spotify app with Spicetify (media apps)\nRecolour Orca to match the theme (if you use it)' \
     '0|'
   run wizard --no-apply
@@ -391,7 +390,7 @@ replies() { printf '%s\n' "$@" > "$GUM_REPLIES"; }
   [ "$(saved keep.firefox)" = "true" ]
   [ "$(saved keep.ai)" = "false" ]
   [ "$(saved keep.spotify)" = "false" ]
-  [ "$(saved desktop.animate)" = "true" ]
+  [ "$(saved look.animate)" = "true" ]
   [ "$(saved bar.weather)" = "auto" ]
   # the summary names what changed by label, and not what did not
   [[ "$output" == *"Theme: tokyo-night → nord"* ]]
@@ -406,7 +405,7 @@ replies() { printf '%s\n' "$@" > "$GUM_REPLIES"; }
   [[ "$output" == *"gum input --header Weather place --value auto"* ]]
   # everything UnMacOS changes starts ticked: a tick is a change, an untick leaves it alone
   [[ "$output" == *"--header What should UnMacOS change? Untick to leave it as it is --selected=Turn off Apple Intelligence (macOS 26+),Turn off Liquid Glass (macOS 26+),Set the desktop wallpaper from the theme,"*"Recolour Orca to match the theme (if you use it)"* ]]
-  [[ "$output" == *"--header Windows and pointer --selected=Animate windows into place,"* ]]
+  [[ "$output" == *"--header Windows and pointer --selected=Focus follows the mouse,"* ]]
 }
 
 @test "a text answer keeps the spaces inside it" {

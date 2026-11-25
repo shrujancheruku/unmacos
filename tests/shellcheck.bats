@@ -21,4 +21,6 @@ setup() {
   [[ "$output" == *"home/.chezmoiscripts/run_onchange_after_50-theme.sh.tmpl"* ]]
   [[ "$output" == *"home/dot_local/bin/executable_unmacos-setup"* ]]
   [[ "$output" == *"install.sh"* ]]
+  # rendered goldens are expected output, not scripts: a golden borders.sh is never checked
+  [[ "$output" != *"tests/golden"* ]]
 }

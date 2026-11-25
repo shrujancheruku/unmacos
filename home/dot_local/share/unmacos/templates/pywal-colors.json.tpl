@@ -1,26 +1,26 @@
 {
   "wallpaper": "",
   "special": {
-    "background": "{{ background }}",
-    "foreground": "{{ foreground }}",
-    "cursor": "{{ foreground }}"
+    "background": "{{ .theme.background }}",
+    "foreground": "{{ .theme.foreground }}",
+    "cursor": "{{ .theme.foreground }}"
   },
   "colors": {
-    "color0": "{{ background }}",
-    "color1": "{{ accent }}",
-    "color2": "{{ magenta }}",
-    "color3": "{{ yellow }}",
-    "color4": "{{ blue }}",
-    "color5": "{{ magenta }}",
-    "color6": "{{ cyan }}",
-    "color7": "{{ lighter_background }}",
-    "color8": "{{ dark_background }}",
-    "color9": "{{ bright_red }}",
-    "color10": "{{ accent }}",
-    "color11": "{{ bright_yellow }}",
-    "color12": "{{ bright_blue }}",
-    "color13": "{{ bright_magenta }}",
-    "color14": "{{ bright_cyan }}",
-    "color15": "{{ foreground }}"
+    "color0": "{{ .theme.background }}",
+    "color1": "{{ .theme.accent }}",
+    "color2": "{{ .theme.magenta }}",
+    "color3": "{{ .theme.yellow }}",
+    "color4": "{{ .theme.blue }}",
+    "color5": "{{ .theme.magenta }}",
+    "color6": "{{ .theme.cyan }}",
+    "color7": "{{ .theme.lighter_background }}",
+    "color8": "{{ .theme.dark_background }}",
+    "color9": "{{ .theme.bright_red }}",
+    "color10": "{{ .theme.accent }}",
+    "color11": "{{ .theme.bright_yellow }}",
+    "color12": "{{ .theme.bright_blue }}",
+    "color13": "{{ .theme.bright_magenta }}",
+    "color14": "{{ .theme.bright_cyan }}",
+    "color15": "{{ .theme.foreground }}"
   }
 }
